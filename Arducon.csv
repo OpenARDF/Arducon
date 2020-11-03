@@ -1,0 +1,36 @@
+Ref,Qty,Value,Footprint,Link,Part No.,
+BT101 ,1,CR1220,Oddities:BC501SM_CR1220_BAT_Handsolder,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>,BC501SM-ND
+C109 C108 C110 C103 C104 C101 C102 C112 C115 C113 C114 ,11,100nF,Capacitors_SMD:C_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
+C111 C107 ,2,10uF,Capacitors_SMD:C_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,490-5523-1-ND
+C105 C106 ,2,2.2uF,Capacitors_SMD:C_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=1276-1763-1-ND">Link</a>,1276-1763-1-ND
+D101 ,1,D_Schottky_x2_KCom_Dual,TO_SOT_Packages_SMD:SOT-363_Handsolder,<a href="https://www.digikey.com/products/en?keywords=BAT54CDW-FDICT-ND">Link</a>,BAT54CDW-FDICT-ND
+D102 ,1,D_Schottky,, , 
+D103 ,1,LED,,<a href="">Link</a>,Value
+J105 ,1,Jumper_NC_Small,Wire_Connections_Bridges:Solder-Jumper-NC-SMD-Pad_Small,np,np
+J104 ,1,Radio D9 Connector,, , 
+J102 ,1,PTT & Tone,, , 
+J103 ,1,Power In,, , 
+J101 ,1,Logic Level,, , 
+J106 ,1,CONN_01X03,, , 
+P102 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
+P101 ,1,Header,Pin_Headers:Pin_Header_Straight_1x06,np,np
+Q101 ,1,2N2222,TO_SOT_Packages_THT:TO-92_Molded_Narrow,https://www.digikey.com/en/products/detail/nexperia-usa-inc/PMBT2222A215/763342?s=N4IgTCBcDaIIwHYwILRgJwFYBsK4oDkAREAXQF8g,1727-2956-1-ND
+R109 R113 ,2,10k,Resistors_SMD:R_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
+R108 R107 ,2,np,Resistors_SMD:R_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
+R112 ,1,330,Resistors_SMD:R_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
+R103 R104 ,2,100k,,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>,311-100KCRCT-ND
+R106 ,1,10k,,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
+R102 ,1,2.2k,,<a href="">Link</a>,Value
+R110 ,1,162k,, , 
+R111 ,1,12.4k,, , 
+R105 ,1,300k,,<a href="https://www.digikey.com/products/en?keywords=311-300KCRCT-ND">Link</a>,311-300KCRCT-ND
+R101 ,1,220k,,<a href="https://www.digikey.com/products/en?keywords=311-220KCRCT-ND">Link</a>,311-220KCRCT-ND
+RV101 ,1,10k,,<a href="https://www.digikey.com/products/en?keywords=ST32ETB103CT-ND">Link</a>,ST32ETB103CT-ND
+SW101 ,1,SPST_small,, , 
+TP101 ,1,I2C,Pin_Headers:Pin_Header_Straight_1x03,np,np
+U103 ,1,ATMEGA328P,Housings_QFP:TQFP-32_7x7mm_Pitch0.8mm,<a href="https://www.digikey.com/products/en?keywords=ATMEGA328P-AURCT-ND">Link</a>,ATMEGA328P-AURCT-ND
+U102 ,1,MIC5219-3.3BM5,TO_SOT_Packages_SMD:SOT-23-5_Handsolder,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND">Link</a>,576-1281-1-ND
+U101 ,1,MT88L70A,,https://www.digikey.com/en/products/detail/microchip-technology/MT88L70ASR1/4309920,MT88L70ASR1
+U104 ,1,RV-3028-C7,,https://www.digikey.com/en/products/detail/micro-crystal-ag/RV-3028-C7-32-768KHZ-1PPM-TA-QC/10431070,C732.768KHZ1PPM-TA-QCCT-ND
+W101 W102 ,2,CONN_01X01,Pin_Headers:Pin_Header_Straight_1x01,np,np
+X101 ,1,3.579MHz,,<a href="https://www.digikey.com/products/en?keywords=535-10591-1-ND">Link</a>,535-10591-1-ND

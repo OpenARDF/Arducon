@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name Arducon-rescue)(type Legacy)(uri ${KIPRJMOD}/Arducon-rescue.lib)(options "")(descr ""))
+  (lib (name special)(type Legacy)(uri "/Library/Application Support/kicad/docs/KiCad/kicad libraries/special.lib")(options "")(descr ""))
+)
