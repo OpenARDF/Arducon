@@ -1,1267 +1,1267 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <export version="D">
-  <design>
-    <source>/Library/Application Support/kicad/docs/KiCad/Receiver_Development_Platform/Arducon/Arducon.sch</source>
-    <date>Monday, November 02, 2020 at 10:33:45 PM</date>
-    <tool>Eeschema (5.1.7-0-10_14)</tool>
-    <sheet number="1" name="/" tstamps="/">
-      <title_block>
-        <title>Arducon</title>
-        <company/>
-        <rev>P1.0</rev>
-        <date>2020-11-02</date>
-        <source>Arducon.sch</source>
-        <comment number="1" value=""/>
-        <comment number="2" value=""/>
-        <comment number="3" value=""/>
-        <comment number="4" value=""/>
-      </title_block>
-    </sheet>
-  </design>
-  <components>
-    <comp ref="U103">
-      <value>ATMEGA328P</value>
-      <footprint>Housings_QFP:TQFP-32_7x7mm_Pitch0.8mm</footprint>
-      <datasheet>https://www.microchip.com/wwwproducts/en/ATmega328P</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=ATMEGA328P-AURCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">ATMEGA328P-AURCT-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="ATMEGA328P-A" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5797AFB0</tstamp>
-    </comp>
-    <comp ref="R109">
-      <value>10k</value>
-      <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
-      <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>57AD3D94</tstamp>
-    </comp>
-    <comp ref="P102">
-      <value>ISP/PDI</value>
-      <footprint>Pin_Headers:SM_Pin_Header_Straight_2x03</footprint>
-      <datasheet>http://katalog.we-online.de/em/datasheet/6100xx21121.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">609-3487-1-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CONN_02X03" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>57AD5B1A</tstamp>
-    </comp>
-    <comp ref="C109">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>57AE8E4C</tstamp>
-    </comp>
-    <comp ref="C108">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>57AE90C4</tstamp>
-    </comp>
-    <comp ref="C111">
-      <value>10uF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">490-5523-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>57B43F7B</tstamp>
-    </comp>
-    <comp ref="C107">
-      <value>10uF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">490-5523-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5959ECE9</tstamp>
-    </comp>
-    <comp ref="W101">
-      <value>CONN_01X01</value>
-      <footprint>Pin_Headers:Pin_Header_Straight_1x01</footprint>
-      <fields>
-        <field name="Link">np</field>
-        <field name="Part No.">np</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CONN_01X01" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>59FF6C44</tstamp>
-    </comp>
-    <comp ref="W102">
-      <value>CONN_01X01</value>
-      <footprint>Pin_Headers:Pin_Header_Straight_1x01</footprint>
-      <fields>
-        <field name="Link">np</field>
-        <field name="Part No.">np</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CONN_01X01" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>59FF6D51</tstamp>
-    </comp>
-    <comp ref="TP101">
-      <value>I2C</value>
-      <footprint>Pin_Headers:Pin_Header_Straight_1x03</footprint>
-      <fields>
-        <field name="Link">np</field>
-        <field name="Part No.">np</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CONN_01X03" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5A0894A0</tstamp>
-    </comp>
-    <comp ref="R108">
-      <value>np</value>
-      <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
-      <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5A6C903F</tstamp>
-    </comp>
-    <comp ref="R107">
-      <value>np</value>
-      <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
-      <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5A6C9183</tstamp>
-    </comp>
-    <comp ref="BT101">
-      <value>CR1220</value>
-      <footprint>Oddities:BC501SM_CR1220_BAT_Handsolder</footprint>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=BC501SM-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">BC501SM-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="Battery_Single_Cell" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5BCD438E</tstamp>
-    </comp>
-    <comp ref="P101">
-      <value>Header</value>
-      <footprint>Pin_Headers:Pin_Header_Straight_1x06</footprint>
-      <fields>
-        <field name="Link">np</field>
-        <field name="Part No.">np</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CONN_01X06" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5BCD63B2</tstamp>
-    </comp>
-    <comp ref="C110">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5C78AA39</tstamp>
-    </comp>
-    <comp ref="D101">
-      <value>D_Schottky_x2_KCom_Dual</value>
-      <footprint>TO_SOT_Packages_SMD:SOT-363_Handsolder</footprint>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=BAT54CDW-FDICT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">BAT54CDW-FDICT-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="D_Schottky_x2_KCom_Dual" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5CE37D9A</tstamp>
-    </comp>
-    <comp ref="J105">
-      <value>Jumper_NC_Small</value>
-      <footprint>Wire_Connections_Bridges:Solder-Jumper-NC-SMD-Pad_Small</footprint>
-      <fields>
-        <field name="Link">np</field>
-        <field name="Part No.">np</field>
-      </fields>
-      <libsource lib="Device" part="Jumper_NC_Small" description="Jumper, normally closed, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F83B487</tstamp>
-    </comp>
-    <comp ref="C105">
-      <value>2.2uF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-1763-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">1276-1763-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F83F111</tstamp>
-    </comp>
-    <comp ref="U102">
-      <value>MIC5219-3.3BM5</value>
-      <footprint>TO_SOT_Packages_SMD:SOT-23-5_Handsolder</footprint>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">576-1281-1-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="MIC5219" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F83F121</tstamp>
-    </comp>
-    <comp ref="C106">
-      <value>2.2uF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-1763-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">1276-1763-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F83F15F</tstamp>
-    </comp>
-    <comp ref="D102">
-      <value>D_Schottky</value>
-      <libsource lib="Device" part="D_Schottky" description="Schottky diode"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F99E737</tstamp>
-    </comp>
-    <comp ref="U101">
-      <value>MT88L70A</value>
-      <datasheet>http://www.microsemi.com/document-portal/doc_download/127022-mt88l70-datasheet-aug2005</datasheet>
-      <fields>
-        <field name="Link">https://www.digikey.com/en/products/detail/microchip-technology/MT88L70ASR1/4309920</field>
-        <field name="Part No.">MT88L70ASR1</field>
-      </fields>
-      <libsource lib="special" part="MT88L70A" description="DTMF receiver integrating both the bandsplit filter and digital decoder functions."/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F99FBD2</tstamp>
-    </comp>
-    <comp ref="U104">
-      <value>RV-3028-C7</value>
-      <datasheet>https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf</datasheet>
-      <fields>
-        <field name="Link">https://www.digikey.com/en/products/detail/micro-crystal-ag/RV-3028-C7-32-768KHZ-1PPM-TA-QC/10431070</field>
-        <field name="Part No.">C732.768KHZ1PPM-TA-QCCT-ND</field>
-      </fields>
-      <libsource lib="special" part="RV-3028-C7" description="I2C Real-Time Clock"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9A0888</tstamp>
-    </comp>
-    <comp ref="R113">
-      <value>10k</value>
-      <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
-      <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9AFE5B</tstamp>
-    </comp>
-    <comp ref="R112">
-      <value>330</value>
-      <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
-      <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9B4A76</tstamp>
-    </comp>
-    <comp ref="D103">
-      <value>LED</value>
-      <fields>
-        <field name="Link">&lt;a href=""&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">Value</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="LED" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9B4B9A</tstamp>
-    </comp>
-    <comp ref="R103">
-      <value>100k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-100KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9B9C6E</tstamp>
-    </comp>
-    <comp ref="RV101">
-      <value>10k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=ST32ETB103CT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">ST32ETB103CT-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="POT" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9CC9A1</tstamp>
-    </comp>
-    <comp ref="J104">
-      <value>Radio D9 Connector</value>
-      <libsource lib="Arducon-rescue" part="CONN_01X09" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9CE568</tstamp>
-    </comp>
-    <comp ref="Q101">
-      <value>2N2222</value>
-      <footprint>TO_SOT_Packages_THT:TO-92_Molded_Narrow</footprint>
-      <fields>
-        <field name="Link">https://www.digikey.com/en/products/detail/nexperia-usa-inc/PMBT2222A215/763342?s=N4IgTCBcDaIIwHYwILRgJwFYBsK4oDkAREAXQF8g</field>
-        <field name="Part No.">1727-2956-1-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="PN2222A" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9CFFCD</tstamp>
-    </comp>
-    <comp ref="R106">
-      <value>10k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-10.0KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9D04E6</tstamp>
-    </comp>
-    <comp ref="J102">
-      <value>PTT &amp; Tone</value>
-      <libsource lib="Arducon-rescue" part="CONN_01X02" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9D9FF5</tstamp>
-    </comp>
-    <comp ref="R102">
-      <value>2.2k</value>
-      <fields>
-        <field name="Link">&lt;a href=""&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">Value</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9DAE1C</tstamp>
-    </comp>
-    <comp ref="SW101">
-      <value>SPST_small</value>
-      <libsource lib="Arducon-rescue" part="SPST_small" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9DCC49</tstamp>
-    </comp>
-    <comp ref="J103">
-      <value>Power In</value>
-      <libsource lib="Arducon-rescue" part="CONN_01X03" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9DEA1C</tstamp>
-    </comp>
-    <comp ref="J101">
-      <value>Logic Level</value>
-      <libsource lib="Arducon-rescue" part="CONN_01X04" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9DFDF6</tstamp>
-    </comp>
-    <comp ref="J106">
-      <value>CONN_01X03</value>
-      <libsource lib="Arducon-rescue" part="CONN_01X03" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9E416A</tstamp>
-    </comp>
-    <comp ref="R110">
-      <value>162k</value>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9E5B53</tstamp>
-    </comp>
-    <comp ref="R111">
-      <value>12.4k</value>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9E5C35</tstamp>
-    </comp>
-    <comp ref="X101">
-      <value>3.579MHz</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=535-10591-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">535-10591-1-ND</field>
-      </fields>
-      <libsource lib="Arducon-rescue" part="CRYSTAL_SMD" description=""/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5F9B7F73</tstamp>
-    </comp>
-    <comp ref="C103">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FAAD9FE</tstamp>
-    </comp>
-    <comp ref="C104">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FACE7A3</tstamp>
-    </comp>
-    <comp ref="C101">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FADE307</tstamp>
-    </comp>
-    <comp ref="C102">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FAF0E0D</tstamp>
-    </comp>
-    <comp ref="C112">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB01B9D</tstamp>
-    </comp>
-    <comp ref="C115">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB15C5B</tstamp>
-    </comp>
-    <comp ref="C113">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB2761A</tstamp>
-    </comp>
-    <comp ref="C114">
-      <value>100nF</value>
-      <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
-      <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">478-1395-1-ND</field>
-      </fields>
-      <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB37D20</tstamp>
-    </comp>
-    <comp ref="R104">
-      <value>100k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-100KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB50ACB</tstamp>
-    </comp>
-    <comp ref="R105">
-      <value>300k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-300KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-300KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB62A52</tstamp>
-    </comp>
-    <comp ref="R101">
-      <value>220k</value>
-      <fields>
-        <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-220KCRCT-ND"&gt;Link&lt;/a&gt;</field>
-        <field name="Part No.">311-220KCRCT-ND</field>
-      </fields>
-      <libsource lib="Device" part="R" description="Resistor"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamp>5FB82EE5</tstamp>
-    </comp>
-  </components>
-  <libparts>
-    <libpart lib="Arducon-rescue" part="ATMEGA328P-A">
-      <fields>
-        <field name="Reference">IC</field>
-        <field name="Value">ATMEGA328P-A</field>
-        <field name="Footprint">TQFP32</field>
-      </fields>
-      <pins>
-        <pin num="1" name="(PCINT19/OC2B/INT1)PD3" type="BiDi"/>
-        <pin num="2" name="(PCINT20/XCK/T0)PD4" type="BiDi"/>
-        <pin num="3" name="GND" type="power_in"/>
-        <pin num="4" name="VCC" type="power_in"/>
-        <pin num="5" name="GND" type="power_in"/>
-        <pin num="6" name="VCC" type="power_in"/>
-        <pin num="7" name="(PCINT6/XTAL1/TOSC1)PB6" type="BiDi"/>
-        <pin num="8" name="(PCINT7/XTAL2/TOSC2)PB7" type="BiDi"/>
-        <pin num="9" name="(PCINT21/OC0B/T1)PD5" type="BiDi"/>
-        <pin num="10" name="(PCINT22/OC0A/AIN0)PD6" type="BiDi"/>
-        <pin num="11" name="(PCINT23/AIN1)PD7" type="BiDi"/>
-        <pin num="12" name="(PCINT0/CLKO/ICP1)PB0" type="BiDi"/>
-        <pin num="13" name="(PCINT1/OC1A)PB1" type="BiDi"/>
-        <pin num="14" name="(PCINT2/OC1B/~SS~)PB2" type="BiDi"/>
-        <pin num="15" name="(PCINT3/OC2A/MOSI)PB3" type="BiDi"/>
-        <pin num="16" name="(PCINT4/MISO)PB4" type="BiDi"/>
-        <pin num="17" name="(PCINT5/SCK)PB5" type="BiDi"/>
-        <pin num="18" name="AVCC" type="power_in"/>
-        <pin num="19" name="ADC6" type="input"/>
-        <pin num="20" name="AREF" type="power_in"/>
-        <pin num="21" name="GND" type="power_in"/>
-        <pin num="22" name="ADC7" type="input"/>
-        <pin num="23" name="(PCINT8/ADC0)PC0" type="BiDi"/>
-        <pin num="24" name="(PCINT9/ADC1)PC1" type="BiDi"/>
-        <pin num="25" name="(PCINT10/ADC2)PC2" type="BiDi"/>
-        <pin num="26" name="(PCINT11/ADC3)PC3" type="BiDi"/>
-        <pin num="27" name="(PCINT12/SDA/ADC4)PC4" type="BiDi"/>
-        <pin num="28" name="(PCINT13/SCL/ADC5)PC5" type="BiDi"/>
-        <pin num="29" name="(PCINT14/~RESET~)PC6" type="BiDi"/>
-        <pin num="30" name="(PCINT16/RXD)PD0" type="BiDi"/>
-        <pin num="31" name="(PCINT17/TXD)PD1" type="BiDi"/>
-        <pin num="32" name="(PCINT18/INT0)PD2" type="BiDi"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="Battery_Single_Cell">
-      <fields>
-        <field name="Reference">BT</field>
-        <field name="Value">Battery_Single_Cell</field>
-      </fields>
-      <pins>
-        <pin num="1" name="~" type="passive"/>
-        <pin num="2" name="~" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X01">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X01</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X02">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X02</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X03">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X03</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-        <pin num="3" name="P3" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X04">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X04</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-        <pin num="3" name="P3" type="passive"/>
-        <pin num="4" name="P4" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X06">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X06</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-        <pin num="3" name="P3" type="passive"/>
-        <pin num="4" name="P4" type="passive"/>
-        <pin num="5" name="P5" type="passive"/>
-        <pin num="6" name="P6" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_01X09">
-      <footprints>
-        <fp>Pin_Header_Straight_1X*</fp>
-        <fp>Pin_Header_Angled_1X*</fp>
-        <fp>Socket_Strip_Straight_1X*</fp>
-        <fp>Socket_Strip_Angled_1X*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_01X09</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-        <pin num="3" name="P3" type="passive"/>
-        <pin num="4" name="P4" type="passive"/>
-        <pin num="5" name="P5" type="passive"/>
-        <pin num="6" name="P6" type="passive"/>
-        <pin num="7" name="P7" type="passive"/>
-        <pin num="8" name="P8" type="passive"/>
-        <pin num="9" name="P9" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CONN_02X03">
-      <footprints>
-        <fp>Pin_Header_Straight_2X*</fp>
-        <fp>Pin_Header_Angled_2X*</fp>
-        <fp>Socket_Strip_Straight_2X*</fp>
-        <fp>Socket_Strip_Angled_2X*</fp>
-        <fp>IDC_Header_Straight_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J</field>
-        <field name="Value">CONN_02X03</field>
-      </fields>
-      <pins>
-        <pin num="1" name="P1" type="passive"/>
-        <pin num="2" name="P2" type="passive"/>
-        <pin num="3" name="P3" type="passive"/>
-        <pin num="4" name="P4" type="passive"/>
-        <pin num="5" name="P5" type="passive"/>
-        <pin num="6" name="P6" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="CRYSTAL_SMD">
-      <fields>
-        <field name="Reference">X</field>
-        <field name="Value">CRYSTAL_SMD</field>
-      </fields>
-      <pins>
-        <pin num="1" name="1" type="passive"/>
-        <pin num="2" name="2" type="passive"/>
-        <pin num="3" name="case" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="D_Schottky_x2_KCom_Dual">
-      <fields>
-        <field name="Reference">D</field>
-        <field name="Value">D_Schottky_x2_KCom_Dual</field>
-      </fields>
-      <pins>
-        <pin num="1" name="A2" type="passive"/>
-        <pin num="2" name="A2" type="passive"/>
-        <pin num="3" name="C1" type="passive"/>
-        <pin num="4" name="A1" type="passive"/>
-        <pin num="5" name="A1" type="passive"/>
-        <pin num="6" name="C2" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="LED">
-      <footprints>
-        <fp>LED-3MM</fp>
-        <fp>LED-5MM</fp>
-        <fp>LED-10MM</fp>
-        <fp>LED-0603</fp>
-        <fp>LED-0805</fp>
-        <fp>LED-1206</fp>
-        <fp>LEDV</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">D</field>
-        <field name="Value">LED</field>
-      </fields>
-      <pins>
-        <pin num="1" name="K" type="passive"/>
-        <pin num="2" name="A" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="MIC5219">
-      <footprints>
-        <fp>SOT*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">U</field>
-        <field name="Value">MIC5219</field>
-        <field name="Footprint">SOT-23-5</field>
-      </fields>
-      <pins>
-        <pin num="1" name="VIN" type="power_in"/>
-        <pin num="2" name="GND" type="power_in"/>
-        <pin num="3" name="EN" type="input"/>
-        <pin num="4" name="BYP" type="passive"/>
-        <pin num="5" name="VOUT" type="power_out"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="PN2222A">
-      <footprints>
-        <fp>TO-92*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">Q</field>
-        <field name="Value">PN2222A</field>
-        <field name="Footprint">TO_SOT_Packages_THT:TO-92_Molded_Narrow</field>
-      </fields>
-      <pins>
-        <pin num="1" name="E" type="passive"/>
-        <pin num="2" name="B" type="input"/>
-        <pin num="3" name="C" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="POT">
-      <fields>
-        <field name="Reference">RV</field>
-        <field name="Value">POT</field>
-      </fields>
-      <pins>
-        <pin num="1" name="1" type="passive"/>
-        <pin num="2" name="2" type="passive"/>
-        <pin num="3" name="3" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Arducon-rescue" part="SPST_small">
-      <fields>
-        <field name="Reference">SW</field>
-        <field name="Value">SPST_small</field>
-      </fields>
-      <pins>
-        <pin num="1" name="1" type="input"/>
-        <pin num="2" name="2" type="input"/>
-      </pins>
-    </libpart>
-    <libpart lib="Device" part="C">
-      <description>Unpolarized capacitor</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>C_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">C</field>
-        <field name="Value">C</field>
-      </fields>
-      <pins>
-        <pin num="1" name="~" type="passive"/>
-        <pin num="2" name="~" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Device" part="C_Small">
-      <description>Unpolarized capacitor, small symbol</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>C_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">C</field>
-        <field name="Value">C_Small</field>
-      </fields>
-      <pins>
-        <pin num="1" name="~" type="passive"/>
-        <pin num="2" name="~" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Device" part="D_Schottky">
-      <description>Schottky diode</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>TO-???*</fp>
-        <fp>*_Diode_*</fp>
-        <fp>*SingleDiode*</fp>
-        <fp>D_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">D</field>
-        <field name="Value">D_Schottky</field>
-      </fields>
-      <pins>
-        <pin num="1" name="K" type="passive"/>
-        <pin num="2" name="A" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Device" part="Jumper_NC_Small">
-      <description>Jumper, normally closed, small symbol</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>SolderJumper*Bridged*</fp>
-        <fp>Jumper*</fp>
-        <fp>TestPoint*2Pads*</fp>
-        <fp>TestPoint*Bridge*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">JP</field>
-        <field name="Value">Jumper_NC_Small</field>
-      </fields>
-      <pins>
-        <pin num="1" name="1" type="passive"/>
-        <pin num="2" name="2" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Device" part="R">
-      <description>Resistor</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>R_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">R</field>
-        <field name="Value">R</field>
-      </fields>
-      <pins>
-        <pin num="1" name="~" type="passive"/>
-        <pin num="2" name="~" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="special" part="MT88L70A">
-      <description>DTMF receiver integrating both the bandsplit filter and digital decoder functions.</description>
-      <docs>http://www.microsemi.com/document-portal/doc_download/127022-mt88l70-datasheet-aug2005</docs>
-      <fields>
-        <field name="Reference">U</field>
-        <field name="Value">MT88L70A</field>
-      </fields>
-      <pins>
-        <pin num="1" name="IN+" type="input"/>
-        <pin num="2" name="IN-" type="input"/>
-        <pin num="3" name="GS" type="input"/>
-        <pin num="4" name="Vref" type="output"/>
-        <pin num="5" name="INH" type="input"/>
-        <pin num="6" name="PWDN" type="input"/>
-        <pin num="7" name="OSC1" type="passive"/>
-        <pin num="8" name="OSC2" type="BiDi"/>
-        <pin num="9" name="VSS" type="power_in"/>
-        <pin num="10" name="TOE" type="input"/>
-        <pin num="11" name="Q1" type="output"/>
-        <pin num="12" name="Q2" type="output"/>
-        <pin num="13" name="Q3" type="output"/>
-        <pin num="14" name="Q4" type="output"/>
-        <pin num="15" name="StD" type="output"/>
-        <pin num="16" name="ESt" type="output"/>
-        <pin num="17" name="St/GT" type="BiDi"/>
-        <pin num="18" name="VDD" type="power_in"/>
-      </pins>
-    </libpart>
-    <libpart lib="special" part="RV-3028-C7">
-      <description>I2C Real-Time Clock</description>
-      <docs>https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf</docs>
-      <footprints>
-        <fp>SO8E</fp>
-        <fp>DIP-8_300_ELL</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">U</field>
-        <field name="Value">RV-3028-C7</field>
-      </fields>
-      <pins>
-        <pin num="1" name="CLK" type="output"/>
-        <pin num="2" name="~INT" type="output"/>
-        <pin num="3" name="SCL" type="input"/>
-        <pin num="4" name="SDA" type="BiDi"/>
-        <pin num="5" name="Vss" type="power_in"/>
-        <pin num="6" name="Vback" type="input"/>
-        <pin num="7" name="VDD" type="power_in"/>
-        <pin num="8" name="EVI" type="input"/>
-      </pins>
-    </libpart>
-  </libparts>
-  <libraries>
-    <library logical="Arducon-rescue">
-      <uri>/Library/Application Support/kicad/docs/KiCad/Receiver_Development_Platform/Arducon/Arducon-rescue.lib</uri>
-    </library>
-    <library logical="Device">
-      <uri>/Library/Application Support/kicad/library/Device.lib</uri>
-    </library>
-    <library logical="special">
-      <uri>/Library/Application Support/kicad/docs/KiCad/kicad libraries/special.lib</uri>
-    </library>
-  </libraries>
-  <nets>
-    <net code="1" name="~RTC_INT~">
-      <node ref="U103" pin="1"/>
-      <node ref="U104" pin="2"/>
-    </net>
-    <net code="2" name="/PD6">
-      <node ref="U103" pin="10"/>
-    </net>
-    <net code="3" name="/PD7">
-      <node ref="U103" pin="11"/>
-      <node ref="R112" pin="2"/>
-    </net>
-    <net code="4" name="PTT_LOGIC">
-      <node ref="J101" pin="4"/>
-      <node ref="R106" pin="1"/>
-      <node ref="U103" pin="12"/>
-    </net>
-    <net code="5" name="TONE_LOGIC">
-      <node ref="J101" pin="2"/>
-      <node ref="U103" pin="13"/>
-      <node ref="R101" pin="1"/>
-    </net>
-    <net code="6" name="CW_KEY_LOGIC">
-      <node ref="J101" pin="3"/>
-      <node ref="U103" pin="14"/>
-    </net>
-    <net code="7" name="MOSI">
-      <node ref="P102" pin="4"/>
-      <node ref="U103" pin="15"/>
-    </net>
-    <net code="8" name="MISO">
-      <node ref="U103" pin="16"/>
-      <node ref="P102" pin="1"/>
-    </net>
-    <net code="9" name="SCK">
-      <node ref="U103" pin="17"/>
-      <node ref="P102" pin="3"/>
-    </net>
-    <net code="10" name="/PD4">
-      <node ref="SW101" pin="1"/>
-      <node ref="U103" pin="2"/>
-    </net>
-    <net code="11" name="Net-(C111-Pad2)">
-      <node ref="C111" pin="2"/>
-      <node ref="U103" pin="20"/>
-    </net>
-    <net code="12" name="Q1">
-      <node ref="U103" pin="23"/>
-      <node ref="U101" pin="11"/>
-    </net>
-    <net code="13" name="Q2">
-      <node ref="U101" pin="12"/>
-      <node ref="U103" pin="24"/>
-    </net>
-    <net code="14" name="Q3">
-      <node ref="U101" pin="13"/>
-      <node ref="U103" pin="25"/>
-    </net>
-    <net code="15" name="Q4">
-      <node ref="U103" pin="26"/>
-      <node ref="U101" pin="14"/>
-    </net>
-    <net code="16" name="SDA">
-      <node ref="R108" pin="2"/>
-      <node ref="U104" pin="4"/>
-      <node ref="TP101" pin="2"/>
-      <node ref="U103" pin="27"/>
-    </net>
-    <net code="17" name="SCL">
-      <node ref="U103" pin="28"/>
-      <node ref="TP101" pin="3"/>
-      <node ref="U104" pin="3"/>
-      <node ref="R107" pin="2"/>
-    </net>
-    <net code="18" name="~RESET~">
-      <node ref="U103" pin="29"/>
-      <node ref="C112" pin="2"/>
-      <node ref="R109" pin="2"/>
-      <node ref="D102" pin="2"/>
-      <node ref="P102" pin="5"/>
-    </net>
-    <net code="19" name="/PD0">
-      <node ref="P101" pin="4"/>
-      <node ref="U103" pin="30"/>
-    </net>
-    <net code="20" name="/PD1">
-      <node ref="P101" pin="5"/>
-      <node ref="U103" pin="31"/>
-    </net>
-    <net code="21" name="/PB7">
-      <node ref="U103" pin="8"/>
-    </net>
-    <net code="22" name="ADC6">
-      <node ref="U103" pin="19"/>
-      <node ref="J106" pin="2"/>
-    </net>
-    <net code="23" name="Net-(P101-Pad2)">
-      <node ref="P101" pin="2"/>
-    </net>
-    <net code="24" name="FTDI_Power_+5">
-      <node ref="P101" pin="3"/>
-      <node ref="D101" pin="2"/>
-    </net>
-    <net code="25" name="EXT_BATTERY">
-      <node ref="R110" pin="1"/>
-      <node ref="J104" pin="7"/>
-      <node ref="J103" pin="3"/>
-      <node ref="D101" pin="1"/>
-    </net>
-    <net code="26" name="Net-(C105-Pad2)">
-      <node ref="U102" pin="3"/>
-      <node ref="C105" pin="2"/>
-      <node ref="D101" pin="6"/>
-      <node ref="U102" pin="1"/>
-    </net>
-    <net code="27" name="Net-(U102-Pad4)">
-      <node ref="U102" pin="4"/>
-    </net>
-    <net code="28" name="Net-(C106-Pad2)">
-      <node ref="J105" pin="1"/>
-      <node ref="C106" pin="2"/>
-      <node ref="U102" pin="5"/>
-    </net>
-    <net code="29" name="Net-(R103-Pad1)">
-      <node ref="R104" pin="2"/>
-      <node ref="R103" pin="1"/>
-      <node ref="U101" pin="2"/>
-    </net>
-    <net code="30" name="Net-(R104-Pad1)">
-      <node ref="U101" pin="3"/>
-      <node ref="R104" pin="1"/>
-    </net>
-    <net code="31" name="Net-(U101-Pad1)">
-      <node ref="U101" pin="1"/>
-      <node ref="U101" pin="4"/>
-    </net>
-    <net code="32" name="PWDN">
-      <node ref="U103" pin="7"/>
-      <node ref="U101" pin="6"/>
-    </net>
-    <net code="33" name="Net-(U101-Pad7)">
-      <node ref="X101" pin="2"/>
-      <node ref="U101" pin="7"/>
-    </net>
-    <net code="34" name="Net-(U101-Pad8)">
-      <node ref="X101" pin="1"/>
-      <node ref="U101" pin="8"/>
-    </net>
-    <net code="35" name="StD">
-      <node ref="U103" pin="9"/>
-      <node ref="U101" pin="15"/>
-    </net>
-    <net code="36" name="Net-(R105-Pad2)">
-      <node ref="R105" pin="2"/>
-      <node ref="U101" pin="16"/>
-    </net>
-    <net code="37" name="RTC_SQW">
-      <node ref="U104" pin="1"/>
-      <node ref="U103" pin="32"/>
-    </net>
-    <net code="38" name="Net-(BT101-Pad1)">
-      <node ref="U104" pin="6"/>
-      <node ref="C115" pin="2"/>
-      <node ref="BT101" pin="1"/>
-    </net>
-    <net code="39" name="Net-(R113-Pad2)">
-      <node ref="R113" pin="2"/>
-      <node ref="U104" pin="8"/>
-    </net>
-    <net code="40" name="Net-(D103-Pad2)">
-      <node ref="D103" pin="2"/>
-      <node ref="R112" pin="1"/>
-    </net>
-    <net code="41" name="Net-(C112-Pad1)">
-      <node ref="C112" pin="1"/>
-      <node ref="P101" pin="6"/>
-    </net>
-    <net code="42" name="Net-(C102-Pad2)">
-      <node ref="C102" pin="2"/>
-      <node ref="U101" pin="17"/>
-      <node ref="R105" pin="1"/>
-    </net>
-    <net code="43" name="Net-(C104-Pad2)">
-      <node ref="C104" pin="2"/>
-      <node ref="R103" pin="2"/>
-    </net>
-    <net code="44" name="3V3_DIRECT">
-      <node ref="U103" pin="18"/>
-      <node ref="U103" pin="6"/>
-      <node ref="C114" pin="1"/>
-      <node ref="C110" pin="1"/>
-      <node ref="C102" pin="1"/>
-      <node ref="C101" pin="2"/>
-      <node ref="J105" pin="2"/>
-      <node ref="C108" pin="2"/>
-      <node ref="P102" pin="2"/>
-      <node ref="D102" pin="1"/>
-      <node ref="U101" pin="10"/>
-      <node ref="C109" pin="1"/>
-      <node ref="R107" pin="1"/>
-      <node ref="U103" pin="4"/>
-      <node ref="U101" pin="18"/>
-      <node ref="R108" pin="1"/>
-      <node ref="U104" pin="7"/>
-      <node ref="J103" pin="2"/>
-      <node ref="R109" pin="1"/>
-      <node ref="R113" pin="1"/>
-      <node ref="C107" pin="2"/>
-    </net>
-    <net code="45" name="Net-(C103-Pad2)">
-      <node ref="C103" pin="2"/>
-      <node ref="RV101" pin="2"/>
-    </net>
-    <net code="46" name="Net-(R101-Pad2)">
-      <node ref="R101" pin="2"/>
-      <node ref="RV101" pin="3"/>
-    </net>
-    <net code="47" name="Net-(J104-Pad2)">
-      <node ref="J104" pin="2"/>
-    </net>
-    <net code="48" name="Net-(J104-Pad4)">
-      <node ref="J104" pin="4"/>
-    </net>
-    <net code="49" name="Net-(J104-Pad8)">
-      <node ref="J104" pin="8"/>
-    </net>
-    <net code="50" name="Net-(J104-Pad9)">
-      <node ref="J104" pin="9"/>
-    </net>
-    <net code="51" name="Net-(Q101-Pad2)">
-      <node ref="Q101" pin="2"/>
-      <node ref="R106" pin="2"/>
-    </net>
-    <net code="52" name="/PTT_OUT">
-      <node ref="J102" pin="1"/>
-      <node ref="J104" pin="3"/>
-      <node ref="Q101" pin="3"/>
-    </net>
-    <net code="53" name="Net-(J102-Pad2)">
-      <node ref="J102" pin="2"/>
-      <node ref="R102" pin="2"/>
-    </net>
-    <net code="54" name="/AUDIO_OUT">
-      <node ref="R102" pin="1"/>
-      <node ref="J104" pin="1"/>
-      <node ref="C103" pin="1"/>
-    </net>
-    <net code="55" name="EXT_PWR_GROUND">
-      <node ref="J104" pin="6"/>
-      <node ref="W101" pin="1"/>
-      <node ref="RV101" pin="1"/>
-      <node ref="Q101" pin="1"/>
-      <node ref="U103" pin="3"/>
-      <node ref="W102" pin="1"/>
-      <node ref="TP101" pin="1"/>
-      <node ref="SW101" pin="2"/>
-      <node ref="J103" pin="1"/>
-      <node ref="J101" pin="1"/>
-      <node ref="U103" pin="21"/>
-      <node ref="C114" pin="2"/>
-      <node ref="U104" pin="5"/>
-      <node ref="J106" pin="1"/>
-      <node ref="U103" pin="5"/>
-      <node ref="J106" pin="3"/>
-      <node ref="C113" pin="1"/>
-      <node ref="P101" pin="1"/>
-      <node ref="R111" pin="2"/>
-      <node ref="C115" pin="1"/>
-      <node ref="U101" pin="9"/>
-      <node ref="P102" pin="6"/>
-      <node ref="U101" pin="5"/>
-      <node ref="C106" pin="1"/>
-      <node ref="C109" pin="2"/>
-      <node ref="C108" pin="1"/>
-      <node ref="C111" pin="1"/>
-      <node ref="U102" pin="2"/>
-      <node ref="C105" pin="1"/>
-      <node ref="C107" pin="1"/>
-      <node ref="C110" pin="2"/>
-      <node ref="BT101" pin="2"/>
-      <node ref="X101" pin="3"/>
-      <node ref="D103" pin="1"/>
-      <node ref="C101" pin="1"/>
-    </net>
-    <net code="56" name="/ADC7">
-      <node ref="R111" pin="1"/>
-      <node ref="R110" pin="2"/>
-      <node ref="C113" pin="2"/>
-      <node ref="U103" pin="22"/>
-    </net>
-    <net code="57" name="RX_AUDIO_IN">
-      <node ref="C104" pin="1"/>
-      <node ref="J104" pin="5"/>
-    </net>
-  </nets>
+    <design>
+        <source>~/Documents/GitHub/Arducon/Arducon.sch</source>
+        <date>Monday, November 02, 2020 at 10:33:45 PM</date>
+        <tool>Eeschema (5.1.7-0-10_14)</tool>
+        <sheet number="1" name="/" tstamps="/">
+            <title_block>
+                <title>Arducon</title>
+                <company />
+                <rev>P1.0</rev>
+                <date>2020-11-02</date>
+                <source>Arducon.sch</source>
+                <comment number="1" value="" />
+                <comment number="2" value="" />
+                <comment number="3" value="" />
+                <comment number="4" value="" />
+            </title_block>
+        </sheet>
+    </design>
+    <components>
+        <comp ref="U103">
+            <value>ATMEGA328P</value>
+            <footprint>Housings_QFP:TQFP-32_7x7mm_Pitch0.8mm</footprint>
+            <datasheet>https://www.microchip.com/wwwproducts/en/ATmega328P</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=ATMEGA328P-AURCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">ATMEGA328P-AURCT-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="ATMEGA328P-A" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5797AFB0</tstamp>
+        </comp>
+        <comp ref="R109">
+            <value>10k</value>
+            <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
+            <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>57AD3D94</tstamp>
+        </comp>
+        <comp ref="P102">
+            <value>ISP/PDI</value>
+            <footprint>Pin_Headers:SM_Pin_Header_Straight_2x03</footprint>
+            <datasheet>http://katalog.we-online.de/em/datasheet/6100xx21121.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">609-3487-1-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CONN_02X03" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>57AD5B1A</tstamp>
+        </comp>
+        <comp ref="C109">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>57AE8E4C</tstamp>
+        </comp>
+        <comp ref="C108">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>57AE90C4</tstamp>
+        </comp>
+        <comp ref="C111">
+            <value>10uF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">490-5523-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>57B43F7B</tstamp>
+        </comp>
+        <comp ref="C107">
+            <value>10uF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">490-5523-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5959ECE9</tstamp>
+        </comp>
+        <comp ref="W101">
+            <value>CONN_01X01</value>
+            <footprint>Pin_Headers:Pin_Header_Straight_1x01</footprint>
+            <fields>
+                <field name="Link">np</field>
+                <field name="Part No.">np</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CONN_01X01" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>59FF6C44</tstamp>
+        </comp>
+        <comp ref="W102">
+            <value>CONN_01X01</value>
+            <footprint>Pin_Headers:Pin_Header_Straight_1x01</footprint>
+            <fields>
+                <field name="Link">np</field>
+                <field name="Part No.">np</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CONN_01X01" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>59FF6D51</tstamp>
+        </comp>
+        <comp ref="TP101">
+            <value>I2C</value>
+            <footprint>Pin_Headers:Pin_Header_Straight_1x03</footprint>
+            <fields>
+                <field name="Link">np</field>
+                <field name="Part No.">np</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CONN_01X03" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5A0894A0</tstamp>
+        </comp>
+        <comp ref="R108">
+            <value>np</value>
+            <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
+            <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5A6C903F</tstamp>
+        </comp>
+        <comp ref="R107">
+            <value>np</value>
+            <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
+            <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5A6C9183</tstamp>
+        </comp>
+        <comp ref="BT101">
+            <value>CR1220</value>
+            <footprint>Oddities:BC501SM_CR1220_BAT_Handsolder</footprint>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=BC501SM-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">BC501SM-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="Battery_Single_Cell" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5BCD438E</tstamp>
+        </comp>
+        <comp ref="P101">
+            <value>Header</value>
+            <footprint>Pin_Headers:Pin_Header_Straight_1x06</footprint>
+            <fields>
+                <field name="Link">np</field>
+                <field name="Part No.">np</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CONN_01X06" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5BCD63B2</tstamp>
+        </comp>
+        <comp ref="C110">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5C78AA39</tstamp>
+        </comp>
+        <comp ref="D101">
+            <value>D_Schottky_x2_KCom_Dual</value>
+            <footprint>TO_SOT_Packages_SMD:SOT-363_Handsolder</footprint>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=BAT54CDW-FDICT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">BAT54CDW-FDICT-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="D_Schottky_x2_KCom_Dual" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5CE37D9A</tstamp>
+        </comp>
+        <comp ref="J105">
+            <value>Jumper_NC_Small</value>
+            <footprint>Wire_Connections_Bridges:Solder-Jumper-NC-SMD-Pad_Small</footprint>
+            <fields>
+                <field name="Link">np</field>
+                <field name="Part No.">np</field>
+            </fields>
+            <libsource lib="Device" part="Jumper_NC_Small" description="Jumper, normally closed, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F83B487</tstamp>
+        </comp>
+        <comp ref="C105">
+            <value>2.2uF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-1763-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">1276-1763-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C" description="Unpolarized capacitor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F83F111</tstamp>
+        </comp>
+        <comp ref="U102">
+            <value>MIC5219-3.3BM5</value>
+            <footprint>TO_SOT_Packages_SMD:SOT-23-5_Handsolder</footprint>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">576-1281-1-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="MIC5219" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F83F121</tstamp>
+        </comp>
+        <comp ref="C106">
+            <value>2.2uF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=1276-1763-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">1276-1763-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C" description="Unpolarized capacitor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F83F15F</tstamp>
+        </comp>
+        <comp ref="D102">
+            <value>D_Schottky</value>
+            <libsource lib="Device" part="D_Schottky" description="Schottky diode" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F99E737</tstamp>
+        </comp>
+        <comp ref="U101">
+            <value>MT88L70A</value>
+            <datasheet>http://www.microsemi.com/document-portal/doc_download/127022-mt88l70-datasheet-aug2005</datasheet>
+            <fields>
+                <field name="Link">https://www.digikey.com/en/products/detail/microchip-technology/MT88L70ASR1/4309920</field>
+                <field name="Part No.">MT88L70ASR1</field>
+            </fields>
+            <libsource lib="special" part="MT88L70A" description="DTMF receiver integrating both the bandsplit filter and digital decoder functions." />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F99FBD2</tstamp>
+        </comp>
+        <comp ref="U104">
+            <value>RV-3028-C7</value>
+            <datasheet>https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf</datasheet>
+            <fields>
+                <field name="Link">https://www.digikey.com/en/products/detail/micro-crystal-ag/RV-3028-C7-32-768KHZ-1PPM-TA-QC/10431070</field>
+                <field name="Part No.">C732.768KHZ1PPM-TA-QCCT-ND</field>
+            </fields>
+            <libsource lib="special" part="RV-3028-C7" description="I2C Real-Time Clock" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9A0888</tstamp>
+        </comp>
+        <comp ref="R113">
+            <value>10k</value>
+            <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
+            <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9AFE5B</tstamp>
+        </comp>
+        <comp ref="R112">
+            <value>330</value>
+            <footprint>Resistors_SMD:R_0805_HandSoldering</footprint>
+            <datasheet>http://www.yageo.com/documents/recent/PYu-RC_Group_51_RoHS_L_04.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9B4A76</tstamp>
+        </comp>
+        <comp ref="D103">
+            <value>LED</value>
+            <fields>
+                <field name="Link">&lt;a href=""&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">Value</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="LED" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9B4B9A</tstamp>
+        </comp>
+        <comp ref="R103">
+            <value>100k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-100KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9B9C6E</tstamp>
+        </comp>
+        <comp ref="RV101">
+            <value>10k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=ST32ETB103CT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">ST32ETB103CT-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="POT" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9CC9A1</tstamp>
+        </comp>
+        <comp ref="J104">
+            <value>Radio D9 Connector</value>
+            <libsource lib="Arducon-rescue" part="CONN_01X09" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9CE568</tstamp>
+        </comp>
+        <comp ref="Q101">
+            <value>2N2222</value>
+            <footprint>TO_SOT_Packages_THT:TO-92_Molded_Narrow</footprint>
+            <fields>
+                <field name="Link">https://www.digikey.com/en/products/detail/nexperia-usa-inc/PMBT2222A215/763342?s=N4IgTCBcDaIIwHYwILRgJwFYBsK4oDkAREAXQF8g</field>
+                <field name="Part No.">1727-2956-1-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="PN2222A" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9CFFCD</tstamp>
+        </comp>
+        <comp ref="R106">
+            <value>10k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-10.0KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9D04E6</tstamp>
+        </comp>
+        <comp ref="J102">
+            <value>PTT &amp; Tone</value>
+            <libsource lib="Arducon-rescue" part="CONN_01X02" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9D9FF5</tstamp>
+        </comp>
+        <comp ref="R102">
+            <value>2.2k</value>
+            <fields>
+                <field name="Link">&lt;a href=""&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">Value</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9DAE1C</tstamp>
+        </comp>
+        <comp ref="SW101">
+            <value>SPST_small</value>
+            <libsource lib="Arducon-rescue" part="SPST_small" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9DCC49</tstamp>
+        </comp>
+        <comp ref="J103">
+            <value>Power In</value>
+            <libsource lib="Arducon-rescue" part="CONN_01X03" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9DEA1C</tstamp>
+        </comp>
+        <comp ref="J101">
+            <value>Logic Level</value>
+            <libsource lib="Arducon-rescue" part="CONN_01X04" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9DFDF6</tstamp>
+        </comp>
+        <comp ref="J106">
+            <value>CONN_01X03</value>
+            <libsource lib="Arducon-rescue" part="CONN_01X03" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9E416A</tstamp>
+        </comp>
+        <comp ref="R110">
+            <value>162k</value>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9E5B53</tstamp>
+        </comp>
+        <comp ref="R111">
+            <value>12.4k</value>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9E5C35</tstamp>
+        </comp>
+        <comp ref="X101">
+            <value>3.579MHz</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=535-10591-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">535-10591-1-ND</field>
+            </fields>
+            <libsource lib="Arducon-rescue" part="CRYSTAL_SMD" description="" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5F9B7F73</tstamp>
+        </comp>
+        <comp ref="C103">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FAAD9FE</tstamp>
+        </comp>
+        <comp ref="C104">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FACE7A3</tstamp>
+        </comp>
+        <comp ref="C101">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FADE307</tstamp>
+        </comp>
+        <comp ref="C102">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FAF0E0D</tstamp>
+        </comp>
+        <comp ref="C112">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB01B9D</tstamp>
+        </comp>
+        <comp ref="C115">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB15C5B</tstamp>
+        </comp>
+        <comp ref="C113">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB2761A</tstamp>
+        </comp>
+        <comp ref="C114">
+            <value>100nF</value>
+            <footprint>Capacitors_SMD:C_0805_HandSoldering</footprint>
+            <datasheet>http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf</datasheet>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">478-1395-1-ND</field>
+            </fields>
+            <libsource lib="Device" part="C_Small" description="Unpolarized capacitor, small symbol" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB37D20</tstamp>
+        </comp>
+        <comp ref="R104">
+            <value>100k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-100KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB50ACB</tstamp>
+        </comp>
+        <comp ref="R105">
+            <value>300k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-300KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-300KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB62A52</tstamp>
+        </comp>
+        <comp ref="R101">
+            <value>220k</value>
+            <fields>
+                <field name="Link">&lt;a href="https://www.digikey.com/products/en?keywords=311-220KCRCT-ND"&gt;Link&lt;/a&gt;</field>
+                <field name="Part No.">311-220KCRCT-ND</field>
+            </fields>
+            <libsource lib="Device" part="R" description="Resistor" />
+            <sheetpath names="/" tstamps="/" />
+            <tstamp>5FB82EE5</tstamp>
+        </comp>
+    </components>
+    <libparts>
+        <libpart lib="Arducon-rescue" part="ATMEGA328P-A">
+            <fields>
+                <field name="Reference">IC</field>
+                <field name="Value">ATMEGA328P-A</field>
+                <field name="Footprint">TQFP32</field>
+            </fields>
+            <pins>
+                <pin num="1" name="(PCINT19/OC2B/INT1)PD3" type="BiDi" />
+                <pin num="2" name="(PCINT20/XCK/T0)PD4" type="BiDi" />
+                <pin num="3" name="GND" type="power_in" />
+                <pin num="4" name="VCC" type="power_in" />
+                <pin num="5" name="GND" type="power_in" />
+                <pin num="6" name="VCC" type="power_in" />
+                <pin num="7" name="(PCINT6/XTAL1/TOSC1)PB6" type="BiDi" />
+                <pin num="8" name="(PCINT7/XTAL2/TOSC2)PB7" type="BiDi" />
+                <pin num="9" name="(PCINT21/OC0B/T1)PD5" type="BiDi" />
+                <pin num="10" name="(PCINT22/OC0A/AIN0)PD6" type="BiDi" />
+                <pin num="11" name="(PCINT23/AIN1)PD7" type="BiDi" />
+                <pin num="12" name="(PCINT0/CLKO/ICP1)PB0" type="BiDi" />
+                <pin num="13" name="(PCINT1/OC1A)PB1" type="BiDi" />
+                <pin num="14" name="(PCINT2/OC1B/~SS~)PB2" type="BiDi" />
+                <pin num="15" name="(PCINT3/OC2A/MOSI)PB3" type="BiDi" />
+                <pin num="16" name="(PCINT4/MISO)PB4" type="BiDi" />
+                <pin num="17" name="(PCINT5/SCK)PB5" type="BiDi" />
+                <pin num="18" name="AVCC" type="power_in" />
+                <pin num="19" name="ADC6" type="input" />
+                <pin num="20" name="AREF" type="power_in" />
+                <pin num="21" name="GND" type="power_in" />
+                <pin num="22" name="ADC7" type="input" />
+                <pin num="23" name="(PCINT8/ADC0)PC0" type="BiDi" />
+                <pin num="24" name="(PCINT9/ADC1)PC1" type="BiDi" />
+                <pin num="25" name="(PCINT10/ADC2)PC2" type="BiDi" />
+                <pin num="26" name="(PCINT11/ADC3)PC3" type="BiDi" />
+                <pin num="27" name="(PCINT12/SDA/ADC4)PC4" type="BiDi" />
+                <pin num="28" name="(PCINT13/SCL/ADC5)PC5" type="BiDi" />
+                <pin num="29" name="(PCINT14/~RESET~)PC6" type="BiDi" />
+                <pin num="30" name="(PCINT16/RXD)PD0" type="BiDi" />
+                <pin num="31" name="(PCINT17/TXD)PD1" type="BiDi" />
+                <pin num="32" name="(PCINT18/INT0)PD2" type="BiDi" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="Battery_Single_Cell">
+            <fields>
+                <field name="Reference">BT</field>
+                <field name="Value">Battery_Single_Cell</field>
+            </fields>
+            <pins>
+                <pin num="1" name="~" type="passive" />
+                <pin num="2" name="~" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X01">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X01</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X02">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X02</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X03">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X03</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+                <pin num="3" name="P3" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X04">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X04</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+                <pin num="3" name="P3" type="passive" />
+                <pin num="4" name="P4" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X06">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X06</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+                <pin num="3" name="P3" type="passive" />
+                <pin num="4" name="P4" type="passive" />
+                <pin num="5" name="P5" type="passive" />
+                <pin num="6" name="P6" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_01X09">
+            <footprints>
+                <fp>Pin_Header_Straight_1X*</fp>
+                <fp>Pin_Header_Angled_1X*</fp>
+                <fp>Socket_Strip_Straight_1X*</fp>
+                <fp>Socket_Strip_Angled_1X*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_01X09</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+                <pin num="3" name="P3" type="passive" />
+                <pin num="4" name="P4" type="passive" />
+                <pin num="5" name="P5" type="passive" />
+                <pin num="6" name="P6" type="passive" />
+                <pin num="7" name="P7" type="passive" />
+                <pin num="8" name="P8" type="passive" />
+                <pin num="9" name="P9" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CONN_02X03">
+            <footprints>
+                <fp>Pin_Header_Straight_2X*</fp>
+                <fp>Pin_Header_Angled_2X*</fp>
+                <fp>Socket_Strip_Straight_2X*</fp>
+                <fp>Socket_Strip_Angled_2X*</fp>
+                <fp>IDC_Header_Straight_*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">J</field>
+                <field name="Value">CONN_02X03</field>
+            </fields>
+            <pins>
+                <pin num="1" name="P1" type="passive" />
+                <pin num="2" name="P2" type="passive" />
+                <pin num="3" name="P3" type="passive" />
+                <pin num="4" name="P4" type="passive" />
+                <pin num="5" name="P5" type="passive" />
+                <pin num="6" name="P6" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="CRYSTAL_SMD">
+            <fields>
+                <field name="Reference">X</field>
+                <field name="Value">CRYSTAL_SMD</field>
+            </fields>
+            <pins>
+                <pin num="1" name="1" type="passive" />
+                <pin num="2" name="2" type="passive" />
+                <pin num="3" name="case" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="D_Schottky_x2_KCom_Dual">
+            <fields>
+                <field name="Reference">D</field>
+                <field name="Value">D_Schottky_x2_KCom_Dual</field>
+            </fields>
+            <pins>
+                <pin num="1" name="A2" type="passive" />
+                <pin num="2" name="A2" type="passive" />
+                <pin num="3" name="C1" type="passive" />
+                <pin num="4" name="A1" type="passive" />
+                <pin num="5" name="A1" type="passive" />
+                <pin num="6" name="C2" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="LED">
+            <footprints>
+                <fp>LED-3MM</fp>
+                <fp>LED-5MM</fp>
+                <fp>LED-10MM</fp>
+                <fp>LED-0603</fp>
+                <fp>LED-0805</fp>
+                <fp>LED-1206</fp>
+                <fp>LEDV</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">D</field>
+                <field name="Value">LED</field>
+            </fields>
+            <pins>
+                <pin num="1" name="K" type="passive" />
+                <pin num="2" name="A" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="MIC5219">
+            <footprints>
+                <fp>SOT*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">U</field>
+                <field name="Value">MIC5219</field>
+                <field name="Footprint">SOT-23-5</field>
+            </fields>
+            <pins>
+                <pin num="1" name="VIN" type="power_in" />
+                <pin num="2" name="GND" type="power_in" />
+                <pin num="3" name="EN" type="input" />
+                <pin num="4" name="BYP" type="passive" />
+                <pin num="5" name="VOUT" type="power_out" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="PN2222A">
+            <footprints>
+                <fp>TO-92*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">Q</field>
+                <field name="Value">PN2222A</field>
+                <field name="Footprint">TO_SOT_Packages_THT:TO-92_Molded_Narrow</field>
+            </fields>
+            <pins>
+                <pin num="1" name="E" type="passive" />
+                <pin num="2" name="B" type="input" />
+                <pin num="3" name="C" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="POT">
+            <fields>
+                <field name="Reference">RV</field>
+                <field name="Value">POT</field>
+            </fields>
+            <pins>
+                <pin num="1" name="1" type="passive" />
+                <pin num="2" name="2" type="passive" />
+                <pin num="3" name="3" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Arducon-rescue" part="SPST_small">
+            <fields>
+                <field name="Reference">SW</field>
+                <field name="Value">SPST_small</field>
+            </fields>
+            <pins>
+                <pin num="1" name="1" type="input" />
+                <pin num="2" name="2" type="input" />
+            </pins>
+        </libpart>
+        <libpart lib="Device" part="C">
+            <description>Unpolarized capacitor</description>
+            <docs>~</docs>
+            <footprints>
+                <fp>C_*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">C</field>
+                <field name="Value">C</field>
+            </fields>
+            <pins>
+                <pin num="1" name="~" type="passive" />
+                <pin num="2" name="~" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Device" part="C_Small">
+            <description>Unpolarized capacitor, small symbol</description>
+            <docs>~</docs>
+            <footprints>
+                <fp>C_*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">C</field>
+                <field name="Value">C_Small</field>
+            </fields>
+            <pins>
+                <pin num="1" name="~" type="passive" />
+                <pin num="2" name="~" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Device" part="D_Schottky">
+            <description>Schottky diode</description>
+            <docs>~</docs>
+            <footprints>
+                <fp>TO-???*</fp>
+                <fp>*_Diode_*</fp>
+                <fp>*SingleDiode*</fp>
+                <fp>D_*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">D</field>
+                <field name="Value">D_Schottky</field>
+            </fields>
+            <pins>
+                <pin num="1" name="K" type="passive" />
+                <pin num="2" name="A" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Device" part="Jumper_NC_Small">
+            <description>Jumper, normally closed, small symbol</description>
+            <docs>~</docs>
+            <footprints>
+                <fp>SolderJumper*Bridged*</fp>
+                <fp>Jumper*</fp>
+                <fp>TestPoint*2Pads*</fp>
+                <fp>TestPoint*Bridge*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">JP</field>
+                <field name="Value">Jumper_NC_Small</field>
+            </fields>
+            <pins>
+                <pin num="1" name="1" type="passive" />
+                <pin num="2" name="2" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="Device" part="R">
+            <description>Resistor</description>
+            <docs>~</docs>
+            <footprints>
+                <fp>R_*</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">R</field>
+                <field name="Value">R</field>
+            </fields>
+            <pins>
+                <pin num="1" name="~" type="passive" />
+                <pin num="2" name="~" type="passive" />
+            </pins>
+        </libpart>
+        <libpart lib="special" part="MT88L70A">
+            <description>DTMF receiver integrating both the bandsplit filter and digital decoder functions.</description>
+            <docs>http://www.microsemi.com/document-portal/doc_download/127022-mt88l70-datasheet-aug2005</docs>
+            <fields>
+                <field name="Reference">U</field>
+                <field name="Value">MT88L70A</field>
+            </fields>
+            <pins>
+                <pin num="1" name="IN+" type="input" />
+                <pin num="2" name="IN-" type="input" />
+                <pin num="3" name="GS" type="input" />
+                <pin num="4" name="Vref" type="output" />
+                <pin num="5" name="INH" type="input" />
+                <pin num="6" name="PWDN" type="input" />
+                <pin num="7" name="OSC1" type="passive" />
+                <pin num="8" name="OSC2" type="BiDi" />
+                <pin num="9" name="VSS" type="power_in" />
+                <pin num="10" name="TOE" type="input" />
+                <pin num="11" name="Q1" type="output" />
+                <pin num="12" name="Q2" type="output" />
+                <pin num="13" name="Q3" type="output" />
+                <pin num="14" name="Q4" type="output" />
+                <pin num="15" name="StD" type="output" />
+                <pin num="16" name="ESt" type="output" />
+                <pin num="17" name="St/GT" type="BiDi" />
+                <pin num="18" name="VDD" type="power_in" />
+            </pins>
+        </libpart>
+        <libpart lib="special" part="RV-3028-C7">
+            <description>I2C Real-Time Clock</description>
+            <docs>https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf</docs>
+            <footprints>
+                <fp>SO8E</fp>
+                <fp>DIP-8_300_ELL</fp>
+            </footprints>
+            <fields>
+                <field name="Reference">U</field>
+                <field name="Value">RV-3028-C7</field>
+            </fields>
+            <pins>
+                <pin num="1" name="CLK" type="output" />
+                <pin num="2" name="~INT" type="output" />
+                <pin num="3" name="SCL" type="input" />
+                <pin num="4" name="SDA" type="BiDi" />
+                <pin num="5" name="Vss" type="power_in" />
+                <pin num="6" name="Vback" type="input" />
+                <pin num="7" name="VDD" type="power_in" />
+                <pin num="8" name="EVI" type="input" />
+            </pins>
+        </libpart>
+    </libparts>
+    <libraries>
+        <library logical="Arducon-rescue">
+            <uri>~/Documents/GitHub/Arducon/Arducon-rescue.lib</uri>
+        </library>
+        <library logical="Device">
+            <uri>/Library/Application Support/kicad/library/Device.lib</uri>
+        </library>
+        <library logical="special">
+            <uri>/Library/Application Support/kicad/docs/KiCad/kicad libraries/special.lib</uri>
+        </library>
+    </libraries>
+    <nets>
+        <net code="1" name="~RTC_INT~">
+            <node ref="U103" pin="1" />
+            <node ref="U104" pin="2" />
+        </net>
+        <net code="2" name="/PD6">
+            <node ref="U103" pin="10" />
+        </net>
+        <net code="3" name="/PD7">
+            <node ref="U103" pin="11" />
+            <node ref="R112" pin="2" />
+        </net>
+        <net code="4" name="PTT_LOGIC">
+            <node ref="J101" pin="4" />
+            <node ref="R106" pin="1" />
+            <node ref="U103" pin="12" />
+        </net>
+        <net code="5" name="TONE_LOGIC">
+            <node ref="J101" pin="2" />
+            <node ref="U103" pin="13" />
+            <node ref="R101" pin="1" />
+        </net>
+        <net code="6" name="CW_KEY_LOGIC">
+            <node ref="J101" pin="3" />
+            <node ref="U103" pin="14" />
+        </net>
+        <net code="7" name="MOSI">
+            <node ref="P102" pin="4" />
+            <node ref="U103" pin="15" />
+        </net>
+        <net code="8" name="MISO">
+            <node ref="U103" pin="16" />
+            <node ref="P102" pin="1" />
+        </net>
+        <net code="9" name="SCK">
+            <node ref="U103" pin="17" />
+            <node ref="P102" pin="3" />
+        </net>
+        <net code="10" name="/PD4">
+            <node ref="SW101" pin="1" />
+            <node ref="U103" pin="2" />
+        </net>
+        <net code="11" name="Net-(C111-Pad2)">
+            <node ref="C111" pin="2" />
+            <node ref="U103" pin="20" />
+        </net>
+        <net code="12" name="Q1">
+            <node ref="U103" pin="23" />
+            <node ref="U101" pin="11" />
+        </net>
+        <net code="13" name="Q2">
+            <node ref="U101" pin="12" />
+            <node ref="U103" pin="24" />
+        </net>
+        <net code="14" name="Q3">
+            <node ref="U101" pin="13" />
+            <node ref="U103" pin="25" />
+        </net>
+        <net code="15" name="Q4">
+            <node ref="U103" pin="26" />
+            <node ref="U101" pin="14" />
+        </net>
+        <net code="16" name="SDA">
+            <node ref="R108" pin="2" />
+            <node ref="U104" pin="4" />
+            <node ref="TP101" pin="2" />
+            <node ref="U103" pin="27" />
+        </net>
+        <net code="17" name="SCL">
+            <node ref="U103" pin="28" />
+            <node ref="TP101" pin="3" />
+            <node ref="U104" pin="3" />
+            <node ref="R107" pin="2" />
+        </net>
+        <net code="18" name="~RESET~">
+            <node ref="U103" pin="29" />
+            <node ref="C112" pin="2" />
+            <node ref="R109" pin="2" />
+            <node ref="D102" pin="2" />
+            <node ref="P102" pin="5" />
+        </net>
+        <net code="19" name="/PD0">
+            <node ref="P101" pin="4" />
+            <node ref="U103" pin="30" />
+        </net>
+        <net code="20" name="/PD1">
+            <node ref="P101" pin="5" />
+            <node ref="U103" pin="31" />
+        </net>
+        <net code="21" name="/PB7">
+            <node ref="U103" pin="8" />
+        </net>
+        <net code="22" name="ADC6">
+            <node ref="U103" pin="19" />
+            <node ref="J106" pin="2" />
+        </net>
+        <net code="23" name="Net-(P101-Pad2)">
+            <node ref="P101" pin="2" />
+        </net>
+        <net code="24" name="FTDI_Power_+5">
+            <node ref="P101" pin="3" />
+            <node ref="D101" pin="2" />
+        </net>
+        <net code="25" name="EXT_BATTERY">
+            <node ref="R110" pin="1" />
+            <node ref="J104" pin="7" />
+            <node ref="J103" pin="3" />
+            <node ref="D101" pin="1" />
+        </net>
+        <net code="26" name="Net-(C105-Pad2)">
+            <node ref="U102" pin="3" />
+            <node ref="C105" pin="2" />
+            <node ref="D101" pin="6" />
+            <node ref="U102" pin="1" />
+        </net>
+        <net code="27" name="Net-(U102-Pad4)">
+            <node ref="U102" pin="4" />
+        </net>
+        <net code="28" name="Net-(C106-Pad2)">
+            <node ref="J105" pin="1" />
+            <node ref="C106" pin="2" />
+            <node ref="U102" pin="5" />
+        </net>
+        <net code="29" name="Net-(R103-Pad1)">
+            <node ref="R104" pin="2" />
+            <node ref="R103" pin="1" />
+            <node ref="U101" pin="2" />
+        </net>
+        <net code="30" name="Net-(R104-Pad1)">
+            <node ref="U101" pin="3" />
+            <node ref="R104" pin="1" />
+        </net>
+        <net code="31" name="Net-(U101-Pad1)">
+            <node ref="U101" pin="1" />
+            <node ref="U101" pin="4" />
+        </net>
+        <net code="32" name="PWDN">
+            <node ref="U103" pin="7" />
+            <node ref="U101" pin="6" />
+        </net>
+        <net code="33" name="Net-(U101-Pad7)">
+            <node ref="X101" pin="2" />
+            <node ref="U101" pin="7" />
+        </net>
+        <net code="34" name="Net-(U101-Pad8)">
+            <node ref="X101" pin="1" />
+            <node ref="U101" pin="8" />
+        </net>
+        <net code="35" name="StD">
+            <node ref="U103" pin="9" />
+            <node ref="U101" pin="15" />
+        </net>
+        <net code="36" name="Net-(R105-Pad2)">
+            <node ref="R105" pin="2" />
+            <node ref="U101" pin="16" />
+        </net>
+        <net code="37" name="RTC_SQW">
+            <node ref="U104" pin="1" />
+            <node ref="U103" pin="32" />
+        </net>
+        <net code="38" name="Net-(BT101-Pad1)">
+            <node ref="U104" pin="6" />
+            <node ref="C115" pin="2" />
+            <node ref="BT101" pin="1" />
+        </net>
+        <net code="39" name="Net-(R113-Pad2)">
+            <node ref="R113" pin="2" />
+            <node ref="U104" pin="8" />
+        </net>
+        <net code="40" name="Net-(D103-Pad2)">
+            <node ref="D103" pin="2" />
+            <node ref="R112" pin="1" />
+        </net>
+        <net code="41" name="Net-(C112-Pad1)">
+            <node ref="C112" pin="1" />
+            <node ref="P101" pin="6" />
+        </net>
+        <net code="42" name="Net-(C102-Pad2)">
+            <node ref="C102" pin="2" />
+            <node ref="U101" pin="17" />
+            <node ref="R105" pin="1" />
+        </net>
+        <net code="43" name="Net-(C104-Pad2)">
+            <node ref="C104" pin="2" />
+            <node ref="R103" pin="2" />
+        </net>
+        <net code="44" name="3V3_DIRECT">
+            <node ref="U103" pin="18" />
+            <node ref="U103" pin="6" />
+            <node ref="C114" pin="1" />
+            <node ref="C110" pin="1" />
+            <node ref="C102" pin="1" />
+            <node ref="C101" pin="2" />
+            <node ref="J105" pin="2" />
+            <node ref="C108" pin="2" />
+            <node ref="P102" pin="2" />
+            <node ref="D102" pin="1" />
+            <node ref="U101" pin="10" />
+            <node ref="C109" pin="1" />
+            <node ref="R107" pin="1" />
+            <node ref="U103" pin="4" />
+            <node ref="U101" pin="18" />
+            <node ref="R108" pin="1" />
+            <node ref="U104" pin="7" />
+            <node ref="J103" pin="2" />
+            <node ref="R109" pin="1" />
+            <node ref="R113" pin="1" />
+            <node ref="C107" pin="2" />
+        </net>
+        <net code="45" name="Net-(C103-Pad2)">
+            <node ref="C103" pin="2" />
+            <node ref="RV101" pin="2" />
+        </net>
+        <net code="46" name="Net-(R101-Pad2)">
+            <node ref="R101" pin="2" />
+            <node ref="RV101" pin="3" />
+        </net>
+        <net code="47" name="Net-(J104-Pad2)">
+            <node ref="J104" pin="2" />
+        </net>
+        <net code="48" name="Net-(J104-Pad4)">
+            <node ref="J104" pin="4" />
+        </net>
+        <net code="49" name="Net-(J104-Pad8)">
+            <node ref="J104" pin="8" />
+        </net>
+        <net code="50" name="Net-(J104-Pad9)">
+            <node ref="J104" pin="9" />
+        </net>
+        <net code="51" name="Net-(Q101-Pad2)">
+            <node ref="Q101" pin="2" />
+            <node ref="R106" pin="2" />
+        </net>
+        <net code="52" name="/PTT_OUT">
+            <node ref="J102" pin="1" />
+            <node ref="J104" pin="3" />
+            <node ref="Q101" pin="3" />
+        </net>
+        <net code="53" name="Net-(J102-Pad2)">
+            <node ref="J102" pin="2" />
+            <node ref="R102" pin="2" />
+        </net>
+        <net code="54" name="/AUDIO_OUT">
+            <node ref="R102" pin="1" />
+            <node ref="J104" pin="1" />
+            <node ref="C103" pin="1" />
+        </net>
+        <net code="55" name="EXT_PWR_GROUND">
+            <node ref="J104" pin="6" />
+            <node ref="W101" pin="1" />
+            <node ref="RV101" pin="1" />
+            <node ref="Q101" pin="1" />
+            <node ref="U103" pin="3" />
+            <node ref="W102" pin="1" />
+            <node ref="TP101" pin="1" />
+            <node ref="SW101" pin="2" />
+            <node ref="J103" pin="1" />
+            <node ref="J101" pin="1" />
+            <node ref="U103" pin="21" />
+            <node ref="C114" pin="2" />
+            <node ref="U104" pin="5" />
+            <node ref="J106" pin="1" />
+            <node ref="U103" pin="5" />
+            <node ref="J106" pin="3" />
+            <node ref="C113" pin="1" />
+            <node ref="P101" pin="1" />
+            <node ref="R111" pin="2" />
+            <node ref="C115" pin="1" />
+            <node ref="U101" pin="9" />
+            <node ref="P102" pin="6" />
+            <node ref="U101" pin="5" />
+            <node ref="C106" pin="1" />
+            <node ref="C109" pin="2" />
+            <node ref="C108" pin="1" />
+            <node ref="C111" pin="1" />
+            <node ref="U102" pin="2" />
+            <node ref="C105" pin="1" />
+            <node ref="C107" pin="1" />
+            <node ref="C110" pin="2" />
+            <node ref="BT101" pin="2" />
+            <node ref="X101" pin="3" />
+            <node ref="D103" pin="1" />
+            <node ref="C101" pin="1" />
+        </net>
+        <net code="56" name="/ADC7">
+            <node ref="R111" pin="1" />
+            <node ref="R110" pin="2" />
+            <node ref="C113" pin="2" />
+            <node ref="U103" pin="22" />
+        </net>
+        <net code="57" name="RX_AUDIO_IN">
+            <node ref="C104" pin="1" />
+            <node ref="J104" pin="5" />
+        </net>
+    </nets>
 </export>
