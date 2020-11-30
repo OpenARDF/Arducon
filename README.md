@@ -1,5 +1,5 @@
 # Arducon
-A transmitter controller for Amateur Radio Direction Finding (ARDF) based on an Arduino-like architecture.
+A transmitter controller for Amateur Radio Direction Finding (ARDF) based on the Arduino Pro Mini.
 
 <b>KiCad</b>
 
