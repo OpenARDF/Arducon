@@ -35,6 +35,7 @@
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include "ardooweeno.h"
+#include <stdlib.h>
 #else
 #include "Arduino.h"
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
