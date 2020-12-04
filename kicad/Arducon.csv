@@ -4,7 +4,6 @@ C106 C101 C102 ,3,10uF,Capacitors_SMD:C_0805_HandSoldering,<a href="https://www.
 C108 C107 C103 C104 C109 C105 ,6,100nF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
 D102 ,1,LED,LEDs:LED_0805,<a href="https://www.digikey.com/products/en?keywords=732-4984-1-ND">Link</a>,732-4984-1-ND
 D101 ,1,MSS1P4-M3/89A,Diodes_SMD:DO-219AD,<a href="https://www.digikey.com/products/en?keywords=M3/89AGICT-ND">Link</a>,M3/89AGICT-ND
-IC101 ,1,Arduino Pro Mini,Oddities:Sparkfun_Arduino_Pro_Mini,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,1568-1055-ND
 J107 ,1,Power In,Wire_Pads:SolderWirePad_3x_1-5mmDrill_Polarized,np,np
 J106 ,1,Logic Level,Pin_Headers:Pin_Header_Straight_1x04,np,np
 J102 ,1,DB9 Female,Connect:DB9F_CI, , 
@@ -12,7 +11,9 @@ J103 ,1,To Antenna,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/produ
 J101 ,1,To Radio,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
 J108 ,1,Controlled Device Power,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
 J104 J105 ,2,Conn_01x07,Pin_Headers:Pin_Header_Straight_1x07,np,np
+MOD101 ,1,Arduino Pro Mini,Modules:Arduino_Pro_Mini,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,1568-1055-ND
 P101 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
+PCB201 ,1,Printed Circuit Board,Oddities:Dummy_Empty,np,np
 Q101 ,1,MMBT2222,TO_SOT_Packages_SMD:SOT-23,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>,MMBT2222ATPMSCT-ND
 Q102 ,1,LMN400E01,TO_SOT_Packages_SMD:SOT-363,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>,LMN400E01DICT-ND
 R103 R104 ,2,10k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
@@ -28,5 +29,5 @@ TP101 ,1,I2C,Pin_Headers:Pin_Header_Straight_1x03,np,np
 U103 ,1,RV-3028-C7,Oddities:RV-3028-C7,<a href="https://www.digikey.com/products/en?keywords=C732.768KHZ1PPM-TA-QCCT-ND">Link</a>,C732.768KHZ1PPM-TA-QCCT-ND
 U104 ,1,F1975,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>,800-3576-ND
 U102 ,1,CD74HC4050M96,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm, , 
-U101 ,1,MIC5219-3.3YM5,Package_TO_SOT_SMD:SOT-23-5,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND ">Link</a>,576-1281-1-ND 
+U101 ,1,MIC5219-3.3YM5,TO_SOT_Packages_SMD:SOT-23-5,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND ">Link</a>,576-1281-1-ND 
 W101 W102 ,2,CONN_01X01,Pin_Headers:Pin_Header_Straight_1x01,np,np
