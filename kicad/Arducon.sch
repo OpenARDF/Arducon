@@ -467,8 +467,8 @@ F 0 "U103" H 9650 4600 61  0000 C CNB
 F 1 "RV-3028-C7" H 9750 4450 61  0000 C CNB
 F 2 "Oddities:RV-3028-C7" H 9100 4050 60  0001 C CNN
 F 3 "https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf" H 9100 4050 60  0001 C CNN
-F 4 "C732.768KHZ1PPM-TA-QCCT-ND" H 9100 4050 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=C732.768KHZ1PPM-TA-QCCT-ND\">Link</a>" H 9100 4050 50  0001 C CNN "Link"
+F 4 "2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND" H 9100 4050 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND\">Link</a>" H 9100 4050 50  0001 C CNN "Link"
 	1    9100 4050
 	1    0    0    -1  
 $EndComp
@@ -1060,8 +1060,8 @@ F 0 "D101" H 5500 7800 50  0000 C CNN
 F 1 "MSS1P4-M3/89A" H 5450 7600 50  0001 C CNN
 F 2 "Diodes_SMD:DO-219AD" H 5450 7525 50  0001 C CNN
 F 3 "" H 5450 7700 50  0001 C CNN
-F 4 "M3/89AGICT-ND" H 5450 7700 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=M3/89AGICT-ND\">Link</a>" H 5450 7700 50  0001 C CNN "Link"
+F 4 "MSS1P4-M3/89AGICT-ND" H 5450 7700 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 5450 7700 50  0001 C CNN "Link"
 	1    5450 7700
 	-1   0    0    -1  
 $EndComp
@@ -1087,7 +1087,9 @@ P 13450 5500
 F 0 "U102" H 13600 5650 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13425 5726 50  0001 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 4850 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 5500 50  0001 C CNN
+F 3 "" H 13450 5500 50  0001 C CNN
+F 4 "296-14529-1-ND" H 13450 5500 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 5500 50  0001 C CNN "Link"
 	1    13450 5500
 	1    0    0    -1  
 $EndComp
@@ -1098,7 +1100,9 @@ P 13450 4950
 F 0 "U102" H 13550 5100 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13450 5176 50  0001 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 4300 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 4950 50  0001 C CNN
+F 3 "" H 13450 4950 50  0001 C CNN
+F 4 "296-14529-1-ND" H 13450 4950 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 4950 50  0001 C CNN "Link"
 	2    13450 4950
 	1    0    0    -1  
 $EndComp
@@ -1109,7 +1113,9 @@ P 13450 4400
 F 0 "U102" H 13550 4550 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13450 4626 50  0001 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 3750 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 4400 50  0001 C CNN
+F 3 "" H 13450 4400 50  0001 C CNN
+F 4 "296-14529-1-ND" H 13450 4400 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 4400 50  0001 C CNN "Link"
 	3    13450 4400
 	1    0    0    -1  
 $EndComp
@@ -1120,7 +1126,9 @@ P 13450 3950
 F 0 "U102" H 13550 4100 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13450 4176 50  0001 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 3300 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 3950 50  0001 C CNN
+F 3 "" H 13450 3950 50  0001 C CNN
+F 4 "296-14529-1-ND" H 13450 3950 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 3950 50  0001 C CNN "Link"
 	4    13450 3950
 	1    0    0    -1  
 $EndComp
@@ -1131,7 +1139,9 @@ P 13450 3450
 F 0 "U102" H 13550 3600 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13450 3676 50  0001 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 2800 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 3450 50  0001 C CNN
+F 3 "" H 13450 3450 50  0001 C CNN
+F 4 "296-14529-1-ND" H 13450 3450 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 3450 50  0001 C CNN "Link"
 	5    13450 3450
 	1    0    0    -1  
 $EndComp
@@ -1142,7 +1152,9 @@ P 13450 2950
 F 0 "U102" H 13600 3100 50  0000 C CNB
 F 1 "CD74HC4050M96" H 13400 3350 61  0000 C CNB
 F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 13700 2300 50  0001 C CNN
-F 3 "http://www.ti.com/general/docs/suppproductinfo.tsp?distId=10&gotoUrl=http%3A%2F%2Fwww.ti.com%2Flit%2Fgpn%2Fcd74hc4049" H 13450 2950 50  0001 C CNN
+F 3 "" H 13450 2950 50  0001 C CNN
+F 4 " 296-14529-1-ND" H 13450 2950 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 13450 2950 50  0001 C CNN "Link"
 	6    13450 2950
 	1    0    0    -1  
 $EndComp
@@ -2050,9 +2062,9 @@ P 4050 3050
 F 0 "R102" V 4130 3050 50  0000 C CNN
 F 1 "2.2k" V 3950 3050 50  0000 C CNN
 F 2 "Resistors_SMD:R_0805" V 3980 3050 50  0001 C CNN
-F 3 "" H 4050 3050 50  0000 C CNN
-F 4 "Value" H 4050 3050 60  0001 C CNN "Part No."
-F 5 "<a href=\"\">Link</a>" H 4050 3050 60  0001 C CNN "Link"
+F 3 "" H 4050 3050 50  0001 C CNN
+F 4 "311-2.20KCRCT-ND" H 4050 3050 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND\">Link</a>" H 4050 3050 60  0001 C CNN "Link"
 	1    4050 3050
 	1    0    0    -1  
 $EndComp
