@@ -14,10 +14,10 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L special:Circuit_Board PCB?
+L special:Circuit_Board PCB201
 U 1 1 5FCC9970
 P 3150 2350
-F 0 "PCB?" H 3698 2374 50  0000 L CNN
+F 0 "PCB201" H 3698 2374 50  0000 L CNN
 F 1 "Printed Circuit Board" H 3698 2283 50  0000 L CNN
 F 2 "Oddities:Dummy_Empty" H 3990 2510 50  0001 C CNN
 F 3 "" H 3990 2510 50  0001 C CNN

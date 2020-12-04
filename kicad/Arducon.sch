@@ -965,12 +965,12 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-100KCRCT-ND\">Li
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:Arduino_Pro_Mini-MCU_Module IC101
+L Arducon-rescue:Arduino_Pro_Mini-MCU_Module MOD101
 U 1 1 5FC82DF4
 P 6850 6500
-F 0 "IC101" H 6900 7867 61  0000 C CNB
+F 0 "MOD101" H 6900 7867 61  0000 C CNB
 F 1 "Arduino Pro Mini" H 6900 7776 61  0000 C CNB
-F 2 "Oddities:Sparkfun_Arduino_Pro_Mini" H 6900 7775 50  0001 C CIN
+F 2 "Modules:Arduino_Pro_Mini" H 6900 7775 50  0001 C CIN
 F 3 "" H 6850 6500 50  0001 C CNN
 F 4 "1568-1055-ND" H 6850 6500 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=1568-1055-ND\">Link</a>" H 6850 6500 50  0001 C CNN "Link"
@@ -1163,7 +1163,7 @@ U 1 1 5FFBE552
 P 14050 1700
 F 0 "U101" H 14050 1950 61  0000 C CNB
 F 1 "MIC5219-3.3YM5" H 14750 1550 61  0000 C CNB
-F 2 "Package_TO_SOT_SMD:SOT-23-5" H 14050 2025 50  0001 C CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23-5" H 14050 2025 50  0001 C CNN
 F 3 "" H 14050 1700 50  0001 C CNN
 F 4 "576-1281-1-ND " H 14050 1700 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=576-1281-1-ND \">Link</a>" H 14050 1700 50  0001 C CNN "Link"
