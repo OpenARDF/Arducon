@@ -1,4 +1,5 @@
 (sym_lib_table
   (lib (name Arducon-rescue)(type Legacy)(uri ${KIPRJMOD}/Arducon-rescue.lib)(options "")(descr ""))
   (lib (name special)(type Legacy)(uri "/Library/Application Support/kicad/library/special.lib")(options "")(descr ""))
+  (lib (name Two-band-Tx)(type Legacy)(uri "/Library/Application Support/kicad/library/ARDF_2-Band_MiniTx-cache.lib")(options "")(descr ""))
 )
