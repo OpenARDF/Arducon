@@ -721,4 +721,18 @@ X VDC 1 0 0 0 U 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
+# special_Circuit_Board
+#
+DEF special_Circuit_Board PCB 0 10 N N 1 F N
+F0 "PCB" -80 425 50 H V L CNN
+F1 "special_Circuit_Board" -235 -445 50 H V L CNN
+F2 "" 840 160 50 H V C CNN
+F3 "" 840 160 50 H V C CNN
+DRAW
+S -515 -350 520 335 0 1 0 F
+P 2 0 1 0 -540 -375 -515 -350 N
+P 5 0 1 0 -515 335 -540 305 -540 -380 500 -380 520 -355 N
+ENDDRAW
+ENDDEF
+#
 #End Library

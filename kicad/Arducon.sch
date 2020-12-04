@@ -3,10 +3,10 @@ EELAYER 30 0
 EELAYER END
 $Descr B 17000 11000
 encoding utf-8
-Sheet 1 1
+Sheet 1 2
 Title "Arducon"
-Date "2020-11-30"
-Rev "P1.1"
+Date "2020-12-04"
+Rev "P1.3"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -284,7 +284,7 @@ PB5
 Text Notes 8600 3000 0    79   ~ 16
 Real-Time Clock
 Text Notes 12350 9500 0    118  ~ 24
-PCB: Arducon ARDF Controller (p. 1/1)
+PCB: Arducon ARDF Controller (p. 1/2)
 $Comp
 L power:GNDD #PWR0120
 U 1 1 591E61CB
@@ -971,7 +971,7 @@ P 6850 6500
 F 0 "IC101" H 6900 7867 61  0000 C CNB
 F 1 "Arduino Pro Mini" H 6900 7776 61  0000 C CNB
 F 2 "Oddities:Sparkfun_Arduino_Pro_Mini" H 6900 7775 50  0001 C CIN
-F 3 "" H 6850 6500 50  0000 C CNN
+F 3 "" H 6850 6500 50  0001 C CNN
 F 4 "1568-1055-ND" H 6850 6500 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=1568-1055-ND\">Link</a>" H 6850 6500 50  0001 C CNN "Link"
 	1    6850 6500
@@ -2071,6 +2071,12 @@ Wire Wire Line
 	4150 5800 4400 5800
 Wire Wire Line
 	3550 4100 4150 4100
+$Sheet
+S -1750 300  1650 1000
+U 5FCC6D6A
+F0 "Non-PCB-Parts" 39
+F1 "Non-PCB-Parts.sch" 39
+$EndSheet
 Wire Bus Line
 	8050 5200 8050 7900
 $EndSCHEMATC
