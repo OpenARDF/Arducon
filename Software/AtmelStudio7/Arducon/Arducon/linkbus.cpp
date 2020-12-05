@@ -40,16 +40,8 @@ static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
 
 static const char textHelp[][23] = { "\nCommands:\n",
-									 "  CAL - Calibrate\n",
-									 "  DIP - Override DIP\n",
-									 "  FAC - Factory reset\n",
 									 "  GO  - Sync clock\n",
 									 "  ID -  Set callsign\n",
-									 "  LED - LED on/off\n",
-									 "  RST - Reset\n",
-									 "  SPD - ID code speed\n",
-									 "  STA - Start tones\n",
-									 "  TEM - Temperature\n",
 									 "  VER - S/W version\n",
 									 "  TXE - Tx enable" };
 

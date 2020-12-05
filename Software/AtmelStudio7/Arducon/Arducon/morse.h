@@ -20,49 +20,36 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
- *  See https://www.embedded.com/the-goertzel-algorithm
- *
  */
 
+#ifndef MORSE_H_
+#define MORSE_H_
 
-/* ensure this library description is only included once */
-#ifndef Goertzel_h
-#define Goertzel_h
-
-/* include types & constants of Wiring core API */
 #include "defs.h"
 
-#if COMPILE_FOR_ATMELSTUDIO7
-#include "ardooweeno.h"
-#include <stdlib.h>
-#else
-#include "Arduino.h"
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#define PROCESSSOR_CLOCK_HZ			(16000000L)
+#define WPM_TO_MS_PER_DOT(w)		(1200/(w))
+#define THROTTLE_VAL_FROM_WPM(w)	(PROCESSSOR_CLOCK_HZ / 8000000L) * ((7042 / (w)) / 10)
 
-#define MAXN 209
-#define ADCCENTER 512
+/*
+*/
+typedef struct {
+	uint8_t		pattern;
+	uint8_t		lengthInSymbols;
+	uint8_t		lengthInElements;
+} MorseCharacter;
 
-/* Adjustments that can be made to tune performance:
-	N,
-	Sampling Frequency (Sample Rate),
-	Threshold,
-	ADCCENTER,
-	Minimum tone detection time
+/**
+Load a string to send by passing in a pointer to the string in the argument.
+Call this function with a NULL argument at intervals of 1 element of time to generate Morse code.
+Once loaded with a string each call to this function returns a BOOL indicating whether a CW carrier should be sent
  */
-class Goertzel
-{
-public:
-Goertzel(float, float);
-~Goertzel();
-void SetTargetFrequency(float);
-bool DataPoint(int);
-float Magnitude2();
-bool SamplesReady(void);
+BOOL makeMorse(char* s, BOOL* repeating, BOOL* finished);
 
-private:
-void ProcessSample(int);
-void ResetGoertzel(void);
-};
+/**
+Returns the number of milliseconds required to send the string pointed to by the first argument at the WPM code speed
+passed in the second argument.
+*/
+uint16_t timeRequiredToSendStrAtWPM(char* str, uint16_t spd);
 
-#endif
+#endif /* MORSE_H_ */
