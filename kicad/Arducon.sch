@@ -1052,19 +1052,6 @@ Wire Wire Line
 	5450 6750 5950 6750
 Text GLabel 5300 7700 0    39   Input ~ 0
 EXT_BATTERY
-$Comp
-L Diode:1N4004 D101
-U 1 1 5FF52117
-P 5450 7700
-F 0 "D101" H 5500 7800 50  0000 C CNN
-F 1 "MSS1P4-M3/89A" H 5450 7600 50  0001 C CNN
-F 2 "Diodes_SMD:DO-219AD" H 5450 7525 50  0001 C CNN
-F 3 "" H 5450 7700 50  0001 C CNN
-F 4 "MSS1P4-M3/89AGICT-ND" H 5450 7700 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 5450 7700 50  0001 C CNN "Link"
-	1    5450 7700
-	-1   0    0    -1  
-$EndComp
 Wire Wire Line
 	5600 7700 5650 7700
 $Comp
@@ -2089,6 +2076,19 @@ U 5FCC6D6A
 F0 "Non-PCB-Parts" 39
 F1 "Non-PCB-Parts.sch" 39
 $EndSheet
+$Comp
+L Diode:MSS1P4-M3_89A D101
+U 1 1 5FCDC169
+P 5450 7700
+F 0 "D101" H 5450 7800 50  0000 C CNN
+F 1 "MSS1P4-M3_89A" H 5450 7600 50  0000 C CNN
+F 2 "Diodes_SMD:DO-219AD" H 5450 7525 50  0001 C CNN
+F 3 "" H 5450 7700 50  0001 C CNN
+F 4 "MSS1P4-M3/89AGICT-ND" H 5450 7700 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 5450 7700 50  0001 C CNN "Link"
+	1    5450 7700
+	-1   0    0    -1  
+$EndComp
 Wire Bus Line
 	8050 5200 8050 7900
 $EndSCHEMATC
