@@ -6,7 +6,7 @@ D102 ,1,LED,LEDs:LED_0805,<a href="https://www.digikey.com/products/en?keywords=
 D101 ,1,MSS1P4-M3_89A,Diodes_SMD:DO-219AD,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>,MSS1P4-M3/89AGICT-ND
 J107 ,1,Power In,Wire_Pads:SolderWirePad_3x_1-5mmDrill_Polarized,np,np
 J106 ,1,Logic Level,Pin_Headers:Pin_Header_Straight_1x04,np,np
-J102 ,1,DB9 Female,Connect:DB9F_CI, , 
+J102 ,1,DB9 Female,Connect:DB9F_CI,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,609-1525-ND
 J103 ,1,To Antenna,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND ">Link</a>,CON-SMA-EDGE-S-ND
 J101 ,1,To Radio,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
 J108 ,1,Controlled Device Power,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
