@@ -262,8 +262,8 @@ F 3 "" H 5350 5400 50  0000 C CNN
 	1    5350 5400
 	0    1    -1   0   
 $EndComp
-Text Notes 6450 4850 0    79   ~ 16
-Microcontroller
+Text Notes 6200 4950 0    79   ~ 16
+Microcontroller Module
 $Comp
 L power:GNDA #PWR0148
 U 1 1 57B0FFE1
@@ -969,7 +969,7 @@ L Arducon-rescue:Arduino_Pro_Mini-MCU_Module MOD101
 U 1 1 5FC82DF4
 P 6850 6500
 F 0 "MOD101" H 6900 7867 61  0000 C CNB
-F 1 "Arduino Pro Mini" H 6900 7776 61  0000 C CNB
+F 1 "Arduino Pro Mini (5V Version)" H 6900 7776 61  0000 C CNB
 F 2 "Modules:Arduino_Pro_Mini" H 6900 7775 50  0001 C CIN
 F 3 "" H 6850 6500 50  0001 C CNN
 F 4 "1568-1055-ND" H 6850 6500 50  0001 C CNN "Part No."
