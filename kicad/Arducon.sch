@@ -1395,6 +1395,8 @@ F 0 "J102" H 3450 4150 50  0000 C CNN
 F 1 "DB9 Female" V 3500 3750 50  0000 C CNN
 F 2 "Connect:DB9F_CI" H 3250 3700 50  0001 C CNN
 F 3 "" H 3250 3700 50  0001 C CNN
+F 4 "609-1525-ND" H 3250 3700 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=609-1525-ND\">Link</a>" H 3250 3700 50  0001 C CNN "Link"
 	1    3250 3700
 	-1   0    0    -1  
 $EndComp
