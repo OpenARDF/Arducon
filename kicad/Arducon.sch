@@ -243,24 +243,24 @@ PB2
 $Comp
 L power:GNDD #PWR0131
 U 1 1 57B4BF2C
-P 5350 5200
-F 0 "#PWR0131" H 5350 4950 50  0001 C CNN
-F 1 "GNDD" H 5350 5050 50  0000 C CNN
-F 2 "" H 5350 5200 50  0000 C CNN
-F 3 "" H 5350 5200 50  0000 C CNN
-	1    5350 5200
-	0    1    1    0   
+P 5750 8050
+F 0 "#PWR0131" H 5750 7800 50  0001 C CNN
+F 1 "GNDD" H 5750 7900 50  0000 C CNN
+F 2 "" H 5750 8050 50  0000 C CNN
+F 3 "" H 5750 8050 50  0000 C CNN
+	1    5750 8050
+	1    0    0    -1  
 $EndComp
 $Comp
 L power:GNDD #PWR0132
 U 1 1 57B4C04E
-P 5350 5400
-F 0 "#PWR0132" H 5350 5150 50  0001 C CNN
-F 1 "GNDD" H 5350 5250 50  0000 C CNN
-F 2 "" H 5350 5400 50  0000 C CNN
-F 3 "" H 5350 5400 50  0000 C CNN
-	1    5350 5400
-	0    1    -1   0   
+P 5950 8050
+F 0 "#PWR0132" H 5950 7800 50  0001 C CNN
+F 1 "GNDD" H 5950 7900 50  0000 C CNN
+F 2 "" H 5950 8050 50  0000 C CNN
+F 3 "" H 5950 8050 50  0000 C CNN
+	1    5950 8050
+	-1   0    0    -1  
 $EndComp
 Text Notes 6200 4950 0    79   ~ 16
 Microcontroller Module
@@ -360,15 +360,15 @@ Text GLabel 8300 7300 2    39   Input ~ 0
 $Comp
 L Device:C_Small C106
 U 1 1 5959ECE9
-P 5450 5200
-F 0 "C106" V 5600 5200 50  0000 L CNN
-F 1 "10uF" V 5550 5000 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 5450 5200 50  0001 C CNN
-F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 5450 5200 50  0001 C CNN
-F 4 "490-5523-1-ND" H 5450 5200 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 5450 5200 60  0001 C CNN "Link"
-	1    5450 5200
-	0    -1   -1   0   
+P 5750 7950
+F 0 "C106" V 5900 7950 50  0000 L CNN
+F 1 "10uF" V 5850 7750 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 5750 7950 50  0001 C CNN
+F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 5750 7950 50  0001 C CNN
+F 4 "490-5523-1-ND" H 5750 7950 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 5750 7950 60  0001 C CNN "Link"
+	1    5750 7950
+	-1   0    0    1   
 $EndComp
 $Comp
 L Arducon-rescue:CONN_01X01 W101
@@ -544,7 +544,7 @@ F 3 "" H 9000 7700 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	5550 5400 5700 5400
+	5950 7850 5950 7700
 Wire Wire Line
 	7850 5400 7950 5400
 Wire Wire Line
@@ -645,7 +645,7 @@ Wire Wire Line
 Wire Wire Line
 	8300 7600 8150 7600
 Wire Wire Line
-	5550 5200 5700 5200
+	5750 7850 5750 7700
 Connection ~ 11550 10200
 Wire Wire Line
 	11800 10200 11800 10300
@@ -664,11 +664,8 @@ Wire Wire Line
 	8150 6150 9000 6150
 Wire Wire Line
 	8150 6250 9100 6250
-Connection ~ 5700 5200
 Wire Wire Line
 	8300 7700 8150 7700
-Wire Wire Line
-	5700 4900 5700 5200
 Wire Wire Line
 	9500 4200 9650 4200
 Wire Wire Line
@@ -938,8 +935,6 @@ Wire Wire Line
 Wire Wire Line
 	11550 10050 11600 10050
 Wire Wire Line
-	5700 5200 5700 5400
-Wire Wire Line
 	9650 4200 9750 4200
 Wire Wire Line
 	4350 3700 4550 3700
@@ -990,7 +985,6 @@ NoConn ~ 5950 6200
 Wire Wire Line
 	8350 6400 8150 6400
 NoConn ~ 8150 7500
-Connection ~ 5700 5400
 Text GLabel 8300 7000 2    39   Output ~ 0
 D4
 Text GLabel 8300 7100 2    39   Output ~ 0
@@ -1603,7 +1597,7 @@ F 3 "~" H 5650 7700 50  0001 C CNN
 $EndComp
 Connection ~ 5650 7700
 Wire Wire Line
-	5650 7700 5950 7700
+	5650 7700 5750 7700
 $Comp
 L power:GNDA #PWR0136
 U 1 1 5FD4CF42
@@ -1644,15 +1638,15 @@ $EndComp
 $Comp
 L Device:C_Small C107
 U 1 1 5FCBD1B0
-P 5450 5400
-F 0 "C107" V 5350 5400 50  0000 L CNN
-F 1 "100nF" V 5550 5300 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 5450 5400 50  0001 C CNN
-F 3 "" H 5450 5400 50  0001 C CNN
-F 4 "478-1395-1-ND" H 5450 5400 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 5450 5400 60  0001 C CNN "Link"
-	1    5450 5400
-	0    -1   1    0   
+P 5950 7950
+F 0 "C107" V 5850 7950 50  0000 L CNN
+F 1 "100nF" V 6050 7850 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 5950 7950 50  0001 C CNN
+F 3 "" H 5950 7950 50  0001 C CNN
+F 4 "478-1395-1-ND" H 5950 7950 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 5950 7950 60  0001 C CNN "Link"
+	1    5950 7950
+	1    0    0    1   
 $EndComp
 $Comp
 L Device:C_Small C103
@@ -2091,6 +2085,12 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND
 	1    5450 7700
 	-1   0    0    -1  
 $EndComp
+Wire Wire Line
+	5700 4900 5700 5400
+Connection ~ 5750 7700
+Wire Wire Line
+	5750 7700 5950 7700
+Connection ~ 5950 7700
 Wire Bus Line
 	8050 5200 8050 7900
 $EndSCHEMATC
