@@ -1,16 +1,18 @@
 Ref,Qty,Value,Footprint,Link,Part No.,
 BT101 ,1,CR1220,Oddities:BC501SM_CR1220_BAT_Handsolder,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>,BC501SM-ND
 C106 C101 C102 ,3,10uF,Capacitors_SMD:C_0805_HandSoldering,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,490-5523-1-ND
-C108 C107 C103 C104 C109 C105 ,6,100nF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
+C108 C107 C103 C104 C109 C105 C110 ,7,100nF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
 D102 ,1,LED,LEDs:LED_0805,<a href="https://www.digikey.com/products/en?keywords=732-4984-1-ND">Link</a>,732-4984-1-ND
 D101 ,1,MSS1P4-M3_89A,Diodes_SMD:DO-219AD,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>,MSS1P4-M3/89AGICT-ND
-J107 ,1,Power In,Wire_Pads:SolderWirePad_3x_1-5mmDrill_Polarized,np,np
+D103 D104 D105 D106 D107 ,5,ESD9B5.0ST5G,Diodes_SMD:SOD-923,<a href="https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND">Link</a>,ESD9B5.0ST5GOSCT-ND
 J106 ,1,Logic Level,Pin_Headers:Pin_Header_Straight_1x04,np,np
 J102 ,1,DB9 Female,Connect:DB9F_CI,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,609-1525-ND
 J103 ,1,To Antenna,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND ">Link</a>,CON-SMA-EDGE-S-ND
 J101 ,1,To Radio,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
 J108 ,1,Controlled Device Power,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
-J104 J105 ,2,Conn_01x07,Pin_Headers:Pin_Header_Straight_1x07,np,np
+J104 J105 ,2,Conn_01x08,Pin_Headers:Pin_Header_Straight_1x08,np,np
+J109 J110 ,2,Conn_01x01,Pin_Headers:Pin_Header_Straight_1x01,np,np
+J107 ,1,Conn_01x02,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
 MOD101 ,1,Arduino Pro Mini (5V Version),Modules:Arduino_Pro_Mini,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,1568-1055-ND
 P101 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
 PCB201 ,1,Printed Circuit Board,Oddities:Dummy_Empty,np,np
@@ -20,8 +22,10 @@ R103 R104 ,2,10k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/
 R109 ,1,470,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-470CRCT-ND">Link</a>,311-470CRCT-ND
 R107 ,1,162k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>,311-162KCRCT-ND
 R108 ,1,12.4k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=P12.4KCCT-ND">Link</a>,P12.4KCCT-ND
-R101 R105 R106 ,3,100k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>,311-100KCRCT-ND
+R101 R106 ,2,100k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>,311-100KCRCT-ND
+R105 ,1,1M,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=RMCF0805FT1M00CT-ND">Link</a>,RMCF0805FT1M00CT-ND
 R102 ,1,2.2k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND">Link</a>,311-2.20KCRCT-ND
+R110 ,1,10,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND">Link</a>,ESD9B5.0ST5GOSCT-ND
 RV101 ,1,10k,Potentiometers:Potentiometer_ST32ET_Handsolder,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,TC33X-103ECT-ND
 SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,8,SolderJumper_2_Open,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,np,np
 SW101 ,1,SPST_small,Buttons_Switches_SMD:PTS645SL50SMTR92,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,CKN9088CT-ND

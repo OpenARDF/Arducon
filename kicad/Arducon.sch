@@ -2367,8 +2367,6 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\
 	1    3150 8200
 	0    -1   -1   0   
 $EndComp
-Wire Bus Line
-	6300 4600 6300 7300
 $Comp
 L Device:R R110
 U 1 1 5FE40666
@@ -2382,4 +2380,17 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\
 	1    4050 5600
 	0    1    1    0   
 $EndComp
+$Comp
+L power:GNDD #PWR?
+U 1 1 5FD4AF72
+P 13950 3300
+F 0 "#PWR?" H 13950 3050 50  0001 C CNN
+F 1 "GNDD" H 14000 3150 50  0000 C CNN
+F 2 "" H 13950 3300 50  0000 C CNN
+F 3 "" H 13950 3300 50  0000 C CNN
+	1    13950 3300
+	1    0    0    -1  
+$EndComp
+Wire Bus Line
+	6300 4600 6300 7300
 $EndSCHEMATC
