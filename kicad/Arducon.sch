@@ -2186,7 +2186,7 @@ Text GLabel 1800 2900 2    39   Input ~ 0
 Controlled_Power
 Text GLabel 4200 5500 0    39   Output ~ 0
 RXD
-Text GLabel 4200 5600 0    39   Output ~ 0
+Text GLabel 3900 5600 0    39   Output ~ 0
 TXD
 Text GLabel 1800 3200 2    39   Input ~ 0
 RXD
@@ -2223,8 +2223,6 @@ Wire Wire Line
 	13800 3650 13950 3650
 Wire Wire Line
 	12600 4000 12950 4000
-Wire Bus Line
-	6300 4600 6300 7300
 $Comp
 L power:PWR_FLAG #FLG0103
 U 1 1 5FD3E1F6
@@ -2239,4 +2237,149 @@ $EndComp
 Connection ~ 13950 3650
 Wire Wire Line
 	13950 3650 14050 3650
+$Comp
+L Diode:ESD9B5.0ST5G D103
+U 1 1 5FD2090F
+P 2150 8200
+F 0 "D103" H 2150 8121 50  0000 R CNN
+F 1 "ESD9B5.0ST5G" V 2105 8121 50  0001 R CNN
+F 2 "Diodes_SMD:SOD-923" H 2150 8200 50  0001 C CNN
+F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2150 8200 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 2150 8200 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2150 8200 50  0001 C CNN "Link"
+	1    2150 8200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GNDD #PWR0143
+U 1 1 5FD45607
+P 2150 8350
+F 0 "#PWR0143" H 2150 8100 50  0001 C CNN
+F 1 "GNDD" H 2150 8200 50  0000 C CNN
+F 2 "" H 2150 8350 50  0000 C CNN
+F 3 "" H 2150 8350 50  0000 C CNN
+	1    2150 8350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GNDD #PWR0151
+U 1 1 5FD4686E
+P 2400 8350
+F 0 "#PWR0151" H 2400 8100 50  0001 C CNN
+F 1 "GNDD" H 2400 8200 50  0000 C CNN
+F 2 "" H 2400 8350 50  0000 C CNN
+F 3 "" H 2400 8350 50  0000 C CNN
+	1    2400 8350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GNDD #PWR0152
+U 1 1 5FD477B2
+P 2650 8350
+F 0 "#PWR0152" H 2650 8100 50  0001 C CNN
+F 1 "GNDD" H 2650 8200 50  0000 C CNN
+F 2 "" H 2650 8350 50  0000 C CNN
+F 3 "" H 2650 8350 50  0000 C CNN
+	1    2650 8350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GNDD #PWR0153
+U 1 1 5FD48905
+P 2900 8350
+F 0 "#PWR0153" H 2900 8100 50  0001 C CNN
+F 1 "GNDD" H 2900 8200 50  0000 C CNN
+F 2 "" H 2900 8350 50  0000 C CNN
+F 3 "" H 2900 8350 50  0000 C CNN
+	1    2900 8350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GNDD #PWR0154
+U 1 1 5FD4970F
+P 3150 8350
+F 0 "#PWR0154" H 3150 8100 50  0001 C CNN
+F 1 "GNDD" H 3150 8200 50  0000 C CNN
+F 2 "" H 3150 8350 50  0000 C CNN
+F 3 "" H 3150 8350 50  0000 C CNN
+	1    3150 8350
+	1    0    0    -1  
+$EndComp
+Text GLabel 2150 8050 1    39   Input ~ 0
+RXD
+Text GLabel 2400 8050 1    39   Input ~ 0
+TXD
+Text GLabel 2650 8050 1    39   Input ~ 0
+TONE_LOGIC
+Text GLabel 2900 8050 1    39   Input ~ 0
+CW_KEY_LOGIC
+Text GLabel 3150 8050 1    39   Input ~ 0
+PTT_LOGIC
+$Comp
+L Diode:ESD9B5.0ST5G D104
+U 1 1 5FDA0FE1
+P 2400 8200
+F 0 "D104" H 2400 8121 50  0000 R CNN
+F 1 "ESD9B5.0ST5G" V 2355 8121 50  0001 R CNN
+F 2 "Diodes_SMD:SOD-923" H 2400 8200 50  0001 C CNN
+F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2400 8200 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 2400 8200 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2400 8200 50  0001 C CNN "Link"
+	1    2400 8200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Diode:ESD9B5.0ST5G D105
+U 1 1 5FDA2503
+P 2650 8200
+F 0 "D105" H 2650 8121 50  0000 R CNN
+F 1 "ESD9B5.0ST5G" V 2605 8121 50  0001 R CNN
+F 2 "Diodes_SMD:SOD-923" H 2650 8200 50  0001 C CNN
+F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2650 8200 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 2650 8200 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2650 8200 50  0001 C CNN "Link"
+	1    2650 8200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Diode:ESD9B5.0ST5G D106
+U 1 1 5FDA39FE
+P 2900 8200
+F 0 "D106" H 2900 8121 50  0000 R CNN
+F 1 "ESD9B5.0ST5G" V 2855 8121 50  0001 R CNN
+F 2 "Diodes_SMD:SOD-923" H 2900 8200 50  0001 C CNN
+F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2900 8200 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 2900 8200 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2900 8200 50  0001 C CNN "Link"
+	1    2900 8200
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Diode:ESD9B5.0ST5G D107
+U 1 1 5FDA4F56
+P 3150 8200
+F 0 "D107" H 3150 8121 50  0000 R CNN
+F 1 "ESD9B5.0ST5G" V 3105 8121 50  0001 R CNN
+F 2 "Diodes_SMD:SOD-923" H 3150 8200 50  0001 C CNN
+F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 3150 8200 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 3150 8200 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 3150 8200 50  0001 C CNN "Link"
+	1    3150 8200
+	0    -1   -1   0   
+$EndComp
+Wire Bus Line
+	6300 4600 6300 7300
+$Comp
+L Device:R R110
+U 1 1 5FE40666
+P 4050 5600
+F 0 "R110" V 4150 5600 50  0000 C CNN
+F 1 "10" V 3950 5500 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 3980 5600 50  0001 C CNN
+F 3 "" H 4050 5600 50  0001 C CNN
+F 4 "ESD9B5.0ST5GOSCT-ND" H 4050 5600 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 4050 5600 60  0001 C CNN "Link"
+	1    4050 5600
+	0    1    1    0   
+$EndComp
 $EndSCHEMATC
