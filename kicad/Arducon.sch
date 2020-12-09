@@ -187,7 +187,7 @@ F 3 "http://katalog.we-online.de/em/datasheet/6100xx21121.pdf" H 5250 6600 50  0
 F 4 "609-3487-1-ND" H 5250 7800 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=609-3487-1-ND\">Link</a>" H 5250 7800 60  0001 C CNN "Link"
 	1    5250 7800
-	1    0    0    -1  
+	-1   0    0    1   
 $EndComp
 Text GLabel 4900 8000 0    39   Output ~ 0
 ~RESET~

@@ -1,4 +1,4 @@
-update=Monday, December 07, 2020 at 12:21:22 PM
+update=Wednesday, December 09, 2020 at 05:51:03 PM
 version=1
 last_client=kicad
 [cvpcb]
@@ -30,8 +30,8 @@ AllowBlindVias=0
 RequireCourtyardDefinitions=0
 ProhibitOverlappingCourtyards=1
 MinTrackWidth=0.2
-MinViaDiameter=0.4
-MinViaDrill=0.3
+MinViaDiameter=0.45
+MinViaDrill=0.2
 MinMicroViaDiameter=0.2
 MinMicroViaDrill=0.09999999999999999
 MinHoleToHole=0.25
