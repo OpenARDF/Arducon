@@ -1,4 +1,4 @@
-update=Wednesday, December 09, 2020 at 05:51:03 PM
+update=Thursday, December 10, 2020 at 04:58:14 PM
 version=1
 last_client=kicad
 [cvpcb]
@@ -34,7 +34,7 @@ MinViaDiameter=0.45
 MinViaDrill=0.2
 MinMicroViaDiameter=0.2
 MinMicroViaDrill=0.09999999999999999
-MinHoleToHole=0.25
+MinHoleToHole=0.125
 TrackWidth1=0.25
 TrackWidth2=0.35
 TrackWidth3=0.5
@@ -246,4 +246,15 @@ uViaDiameter=0.3
 uViaDrill=0.1
 dPairWidth=0.2
 dPairGap=0.25
+dPairViaGap=0.25
+[pcbnew/Netclasses/1]
+Name=Stripline
+Clearance=0.05
+TrackWidth=0.25
+ViaDiameter=0.8
+ViaDrill=0.4
+uViaDiameter=0.3
+uViaDrill=0.1
+dPairWidth=0.2
+dPairGap=0.3
 dPairViaGap=0.25
