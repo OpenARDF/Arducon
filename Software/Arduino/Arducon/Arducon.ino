@@ -1,4 +1,15 @@
 /*
+ *  TODOs:
+ *  1. Add LED feedback for decoded DTMF tones (fast blinking)
+ *  2. Add DTMF and serial commands for
+ *       - Synchronizing
+ *       - Setting competition format
+ *       - Setting fox ID
+ *       - Addressing a command to a specific fox ID
+ *	 - Addressing a command to a specific competition format
+ *       - Setting and reading RTC
+ */
+/*
  *  MIT License
  *
  *  Copyright (c) 2020 DigitalConfections
@@ -123,7 +134,7 @@ static volatile uint8_t g_enable_transmitter;
 
 #define _N 201
 const int N = _N;
-const float threshold = 500000.*(_N/ 100);
+const float threshold = 500000. * (_N / 100);
 const float sampling_freq = SAMPLE_RATE;
 const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 const float y_frequencies[4] = { 697., 770., 852., 941. };
@@ -161,30 +172,34 @@ void setupForFox(void);
 {
 	initializeEEPROMVars(FALSE);
 	/* set pins as outputs */
-	pinMode(PIN_LED, OUTPUT);           /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
-	digitalWrite(PIN_LED, OFF);
-	pinMode(PIN_MORSE_KEY, OUTPUT); /* This pin is used to control the KEY line to the transmitter only active on cycle. */
-	digitalWrite(PIN_MORSE_KEY, OFF);
-	pinMode(PIN_AUDIO_OUT, OUTPUT);
-	digitalWrite(PIN_AUDIO_OUT, OFF);
+	pinMode(PIN_LED1, OUTPUT);                                       /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	digitalWrite(PIN_LED1, OFF);
+	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
+	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
+	pinMode(PIN_CW_TONE_LOGIC, OUTPUT);
+	digitalWrite(PIN_CW_TONE_LOGIC, OFF);
 
 	/* Set unused pins as outputs pulled high */
-	pinMode(PIN_UNUSED_7, INPUT_PULLUP);
-	pinMode(PIN_UNUSED_8, INPUT_PULLUP);
-	pinMode(PIN_UNUSED_10, INPUT_PULLUP);
-	pinMode(PIN_UNUSED_12, INPUT_PULLUP);
+	pinMode(PIN_LED2, INPUT_PULLUP);
+	pinMode(PIN_PTT_LOGIC, INPUT_PULLUP);
+	pinMode(PIN_CW_KEY_LOGIC, INPUT_PULLUP);
+	pinMode(PIN_MISO, INPUT_PULLUP);
 	pinMode(A0, INPUT); /* Audio input */
 	pinMode(A1, INPUT_PULLUP);
 	pinMode(A2, INPUT_PULLUP);
 	pinMode(A3, INPUT_PULLUP);
-	pinMode(PIN_CAL_OUT, OUTPUT);
-	digitalWrite(PIN_CAL_OUT, OFF);
+	pinMode(A4, INPUT_PULLUP);
+	pinMode(A5, INPUT_PULLUP);
+	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
+	pinMode(PIN_MOSI, OUTPUT);
+	digitalWrite(PIN_MOSI, OFF);
 
-	ADCSRA = 0;             /* clear ADCSRA register */
-	ADCSRB = 0;             /* clear ADCSRB register */
-	ADMUX |= (0 & 0x07);    /* set A0 analog input pin */
-	ADMUX |= (1 << REFS0);  /* set reference voltage */
-	ADMUX |= (1 << ADLAR);  /* left align ADC value to 8 bits from ADCH register */
+	ADCSRA = 0;                         /* clear ADCSRA register */
+	ADCSRB = 0;                         /* clear ADCSRB register */
+	ADMUX |= 0x06;                      /* set A6 analog input pin */
+/*	ADMUX |= (1 << REFS0);              / * set reference voltage to AVcc */ 
+	ADMUX |= (1 << REFS1) | (1 << REFS0);  /* set reference voltage to internal 1.1V */ 
+	ADMUX |= (1 << ADLAR);              /* left align ADC value to 8 bits from ADCH register */
 
 	/* sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
 	 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
@@ -216,7 +231,7 @@ void setupForFox(void);
 	TCCR2B = 0;
 	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
 #if CAL_SIGNAL_ON_PD3
-		pinMode(PIN_CAL_OUT, OUTPUT);                   /* 601Hz Calibration Signal */
+		pinMode(PIN_MOSI, OUTPUT);                      /* 601Hz Calibration Signal */
 		TCCR2A |= (1 << COM2A0);                        /* Toggle OC2A (PB3) on compare match */
 #endif /* CAL_SIGNAL_ON_PD3 */
 	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
@@ -265,6 +280,8 @@ void setupForFox(void);
 	dtostrf((double)threshold, 4, 0, s);
 	sprintf(g_tempStr, "Thresh=%s\n\n", s);
 	lb_send_string(g_tempStr, TRUE);
+//	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13);
+//	lb_send_string(g_tempStr, TRUE);
 
 	lb_send_NewPrompt();
 
@@ -292,12 +309,12 @@ void setupForFox(void);
  ************************************************************************/
 ISR(ADC_vect)
 {
-	digitalWrite(PIN_CAL_OUT, ON);
+	digitalWrite(PIN_MOSI, ON);
 	if(g_goertzel.DataPoint(ADCH))
 	{
 		ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 	}
-	digitalWrite(PIN_CAL_OUT, OFF);
+	digitalWrite(PIN_MOSI, OFF);
 }
 
 
@@ -592,7 +609,7 @@ ISR( TIMER2_COMPB_vect )
 			if(g_sync_pin_timer > TIMER2_SECONDS_1)
 			{
 				g_sync_pin_stable = TRUE;
-				digitalWrite(PIN_LED, HIGH);
+				digitalWrite(PIN_LED1, HIGH);
 			}
 		}
 	}
@@ -699,12 +716,12 @@ ISR( TIMER2_COMPB_vect )
 				{
 					if(!g_LEDs_Timed_Out)
 					{
-						digitalWrite(PIN_LED, HIGH);    /*  LED */
+						digitalWrite(PIN_LED1, HIGH);   /*  LED */
 					}
 
 					if(g_enable_transmitter)
 					{
-						digitalWrite(PIN_MORSE_KEY, HIGH);  /* TX key line */
+						digitalWrite(PIN_CW_KEY_LOGIC, HIGH);   /* TX key line */
 					}
 				}
 
@@ -718,12 +735,12 @@ ISR( TIMER2_COMPB_vect )
 		{
 			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
 			{
-				digitalWrite(PIN_LED, key); /*  LED */
+				digitalWrite(PIN_LED1, key);    /*  LED */
 			}
 
 			if(g_enable_transmitter)
 			{
-				digitalWrite(PIN_MORSE_KEY, key);   /* TX key line */
+				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
 			}
 
 			codeInc = g_code_throttle;
@@ -741,10 +758,10 @@ ISR( TIMER2_COMPB_vect )
 			key = OFF;
 			if(!g_sync_pin_stable)
 			{
-				digitalWrite(PIN_LED, OFF);     /*  LED Off */
+				digitalWrite(PIN_LED1, OFF);        /*  LED Off */
 			}
 
-			digitalWrite(PIN_MORSE_KEY, OFF);   /* TX key line */
+			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 		}
 
 		if(playMorse)
@@ -803,7 +820,7 @@ ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
 			}
 
 			g_LEDs_Timed_Out = TRUE;
-			digitalWrite(PIN_LED, OFF);
+			digitalWrite(PIN_LED1, OFF);
 		}
 		g_fox_transition = TRUE;
 		g_fox_seconds_into_interval = 0;
@@ -836,16 +853,16 @@ SIGNAL(TIMER0_COMPA_vect)
 	{
 		if(toggle)
 		{
-			digitalWrite(PIN_AUDIO_OUT,ON);
+			digitalWrite(PIN_CW_TONE_LOGIC,ON);
 		}
 		else
 		{
-			digitalWrite(PIN_AUDIO_OUT,OFF);
+			digitalWrite(PIN_CW_TONE_LOGIC,OFF);
 		}
 	}
 	else
 	{
-		digitalWrite(PIN_AUDIO_OUT,OFF);
+		digitalWrite(PIN_CW_TONE_LOGIC,OFF);
 	}
 }
 
@@ -909,12 +926,12 @@ void loop()
 				{
 					if(!g_sync_pin_stable)
 					{
-						digitalWrite(PIN_LED,OFF);
+						digitalWrite(PIN_LED1,OFF);
 					}
 				}
 				else
 				{
-					digitalWrite(PIN_LED,ON);
+					digitalWrite(PIN_LED1,ON);
 				}
 			}
 		}
@@ -1161,7 +1178,7 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 					if((lb_buff->fields[FIELD1][1] == 'F') || (lb_buff->fields[FIELD1][0] == '0'))
 					{
 						g_enable_LEDs = FALSE;
-						digitalWrite(PIN_LED,OFF);  /*  LED Off */
+						digitalWrite(PIN_LED1,OFF); /*  LED Off */
 					}
 					else
 					{
@@ -1206,7 +1223,7 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 					{
 						cli();
 						g_enable_transmitter = FALSE;
-						digitalWrite(PIN_MORSE_KEY,OFF);
+						digitalWrite(PIN_CW_KEY_LOGIC,OFF);
 						sei();
 					}
 					else
@@ -1562,7 +1579,7 @@ void doSynchronization()
 	g_seconds_since_sync = 0;
 	g_fox_seconds_into_interval = 0;
 	g_sync_pin_stable = FALSE;
-	digitalWrite(PIN_LED,LOW);
+	digitalWrite(PIN_LED1,LOW);
 	g_on_the_air = FALSE;
 	g_fox_counter = 1;  /* Don't count on the 1-sec timer resetting this quickly enough */
 	sei();
@@ -1571,15 +1588,48 @@ void doSynchronization()
 void setupForFox()
 {
 	cli();
-	pinMode(PIN_SYNC,INPUT_PULLUP);     /* Sync button */
-	pinMode(PIN_DIP_0,INPUT_PULLUP);    /* DIP switch LSB */
-	pinMode(PIN_DIP_1,INPUT_PULLUP);    /* DIP switch middle bit */
-	pinMode(PIN_DIP_2,INPUT_PULLUP);    /* DIP switch MSB */
-	digitalWrite(PIN_LED,OFF);          /* Turn off led sync switch is now open */
 
-	g_seconds_since_sync = 0;           /* Total elapsed time counter */
-	g_on_the_air       = FALSE;         /* Controls transmitter Morse activity */
-	g_code_throttle    = 0;             /* Adjusts Morse code speed */
+/*	pinMode(PIN_RXD,INPUT_PULLUP);              / * Arduino Pro Mini pin# 1/28 = PD0 * /
+ *	pinMode(PIN_TXD,INPUT_PULLUP);              / * Arduino Pro Mini pin# 2/29 = PD1 * / */
+	pinMode(PIN_D4,OUTPUT);             /* Arduino Pro Mini pin# 1/28 = PD0 */
+	pinMode(PIN_D5,OUTPUT);             /* Arduino Pro Mini pin# 2/29 = PD1 */
+	pinMode(PIN_RTC_SQW,INPUT_PULLUP);  /* Arduino Pro Mini pin# 5 = PD2 */
+	pinMode(PIN_RTC_INT,INPUT_PULLUP);  /* Arduino Pro Mini pin# 6 = PD3 */
+	pinMode(PIN_SYNC,INPUT_PULLUP);     /* Arduino Pro Mini pin# 7 = PD4 */
+	pinMode(PIN_UNUSED_1,INPUT_PULLUP); /* Arduino Pro Mini pin# 8 = PD5 */
+	pinMode(PIN_PWDN,OUTPUT);           /* Arduino Pro Mini pin# 9 = PD6 */
+	pinMode(PIN_LED2,OUTPUT);           /* Arduino Pro Mini pin# 10 = PD7 */
+	pinMode(PIN_PTT_LOGIC,OUTPUT);      /* Arduino Pro Mini pin# 11 = PB0 */
+	pinMode(PIN_CW_TONE_LOGIC,OUTPUT);  /* Arduino Pro Mini pin# 12 = PB1 */
+	pinMode(PIN_CW_KEY_LOGIC,OUTPUT);   /* Arduino Pro Mini pin# 13 = PB2 */
+/*	pinMode(PIN_MOSI,INPUT_PULLUP);             / * Arduino Pro Mini pin# 14 = PB3 * /
+ *	pinMode(PIN_MISO,INPUT_PULLUP);             / * Arduino Pro Mini pin# 15 = PB4 * / */
+	pinMode(PIN_LED1,OUTPUT);           /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+	pinMode(PIN_D0,OUTPUT);             /* Arduino Pro Mini pin# 17 = PC0 */
+	pinMode(PIN_D1,OUTPUT);             /* Arduino Pro Mini pin# 18 = PC1 */
+	pinMode(PIN_D2,OUTPUT);             /* Arduino Pro Mini pin# 19 = PC2 */
+	pinMode(PIN_D3,OUTPUT);             /* Arduino Pro Mini pin# 20 = PC3 */
+/*	pinMode(PIN_AUDIO_INPUT,INPUT);      / * Arduino Pro Mini pin# 31 = ADC6 * /
+ *	pinMode(PIN_BATTERY_LEVEL,INPUT);    / * Arduino Pro Mini pin# 32 = ADC7 * /
+ *	pinMode(PIN_SDA,INPUT_PULLUP);              / * Arduino Pro Mini pin# 33 = SDA * /
+ *	pinMode(PIN_SCL,INPUT_PULLUP);              / * Arduino Pro Mini pin# 34 = SCL * / */
+
+	digitalWrite(PIN_LED1,OFF);         /* Turn off LED1 */
+	digitalWrite(PIN_LED2,OFF);         /* Turn off LED2 */
+	digitalWrite(PIN_D0,OFF);
+	digitalWrite(PIN_D1,OFF);
+	digitalWrite(PIN_D2,OFF);
+	digitalWrite(PIN_D3,OFF);
+	digitalWrite(PIN_D4,OFF);
+	digitalWrite(PIN_D5,OFF);
+	digitalWrite(PIN_PWDN,OFF);
+	digitalWrite(PIN_PTT_LOGIC,OFF);
+	digitalWrite(PIN_CW_TONE_LOGIC,OFF);
+	digitalWrite(PIN_CW_KEY_LOGIC,OFF);
+
+	g_seconds_since_sync = 0;   /* Total elapsed time counter */
+	g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
+	g_code_throttle    = 0;     /* Adjusts Morse code speed */
 	g_callsign_sent = FALSE;
 
 	g_on_air_interval = 0;
@@ -1599,16 +1649,6 @@ void setupForFox()
 	{
 		g_fox = BEACON;
 	}
-
-#if !HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED
-		/* Disable pull-ups to save power */
-		pinMode(PIN_DIP_0,INPUT);   /* fox switch LSB */
-		pinMode(PIN_DIP_1,INPUT);   /* fox switch middle bit */
-		pinMode(PIN_DIP_2,INPUT);   /* fox switch MSB */
-		pinMode(PIN_DIP_0,OUTPUT);  /* Don't allow pin to float */
-		pinMode(PIN_DIP_1,OUTPUT);  /* Don't allow pin to float */
-		pinMode(PIN_DIP_2,OUTPUT);  /* Don't allow pin to float */
-#endif  /* HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED */
 
 	switch(g_fox)
 	{
