@@ -172,7 +172,7 @@ void setupForFox(void);
 {
 	initializeEEPROMVars(FALSE);
 	/* set pins as outputs */
-	pinMode(PIN_LED1, OUTPUT);                                       /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                                           /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
@@ -190,16 +190,16 @@ void setupForFox(void);
 	pinMode(A3, INPUT_PULLUP);
 	pinMode(A4, INPUT_PULLUP);
 	pinMode(A5, INPUT_PULLUP);
-	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
+	pinMode(PIN_AUDIO_INPUT, INPUT);        /* Receiver Audio sampling */
 	pinMode(PIN_MOSI, OUTPUT);
 	digitalWrite(PIN_MOSI, OFF);
 
-	ADCSRA = 0;                         /* clear ADCSRA register */
-	ADCSRB = 0;                         /* clear ADCSRB register */
-	ADMUX |= 0x06;                      /* set A6 analog input pin */
-/*	ADMUX |= (1 << REFS0);              / * set reference voltage to AVcc */ 
-	ADMUX |= (1 << REFS1) | (1 << REFS0);  /* set reference voltage to internal 1.1V */ 
-	ADMUX |= (1 << ADLAR);              /* left align ADC value to 8 bits from ADCH register */
+	ADCSRA = 0;                             /* clear ADCSRA register */
+	ADCSRB = 0;                             /* clear ADCSRB register */
+	ADMUX |= 0x06;                          /* set A6 analog input pin */
+/*	ADMUX |= (1 << REFS0);					/ * set reference voltage to AVcc */
+	ADMUX |= (1 << REFS1) | (1 << REFS0);   /* set reference voltage to internal 1.1V */
+	ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
 
 	/* sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
 	 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
@@ -280,8 +280,8 @@ void setupForFox(void);
 	dtostrf((double)threshold, 4, 0, s);
 	sprintf(g_tempStr, "Thresh=%s\n\n", s);
 	lb_send_string(g_tempStr, TRUE);
-//	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13);
-//	lb_send_string(g_tempStr, TRUE);
+/*	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13); */
+/*	lb_send_string(g_tempStr, TRUE); */
 
 	lb_send_NewPrompt();
 

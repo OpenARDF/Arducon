@@ -28,11 +28,6 @@
 
 #include "defs.h"
 
-#define A0 50
-#define A1 51
-#define A2 52
-#define A3 53
-
 void pinMode(uint8_t pin, uint8_t mode);
 void digitalWrite(uint8_t pin, uint8_t value);
 BOOL digitalRead(uint8_t pin);
