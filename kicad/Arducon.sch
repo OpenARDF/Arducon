@@ -5,8 +5,8 @@ $Descr B 17000 11000
 encoding utf-8
 Sheet 1 2
 Title "Arducon"
-Date "2020-12-04"
-Rev "P1.3"
+Date "2020-12-16"
+Rev "P1.4"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -363,7 +363,7 @@ U 1 1 5959ECE9
 P 4000 7350
 F 0 "C106" V 4150 7400 50  0000 L CNN
 F 1 "10uF" V 4100 7150 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 4000 7350 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0805" H 4000 7350 50  0001 C CNN
 F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 4000 7350 50  0001 C CNN
 F 4 "490-5523-1-ND" H 4000 7350 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 4000 7350 60  0001 C CNN "Link"
@@ -969,16 +969,14 @@ NoConn ~ 4200 5700
 Wire Wire Line
 	6600 5800 6400 5800
 NoConn ~ 6400 6900
-Text GLabel 6550 6400 2    39   Output ~ 0
+Text GLabel 7050 6250 2    39   Output ~ 0
 D4
-Text GLabel 6550 6500 2    39   Output ~ 0
+Text GLabel 7550 6300 2    39   Output ~ 0
 D5
 Wire Wire Line
-	6400 6400 6550 6400
+	6400 6400 6900 6400
 Wire Wire Line
-	6400 6500 6550 6500
-Wire Wire Line
-	6600 6350 6600 6400
+	6400 6500 7400 6500
 $Comp
 L Device:C_Small C108
 U 1 1 5FF2B1B5
@@ -1164,7 +1162,7 @@ U 1 1 5FFC23DD
 P 9500 1600
 F 0 "C101" V 9600 1500 50  0000 L CNN
 F 1 "10uF" V 9400 1500 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 9500 1600 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0805" H 9500 1600 50  0001 C CNN
 F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 9500 1600 50  0001 C CNN
 F 4 "490-5523-1-ND" H 9500 1600 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 9500 1600 60  0001 C CNN "Link"
@@ -1200,7 +1198,7 @@ U 1 1 5FFD9ABC
 P 11150 1600
 F 0 "C102" V 11250 1500 50  0000 L CNN
 F 1 "10uF" V 11050 1500 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 11150 1600 50  0001 C CNN
+F 2 "Capacitors_SMD:C_0805" H 11150 1600 50  0001 C CNN
 F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 11150 1600 50  0001 C CNN
 F 4 "490-5523-1-ND" H 11150 1600 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 11150 1600 60  0001 C CNN "Link"
@@ -1387,7 +1385,6 @@ F 3 "" H 13200 2750 50  0000 C CNN
 $EndComp
 Wire Wire Line
 	2800 3200 2800 3100
-NoConn ~ 1800 3300
 $Comp
 L Arducon-rescue:LMN200B01-Two-band-Tx Q102
 U 1 1 5FC59E4B
@@ -2184,9 +2181,9 @@ Wire Wire Line
 	14350 7800 14900 7800
 Text GLabel 1800 2900 2    39   Input ~ 0
 Controlled_Power
-Text GLabel 4200 5500 0    39   Output ~ 0
+Text GLabel 7050 6400 2    39   Output ~ 0
 RXD
-Text GLabel 3900 5600 0    39   Output ~ 0
+Text GLabel 7800 6500 2    39   Output ~ 0
 TXD
 Text GLabel 1800 3200 2    39   Input ~ 0
 RXD
@@ -2370,26 +2367,53 @@ $EndComp
 $Comp
 L Device:R R110
 U 1 1 5FE40666
-P 4050 5600
-F 0 "R110" V 4150 5600 50  0000 C CNN
-F 1 "10" V 3950 5500 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 3980 5600 50  0001 C CNN
-F 3 "" H 4050 5600 50  0001 C CNN
-F 4 "ESD9B5.0ST5GOSCT-ND" H 4050 5600 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 4050 5600 60  0001 C CNN "Link"
-	1    4050 5600
-	0    1    1    0   
+P 7650 6500
+F 0 "R110" V 7750 6500 50  0000 C CNN
+F 1 "10" V 7550 6500 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 7580 6500 50  0001 C CNN
+F 3 "" H 7650 6500 50  0001 C CNN
+F 4 "311-10.0CRCT-ND" H 7650 6500 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND\">Link</a>" H 7650 6500 60  0001 C CNN "Link"
+	1    7650 6500
+	0    -1   1    0   
 $EndComp
 $Comp
-L power:GNDD #PWR?
+L power:GNDD #PWR0155
 U 1 1 5FD4AF72
 P 13950 3300
-F 0 "#PWR?" H 13950 3050 50  0001 C CNN
+F 0 "#PWR0155" H 13950 3050 50  0001 C CNN
 F 1 "GNDD" H 14000 3150 50  0000 C CNN
 F 2 "" H 13950 3300 50  0000 C CNN
 F 3 "" H 13950 3300 50  0000 C CNN
 	1    13950 3300
 	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7050 6250 6900 6250
+Wire Wire Line
+	6900 6250 6900 6400
+Connection ~ 6900 6400
+Wire Wire Line
+	6900 6400 7050 6400
+Wire Wire Line
+	7550 6300 7400 6300
+Wire Wire Line
+	7400 6300 7400 6500
+Connection ~ 7400 6500
+Wire Wire Line
+	7400 6500 7500 6500
+NoConn ~ 4200 5500
+NoConn ~ 4200 5600
+$Comp
+L Arducon-rescue:Vproc #PWR0156
+U 1 1 5FDC95A5
+P 1800 3300
+F 0 "#PWR0156" H 1800 3150 50  0001 C CNN
+F 1 "Vproc" V 1800 3550 50  0000 C CNN
+F 2 "" H 1800 3300 50  0000 C CNN
+F 3 "" H 1800 3300 50  0000 C CNN
+	1    1800 3300
+	0    1    1    0   
 $EndComp
 Wire Bus Line
 	6300 4600 6300 7300
