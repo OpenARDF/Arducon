@@ -29,7 +29,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 {
 	switch(pin)
 	{
-		case 2:
+		case D2:
 		{
 			if(mode == OUTPUT)
 			{
@@ -51,7 +51,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 3:
+		case D3:
 		{
 			if(mode == OUTPUT)
 			{
@@ -73,7 +73,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 4:
+		case D4:
 		{
 			if(mode == OUTPUT)
 			{
@@ -95,7 +95,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 5:
+		case D5:
 		{
 			if(mode == OUTPUT)
 			{
@@ -117,7 +117,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 6:
+		case D6:
 		{
 			if(mode == OUTPUT)
 			{
@@ -139,7 +139,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 7:
+		case D7:
 		{
 			if(mode == OUTPUT)
 			{
@@ -161,7 +161,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 9:
+		case D9:
 		{
 			if(mode == OUTPUT)
 			{
@@ -183,7 +183,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
-		case 13:
+		case D13:
 		{
 			if(mode == OUTPUT)
 			{
@@ -289,6 +289,48 @@ void pinMode(uint8_t pin, uint8_t mode)
 			}
 		}
 
+		case A4:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRC  |= (1 << PORTC4);
+			}
+			else
+			{
+				DDRC  &= ~(1 << PORTC4);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTC  |= (1 << PORTC4);
+				}
+				else
+				{
+					PORTC &= ~(1 << PORTC4);
+				}
+			}
+		}
+
+		case A5:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRC  |= (1 << PORTC5);
+			}
+			else
+			{
+				DDRC  &= ~(1 << PORTC5);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTC  |= (1 << PORTC5);
+				}
+				else
+				{
+					PORTC &= ~(1 << PORTC5);
+				}
+			}
+		}
+
 		default:
 		{
 		}
@@ -302,48 +344,48 @@ BOOL digitalRead(uint8_t pin)
 
 	switch(pin)
 	{
-		case 2:
+		case D2:
 		{
 			result = PIND & (1 << PORTD2);
 		}
 		break;
 
-		case 3:
+		case D3:
 		{
 			result = PIND & (1 << PORTD3);
 		}
 		break;
 
-		case 4:
+		case D4:
 		{
 			result = PIND & (1 << PORTD4);
 		}
 		break;
 
-		case 5:
+		case D5:
 		{
 			result = PIND & (1 << PORTD5);
 		}
 		break;
 
-		case 6:
+		case D6:
 		{
 			result = PIND & (1 << PORTD6);
 		}
 		break;
 
-		case 7:
+		case D7:
 		{
 			result = PIND & (1 << PORTD7);
 		}
 		break;
 
-		case 9:
+		case D9:
 		{
 			result = PINB & (1 << PORTB1);
 		}
 
-		case 13:
+		case D13:
 		{
 			result = PINB & (1 << PORTB5);
 		}
@@ -386,7 +428,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 {
 	switch(pin)
 	{
-		case 2:
+		case D2:
 		{
 			if(value)
 			{
@@ -399,7 +441,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 3:
+		case D3:
 		{
 			if(value)
 			{
@@ -412,7 +454,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 4:
+		case D4:
 		{
 			if(value)
 			{
@@ -425,7 +467,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 5:
+		case D5:
 		{
 			if(value)
 			{
@@ -438,7 +480,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 6:
+		case D6:
 		{
 			if(value)
 			{
@@ -451,7 +493,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 7:
+		case D7:
 		{
 			if(value)
 			{
@@ -464,7 +506,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 9:
+		case D9:
 		{
 			if(value)
 			{
@@ -477,7 +519,7 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
-		case 13:
+		case D13:
 		{
 			if(value)
 			{

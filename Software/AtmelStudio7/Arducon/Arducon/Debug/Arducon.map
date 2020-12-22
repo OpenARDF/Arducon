@@ -666,213 +666,213 @@ END GROUP
  *(.vectors)
  *(.progmem.gcc*)
  .progmem.gcc_sw_table._Z7pinModehh
-                0x00000068       0x68 ardooweeno.o
+                0x00000068       0x24 ardooweeno.o
  .progmem.gcc_sw_table._Z11digitalReadh
-                0x000000d0       0x68 ardooweeno.o
+                0x0000008c       0x20 ardooweeno.o
  .progmem.gcc_sw_table._Z12digitalWritehh
-                0x00000138       0x68 ardooweeno.o
+                0x000000ac       0x20 ardooweeno.o
  .progmem.gcc_sw_table._Z11setupForFoxv
-                0x000001a0       0x2a main.o
+                0x000000cc       0x2a main.o
  .progmem.gcc_sw_table._Z12getMorseCharc
-                0x000001ca       0xba morse.o
+                0x000000f6       0xba morse.o
  .progmem.gcc_fplib
-                0x00000284       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr5\libm.a(fp_sinus.o)
-                0x000002a2                . = ALIGN (0x2)
-                0x000002a2                __trampolines_start = .
+                0x000001b0       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr5\libm.a(fp_sinus.o)
+                0x000001ce                . = ALIGN (0x2)
+                0x000001ce                __trampolines_start = .
  *(.trampolines)
- .trampolines   0x000002a2        0x0 linker stubs
+ .trampolines   0x000001ce        0x0 linker stubs
  *(.trampolines*)
-                0x000002a2                __trampolines_end = .
+                0x000001ce                __trampolines_end = .
  *libprintf_flt.a:*(.progmem.data)
  *libc.a:*(.progmem.data)
- .progmem.data  0x000002a2       0xfa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr5\libc.a(ftoa_engine.o)
+ .progmem.data  0x000001ce       0xfa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr5\libc.a(ftoa_engine.o)
  *(.progmem*)
-                0x0000039c                . = ALIGN (0x2)
+                0x000002c8                . = ALIGN (0x2)
  *(.jumptables)
  *(.jumptables*)
  *(.lowtext)
  *(.lowtext*)
-                0x0000039c                __ctors_start = .
+                0x000002c8                __ctors_start = .
  *(.ctors)
- .ctors         0x0000039c        0x2 main.o
-                0x0000039e                __ctors_end = .
-                0x0000039e                __dtors_start = .
+ .ctors         0x000002c8        0x2 main.o
+                0x000002ca                __ctors_end = .
+                0x000002ca                __dtors_start = .
  *(.dtors)
- .dtors         0x0000039e        0x2 main.o
-                0x000003a0                __dtors_end = .
+ .dtors         0x000002ca        0x2 main.o
+                0x000002cc                __dtors_end = .
  SORT(*)(.ctors)
  SORT(*)(.dtors)
  *(.init0)
- .init0         0x000003a0        0x0 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
-                0x000003a0                __init
+ .init0         0x000002cc        0x0 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
+                0x000002cc                __init
  *(.init0)
  *(.init1)
  *(.init1)
  *(.init2)
- .init2         0x000003a0        0xc C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
+ .init2         0x000002cc        0xc C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
  *(.init2)
  *(.init3)
  *(.init3)
  *(.init4)
- .init4         0x000003ac       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_copy_data.o)
-                0x000003ac                __do_copy_data
- .init4         0x000003c2       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_clear_bss.o)
-                0x000003c2                __do_clear_bss
+ .init4         0x000002d8       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_copy_data.o)
+                0x000002d8                __do_copy_data
+ .init4         0x000002ee       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_clear_bss.o)
+                0x000002ee                __do_clear_bss
  *(.init4)
  *(.init5)
  *(.init5)
  *(.init6)
- .init6         0x000003d2       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_ctors.o)
-                0x000003d2                __do_global_ctors
+ .init6         0x000002fe       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr5\libgcc.a(_ctors.o)
+                0x000002fe                __do_global_ctors
  *(.init6)
  *(.init7)
  *(.init7)
  *(.init8)
  *(.init8)
  *(.init9)
- .init9         0x000003e8        0x8 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
+ .init9         0x00000314        0x8 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
  *(.init9)
  *(.text)
- .text          0x000003f0        0x4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
-                0x000003f0                __vector_22
-                0x000003f0                __vector_1
-                0x000003f0                __vector_24
-                0x000003f0                __vector_12
-                0x000003f0                __bad_interrupt
-                0x000003f0                __vector_6
-                0x000003f0                __vector_3
-                0x000003f0                __vector_23
-                0x000003f0                __vector_25
-                0x000003f0                __vector_13
-                0x000003f0                __vector_17
-                0x000003f0                __vector_7
-                0x000003f0                __vector_4
-                0x000003f0                __vector_9
-                0x000003f0                __vector_2
-                0x000003f0                __vector_15
-                0x000003f0                __vector_10
-                0x000003f0                __vector_16
-                0x000003f0                __vector_20
-                0x000003f4                . = ALIGN (0x2)
+ .text          0x0000031c        0x4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
+                0x0000031c                __vector_22
+                0x0000031c                __vector_1
+                0x0000031c                __vector_24
+                0x0000031c                __vector_12
+                0x0000031c                __bad_interrupt
+                0x0000031c                __vector_6
+                0x0000031c                __vector_3
+                0x0000031c                __vector_23
+                0x0000031c                __vector_25
+                0x0000031c                __vector_13
+                0x0000031c                __vector_17
+                0x0000031c                __vector_7
+                0x0000031c                __vector_4
+                0x0000031c                __vector_9
+                0x0000031c                __vector_2
+                0x0000031c                __vector_15
+                0x0000031c                __vector_10
+                0x0000031c                __vector_16
+                0x0000031c                __vector_20
+                0x00000320                . = ALIGN (0x2)
  *(.text.*)
  .text._Z7pinModehh
-                0x000003f4      0x12a ardooweeno.o
-                0x000003f4                _Z7pinModehh
+                0x00000320      0x15e ardooweeno.o
+                0x00000320                _Z7pinModehh
  .text._Z11digitalReadh
-                0x0000051e       0x7e ardooweeno.o
-                0x0000051e                _Z11digitalReadh
+                0x0000047e       0x7e ardooweeno.o
+                0x0000047e                _Z11digitalReadh
  .text._Z12digitalWritehh
-                0x0000059c       0xa6 ardooweeno.o
-                0x0000059c                _Z12digitalWritehh
+                0x000004fc       0xa6 ardooweeno.o
+                0x000004fc                _Z12digitalWritehh
  .text._ZN8GoertzelC2Eff
-                0x00000642       0x9c Goertzel.o
-                0x00000642                _ZN8GoertzelC1Eff
-                0x00000642                _ZN8GoertzelC2Eff
+                0x000005a2       0x9c Goertzel.o
+                0x000005a2                _ZN8GoertzelC1Eff
+                0x000005a2                _ZN8GoertzelC2Eff
  .text._ZN8GoertzelD2Ev
-                0x000006de        0xe Goertzel.o
-                0x000006de                _ZN8GoertzelD2Ev
-                0x000006de                _ZN8GoertzelD1Ev
+                0x0000063e        0xe Goertzel.o
+                0x0000063e                _ZN8GoertzelD2Ev
+                0x0000063e                _ZN8GoertzelD1Ev
  .text._ZN8Goertzel13ResetGoertzelEv
-                0x000006ec       0x26 Goertzel.o
-                0x000006ec                _ZN8Goertzel13ResetGoertzelEv
+                0x0000064c       0x26 Goertzel.o
+                0x0000064c                _ZN8Goertzel13ResetGoertzelEv
  .text._ZN8Goertzel18SetTargetFrequencyEf
-                0x00000712       0xc6 Goertzel.o
-                0x00000712                _ZN8Goertzel18SetTargetFrequencyEf
+                0x00000672       0xc6 Goertzel.o
+                0x00000672                _ZN8Goertzel18SetTargetFrequencyEf
  .text._ZN8Goertzel13ProcessSampleEi
-                0x000007d8       0xa8 Goertzel.o
-                0x000007d8                _ZN8Goertzel13ProcessSampleEi
+                0x00000738       0xa8 Goertzel.o
+                0x00000738                _ZN8Goertzel13ProcessSampleEi
  .text._ZN8Goertzel9DataPointEi
-                0x00000880       0x58 Goertzel.o
-                0x00000880                _ZN8Goertzel9DataPointEi
+                0x000007e0       0x58 Goertzel.o
+                0x000007e0                _ZN8Goertzel9DataPointEi
  .text._ZN8Goertzel12SamplesReadyEv
-                0x000008d8        0x6 Goertzel.o
-                0x000008d8                _ZN8Goertzel12SamplesReadyEv
+                0x00000838        0x6 Goertzel.o
+                0x00000838                _ZN8Goertzel12SamplesReadyEv
  .text._ZN8Goertzel10Magnitude2Ev
-                0x000008de      0x108 Goertzel.o
-                0x000008de                _ZN8Goertzel10Magnitude2Ev
+                0x0000083e      0x108 Goertzel.o
+                0x0000083e                _ZN8Goertzel10Magnitude2Ev
  .text._Z16nextFullTxBufferv
-                0x000009e6       0x4e linkbus.o
-                0x000009e6                _Z16nextFullTxBufferv
+                0x00000946       0x4e linkbus.o
+                0x00000946                _Z16nextFullTxBufferv
  .text._Z17nextEmptyTxBufferv
-                0x00000a34       0x4e linkbus.o
-                0x00000a34                _Z17nextEmptyTxBufferv
+                0x00000994       0x4e linkbus.o
+                0x00000994                _Z17nextEmptyTxBufferv
  .text._Z17nextEmptyRxBufferv
-                0x00000a82       0x5c linkbus.o
-                0x00000a82                _Z17nextEmptyRxBufferv
+                0x000009e2       0x5c linkbus.o
+                0x000009e2                _Z17nextEmptyRxBufferv
  .text._Z16nextFullRxBufferv
-                0x00000ade       0x5c linkbus.o
-                0x00000ade                _Z16nextFullRxBufferv
+                0x00000a3e       0x5c linkbus.o
+                0x00000a3e                _Z16nextFullRxBufferv
  .text._Z16linkbus_start_txv
-                0x00000b3a       0x20 linkbus.o
-                0x00000b3a                _Z16linkbus_start_txv
+                0x00000a9a       0x20 linkbus.o
+                0x00000a9a                _Z16linkbus_start_txv
  .text._Z14linkbus_end_txv
-                0x00000b5a       0x18 linkbus.o
-                0x00000b5a                _Z14linkbus_end_txv
+                0x00000aba       0x18 linkbus.o
+                0x00000aba                _Z14linkbus_end_txv
  .text._Z12linkbus_initm
-                0x00000b72       0x4c linkbus.o
-                0x00000b72                _Z12linkbus_initm
+                0x00000ad2       0x4c linkbus.o
+                0x00000ad2                _Z12linkbus_initm
  .text._Z17linkbus_send_textPc
-                0x00000bbe       0x7c linkbus.o
-                0x00000bbe                _Z17linkbus_send_textPc
+                0x00000b1e       0x7c linkbus.o
+                0x00000b1e                _Z17linkbus_send_textPc
  .text._Z17lb_send_NewPromptv
-                0x00000c3a        0xe linkbus.o
-                0x00000c3a                _Z17lb_send_NewPromptv
+                0x00000b9a        0xe linkbus.o
+                0x00000b9a                _Z17lb_send_NewPromptv
  .text._Z15lb_send_NewLinev
-                0x00000c48        0xa linkbus.o
-                0x00000c48                _Z15lb_send_NewLinev
+                0x00000ba8        0xa linkbus.o
+                0x00000ba8                _Z15lb_send_NewLinev
  .text._Z12lb_echo_charh
-                0x00000c52       0x10 linkbus.o
-                0x00000c52                _Z12lb_echo_charh
+                0x00000bb2       0x10 linkbus.o
+                0x00000bb2                _Z12lb_echo_charh
  .text._Z14lb_send_stringPch
-                0x00000c62       0x56 linkbus.o
-                0x00000c62                _Z14lb_send_stringPch
+                0x00000bc2       0x56 linkbus.o
+                0x00000bc2                _Z14lb_send_stringPch
  .text._Z12lb_send_Helpv
-                0x00000cb8       0x88 linkbus.o
-                0x00000cb8                _Z12lb_send_Helpv
- .text.main     0x00000d40      0x2a8 main.o
-                0x00000d40                main
+                0x00000c18       0x88 linkbus.o
+                0x00000c18                _Z12lb_send_Helpv
+ .text.main     0x00000ca0      0x2c2 main.o
+                0x00000ca0                main
  .text.__vector_21
-                0x00000fe8       0x70 main.o
-                0x00000fe8                __vector_21
+                0x00000f62       0x70 main.o
+                0x00000f62                __vector_21
  .text.__vector_5
-                0x00001058       0x60 main.o
-                0x00001058                __vector_5
+                0x00000fd2       0x60 main.o
+                0x00000fd2                __vector_5
  .text.__vector_18
-                0x000010b8      0x380 main.o
-                0x000010b8                __vector_18
+                0x00001032      0x380 main.o
+                0x00001032                __vector_18
  .text.__vector_19
-                0x00001438       0x9a main.o
-                0x00001438                __vector_19
+                0x000013b2       0x9a main.o
+                0x000013b2                __vector_19
  .text.__vector_8
-                0x000014d2      0x312 main.o
-                0x000014d2                __vector_8
+                0x0000144c      0x312 main.o
+                0x0000144c                __vector_8
  .text.__vector_11
-                0x000017e4      0x22c main.o
-                0x000017e4                __vector_11
+                0x0000175e      0x22c main.o
+                0x0000175e                __vector_11
  .text.__vector_14
-                0x00001a10       0x7a main.o
-                0x00001a10                __vector_14
+                0x0000198a       0x7a main.o
+                0x0000198a                __vector_14
  .text._Z4loopv
-                0x00001a8a      0x5b8 main.o
-                0x00001a8a                _Z4loopv
+                0x00001a04      0x5b8 main.o
+                0x00001a04                _Z4loopv
  .text._Z13sendMorseToneh
-                0x00002042       0x26 main.o
-                0x00002042                _Z13sendMorseToneh
+                0x00001fbc       0x26 main.o
+                0x00001fbc                _Z13sendMorseToneh
  .text._Z17handleLinkBusMsgsv
-                0x00002068      0x63e main.o
-                0x00002068                _Z17handleLinkBusMsgsv
+                0x00001fe2      0x63e main.o
+                0x00001fe2                _Z17handleLinkBusMsgsv
  .text._Z10processKeyc
-                0x000026a6      0x11a main.o
-                0x000026a6                _Z10processKeyc
+                0x00002620      0x11a main.o
+                0x00002620                _Z10processKeyc
  .text._Z20initializeEEPROMVarsh
-                0x000027c0      0x310 main.o
-                0x000027c0                _Z20initializeEEPROMVarsh
+                0x0000273a      0x310 main.o
+                0x0000273a                _Z20initializeEEPROMVarsh
  .text._Z17doSynchronizationv
-                0x00002ad0       0x6c main.o
-                0x00002ad0                _Z17doSynchronizationv
+                0x00002a4a       0x6a main.o
+                0x00002a4a                _Z17doSynchronizationv
  .text._Z11setupForFoxv
-                0x00002b3c      0x1fe main.o
-                0x00002b3c                _Z11setupForFoxv
+                0x00002ab4      0x286 main.o
+                0x00002ab4                _Z11setupForFoxv
  .text._Z12permCallsignPc
                 0x00002d3a       0x5e main.o
                 0x00002d3a                _Z12permCallsignPc
@@ -1488,20 +1488,20 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x3fb7
+.debug_info     0x00000000     0x4193
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0x5f4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
  .debug_info    0x000005f4      0x12a ardooweeno.o
  .debug_info    0x0000071e      0x55b Goertzel.o
  .debug_info    0x00000c79      0x888 linkbus.o
- .debug_info    0x00001501     0x242e main.o
- .debug_info    0x0000392f      0x2e9 morse.o
- .debug_info    0x00003c18       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_byte.o)
- .debug_info    0x00003cb2       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_word.o)
- .debug_info    0x00003d4c       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_byte.o)
- .debug_info    0x00003de7       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_word.o)
- .debug_info    0x00003e82       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eewr_byte.o)
- .debug_info    0x00003f1c       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_block.o)
+ .debug_info    0x00001501     0x260a main.o
+ .debug_info    0x00003b0b      0x2e9 morse.o
+ .debug_info    0x00003df4       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_byte.o)
+ .debug_info    0x00003e8e       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_word.o)
+ .debug_info    0x00003f28       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_byte.o)
+ .debug_info    0x00003fc3       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_word.o)
+ .debug_info    0x0000405e       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eewr_byte.o)
+ .debug_info    0x000040f8       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_block.o)
 
 .debug_abbrev   0x00000000     0x10dd
  *(.debug_abbrev)
@@ -1518,20 +1518,20 @@ END GROUP
  .debug_abbrev  0x000010b5       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eewr_byte.o)
  .debug_abbrev  0x000010c9       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_block.o)
 
-.debug_line     0x00000000     0x2c63
+.debug_line     0x00000000     0x2d3b
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x134 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5/crtatmega328p.o
- .debug_line    0x00000134      0x42b ardooweeno.o
- .debug_line    0x0000055f      0x219 Goertzel.o
- .debug_line    0x00000778      0x535 linkbus.o
- .debug_line    0x00000cad     0x1413 main.o
- .debug_line    0x000020c0      0x861 morse.o
- .debug_line    0x00002921       0x7a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_byte.o)
- .debug_line    0x0000299b       0x67 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_word.o)
- .debug_line    0x00002a02       0xb6 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_byte.o)
- .debug_line    0x00002ab8       0x62 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_word.o)
- .debug_line    0x00002b1a       0x9e C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eewr_byte.o)
- .debug_line    0x00002bb8       0xab C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_block.o)
+ .debug_line    0x00000134      0x48b ardooweeno.o
+ .debug_line    0x000005bf      0x219 Goertzel.o
+ .debug_line    0x000007d8      0x535 linkbus.o
+ .debug_line    0x00000d0d     0x148b main.o
+ .debug_line    0x00002198      0x861 morse.o
+ .debug_line    0x000029f9       0x7a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_byte.o)
+ .debug_line    0x00002a73       0x67 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_word.o)
+ .debug_line    0x00002ada       0xb6 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_byte.o)
+ .debug_line    0x00002b90       0x62 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eeupd_word.o)
+ .debug_line    0x00002bf2       0x9e C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eewr_byte.o)
+ .debug_line    0x00002c90       0xab C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/ATmega_DFP/1.4.351/gcc/dev/atmega328p/avr5\libatmega328p.a(eerd_block.o)
 
 .debug_frame    0x00000000      0x874
  *(.debug_frame)

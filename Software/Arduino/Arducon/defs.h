@@ -74,26 +74,27 @@
  * Set the text that gets displayed to the user */
 #define SW_REVISION "Ver: 0.1"
 
-//#define TRANQUILIZE_WATCHDOG
+/*#define TRANQUILIZE_WATCHDOG */
 
 #define PRODUCT_NAME_SHORT "ARDF Tx"
 #define PRODUCT_NAME_LONG "Arducon"
+/*#define DEBUG_DTMF */
 
 /*******************************************************/
 
 #ifndef uint16_t_defined
 #define uint16_t_defined
-typedef unsigned int uint16_t;
+	typedef unsigned int uint16_t;
 #endif
 
 #ifndef uint32_t_defined
 #define uint32_t_defined
-typedef unsigned long uint32_t;
+	typedef unsigned long uint32_t;
 #endif
 
 #ifndef unit8_t_defined
 #define unit8_t_defined
-typedef unsigned char uint8_t;
+	typedef unsigned char uint8_t;
 #endif
 
 #ifndef null
@@ -104,43 +105,87 @@ typedef unsigned char uint8_t;
 #define PI 3.141592653589793
 #endif
 
-#define PIN_MORSE_KEY 2
-#define PIN_SYNC 3
-#define PIN_DIP_0 4
-#define PIN_DIP_1 5
-#define PIN_DIP_2 6
-#define PIN_UNUSED_7 7
-#define PIN_UNUSED_8 8
-#define PIN_AUDIO_OUT 9
-#define PIN_UNUSED_10 10
-#define PIN_CAL_OUT 11
-#define PIN_UNUSED_12 12
-#define PIN_LED 13
+/*
+ *  Arduino Pro Mini pin definitions per Arduino IDE
+ */
+#define D2 2
+#define D3 3
+#define D4 4
+#define D5 5
+#define D6 6
+#define D7 7
+#define D8 8
+#define D9 9
+#define D10 10
+#define D11 11
+#define D12 12
+#define D13 13
+#if COMPILE_FOR_ATMELSTUDIO7
+#define A0 14
+#define A1 15
+#define A2 16
+#define A3 17
+#define A4 18
+#define A5 19
+#define SDA A4
+#define SCL A5
+#define A6 20
+#define A7 21
+#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
-typedef enum {
-BEACON = 0,
-FOX_1,
-FOX_2,
-FOX_3,
-FOX_4,
-FOX_5,
-FOX_DEMO,
-FOXORING,
-SPECTATOR,
-SPRINT_S1,
-SPRINT_S2,
-SPRINT_S3,
-SPRINT_S4,
-SPRINT_S5,
-SPRINT_F1,
-SPRINT_F2,
-SPRINT_F3,
-SPRINT_F4,
-SPRINT_F5,
-SPRINT_DEMO,
-NO_CODE_START_TONES_2M,
-NO_CODE_START_TONES_5M,
-INVALID_FOX
+/*
+ *  Arducon Pin Definitions
+ */
+#define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
+#define PIN_D4 PIN_RXD          /* Arduino Pro Mini pin# 1/28 = PD0 */
+#define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
+#define PIN_D5 PIN_TXD          /* Arduino Pro Mini pin# 2/29 = PD1 */
+#define PIN_RTC_SQW D2          /* Arduino Pro Mini pin# 5 = PD2 */
+#define PIN_RTC_INT D3          /* Arduino Pro Mini pin# 6 = PD3 */
+#define PIN_SYNC D4             /* Arduino Pro Mini pin# 7 = PD4 */
+#define PIN_UNUSED_1 D5         /* Arduino Pro Mini pin# 8 = PD5 */
+#define PIN_PWDN D6             /* Arduino Pro Mini pin# 9 = PD6 */
+#define PIN_LED2 D7             /* Arduino Pro Mini pin# 10 = PD7 */
+#define PIN_PTT_LOGIC D8        /* Arduino Pro Mini pin# 11 = PB0 */
+#define PIN_CW_TONE_LOGIC D9    /* Arduino Pro Mini pin# 12 = PB1 */
+#define PIN_CW_KEY_LOGIC D10    /* Arduino Pro Mini pin# 13 = PB2 */
+#define PIN_MOSI D11            /* Arduino Pro Mini pin# 14 = PB3 */
+#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
+#define PIN_LED1 D13            /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+#define PIN_D0 A0               /* Arduino Pro Mini pin# 17 = PC0 */
+#define PIN_D1 A1               /* Arduino Pro Mini pin# 18 = PC1 */
+#define PIN_D2 A2               /* Arduino Pro Mini pin# 19 = PC2 */
+#define PIN_D3 A3               /* Arduino Pro Mini pin# 20 = PC3 */
+#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
+#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
+#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
+#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
+
+typedef enum
+{
+	BEACON = 0,
+	FOX_1,
+	FOX_2,
+	FOX_3,
+	FOX_4,
+	FOX_5,
+	FOX_DEMO,
+	FOXORING,
+	SPECTATOR,
+	SPRINT_S1,
+	SPRINT_S2,
+	SPRINT_S3,
+	SPRINT_S4,
+	SPRINT_S5,
+	SPRINT_F1,
+	SPRINT_F2,
+	SPRINT_F3,
+	SPRINT_F4,
+	SPRINT_F5,
+	SPRINT_DEMO,
+	NO_CODE_START_TONES_2M,
+	NO_CODE_START_TONES_5M,
+	INVALID_FOX
 } FoxType;
 
 #define MAX_CODE_SPEED_WPM 20
@@ -170,7 +215,7 @@ typedef enum
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG 0xB8 /* Never set to 0xFF */
+#define EEPROM_INITIALIZED_FLAG 0xB8    /* Never set to 0xFF */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -205,18 +250,18 @@ typedef enum
 
 #define OFF             0
 #define ON              1
-#define TOGGLE			2
-#define UNDETERMINED	3
+#define TOGGLE          2
+#define UNDETERMINED    3
 
-#define MIN(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __a : __b; })
-#define MAX(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
+#define MIN(A, B)    ({ __typeof__(A)__a = (A); __typeof__(B)__b = (B); __a < __b ? __a : __b; })
+#define MAX(A, B)    ({ __typeof__(A)__a = (A); __typeof__(B)__b = (B); __a < __b ? __b : __a; })
 
-#define CLAMP(low, x, high) ({\
-  __typeof__(x) __x = (x); \
-  __typeof__(low) __low = (low);\
-  __typeof__(high) __high = (high);\
-  __x > __high ? __high : (__x < __low ? __low : __x);\
-  })
+#define CLAMP(low, x, high) ({ \
+		__typeof__(x)__x = (x); \
+		__typeof__(low)__low = (low); \
+		__typeof__(high)__high = (high); \
+		__x > __high ? __high : (__x < __low ? __low : __x); \
+	})
 
 #define MAX_TIME 4294967295L
 #define MAX_UINT16 65535
