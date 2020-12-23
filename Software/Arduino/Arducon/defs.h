@@ -277,6 +277,7 @@ typedef enum
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
 
+#define BLINK_FAST 30
 #define BLINK_SHORT 100
 #define BLINK_LONG 500
 

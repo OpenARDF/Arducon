@@ -64,7 +64,7 @@ volatile int g_active           = 0;        /* Disable active. set and clear in 
 
 volatile int g_on_the_air       = 0;        /* Controls transmitter Morse activity */
 volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
-const char g_morsePatterns[][6] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
+const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
 volatile BOOL g_callsign_sent = FALSE;
 
 volatile BOOL g_blinky_time = FALSE;
@@ -85,6 +85,8 @@ volatile uint8_t g_lastSeconds = 0x00;
 volatile int16_t g_sync_pin_timer = 0;
 volatile BOOL g_sync_pin_stable = FALSE;
 volatile BOOL g_sync_enabled = TRUE;
+
+volatile BOOL g_dtmf_detected = FALSE;
 
 #if !COMPILE_FOR_ATMELSTUDIO7
 	FoxType operator++(volatile FoxType &orig, int)
@@ -609,19 +611,38 @@ ISR( TIMER2_COMPB_vect )
 			if(g_sync_pin_timer > TIMER2_SECONDS_1)
 			{
 				g_sync_pin_stable = TRUE;
-				digitalWrite(PIN_LED1, HIGH);
+//				digitalWrite(PIN_LED1, HIGH);
 			}
 		}
 	}
 
-	if(blink_counter < -BLINK_LONG)
+	if(g_dtmf_detected)
 	{
-		blink_count_direction = 1;
-	}
+		if(blink_counter < -BLINK_FAST)
+		{
+			blink_count_direction = 1;
+			digitalWrite(PIN_LED1,OFF);
+		}
 
-	if(blink_counter > BLINK_SHORT)
+		if(blink_counter > BLINK_FAST)
+		{
+			blink_count_direction = -1;
+			digitalWrite(PIN_LED1,ON);
+		}
+	}
+	else
 	{
-		blink_count_direction = -1;
+		blink_counter = BLINK_FAST;
+		blink_count_direction = 1;
+//		if(blink_counter < -BLINK_LONG)
+//		{
+//			blink_count_direction = 1;
+//		}
+
+//		if(blink_counter > BLINK_SHORT)
+//		{
+//			blink_count_direction = -1;
+//		}
 	}
 
 	blink_counter += blink_count_direction;
@@ -714,10 +735,10 @@ ISR( TIMER2_COMPB_vect )
 
 				if(key)
 				{
-					if(!g_LEDs_Timed_Out)
-					{
-						digitalWrite(PIN_LED1, HIGH);   /*  LED */
-					}
+//					if(!g_LEDs_Timed_Out)
+//					{
+//						digitalWrite(PIN_LED1, HIGH);   /*  LED */
+//					}
 
 					if(g_enable_transmitter)
 					{
@@ -733,10 +754,10 @@ ISR( TIMER2_COMPB_vect )
 		}
 		else
 		{
-			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
-			{
-				digitalWrite(PIN_LED1, key);    /*  LED */
-			}
+//			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
+//			{
+//				digitalWrite(PIN_LED1, key);    /*  LED */
+//			}
 
 			if(g_enable_transmitter)
 			{
@@ -756,10 +777,10 @@ ISR( TIMER2_COMPB_vect )
 		if(key)
 		{
 			key = OFF;
-			if(!g_sync_pin_stable)
-			{
-				digitalWrite(PIN_LED1, OFF);        /*  LED Off */
-			}
+//			if(!g_sync_pin_stable)
+//			{
+//				digitalWrite(PIN_LED1, OFF);        /*  LED Off */
+//			}
 
 			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 		}
@@ -819,8 +840,8 @@ ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
 				g_sync_enabled = FALSE;
 			}
 
-			g_LEDs_Timed_Out = TRUE;
-			digitalWrite(PIN_LED1, OFF);
+//			g_LEDs_Timed_Out = TRUE;
+//			digitalWrite(PIN_LED1, OFF);
 		}
 		g_fox_transition = TRUE;
 		g_fox_seconds_into_interval = 0;
@@ -917,23 +938,6 @@ void loop()
 			g_callsign_sent = FALSE;
 			g_fox_transition = FALSE;
 			g_fox_tone_offset = g_fox_counter;
-		}
-		else
-		{
-			if(!g_LEDs_Timed_Out)   /* below will flash LED when off cycle for a heartbeat indicator */
-			{
-				if(g_blinky_time)
-				{
-					if(!g_sync_pin_stable)
-					{
-						digitalWrite(PIN_LED1,OFF);
-					}
-				}
-				else
-				{
-					digitalWrite(PIN_LED1,ON);
-				}
-			}
 		}
 	}
 	else
@@ -1061,6 +1065,7 @@ void loop()
 
 					if(checkCount == 3)
 					{
+						g_dtmf_detected = TRUE;
 						quietCount = 0;
 						g_lastKey = newKey;
 						sprintf(g_tempStr,"\"%c\"\n",g_lastKey);
@@ -1089,7 +1094,6 @@ void loop()
 								lb_send_string(g_tempStr,TRUE);
 							}
 #endif  /* DEBUG_DTMF */
-
 					}
 				}
 
@@ -1104,6 +1108,9 @@ void loop()
 			/* Quieting must be detected at least 3 times in less than 5 seconds before another key can be accepted */
 			if(quietCount++ > 2)
 			{
+				g_dtmf_detected = FALSE;
+				digitalWrite(PIN_LED1,OFF);
+
 				if(delta < 1500)
 				{
 					checkCount = 0;
@@ -1117,6 +1124,21 @@ void loop()
 
 		ADCSRA |= (1 << ADIE);  /* enable ADC interrupt */
 	}
+
+//	if(!g_LEDs_Timed_Out)   /* flash LED */
+//	{
+//		if(g_dtmf_detected)
+//		{
+//			if(g_blinky_time)
+//			{
+//				digitalWrite(PIN_LED1,OFF);
+//			}
+//			else
+//			{
+//				digitalWrite(PIN_LED1,ON);
+//			}
+//		}
+//	}
 }
 
 
