@@ -857,19 +857,6 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-162KCRCT-ND\">Li
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R R108
-U 1 1 5F9E5C35
-P 3450 6450
-F 0 "R108" V 3530 6450 50  0000 C CNN
-F 1 "12.4k" V 3350 6450 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" V 3380 6450 50  0001 C CNN
-F 3 "" H 3450 6450 50  0001 C CNN
-F 4 "P12.4KCCT-ND" H 3450 6450 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=P12.4KCCT-ND\">Link</a>" H 3450 6450 50  0001 C CNN "Link"
-	1    3450 6450
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:GNDA #PWR0137
 U 1 1 5F9E60D1
 P 3300 6750
@@ -2414,6 +2401,19 @@ F 2 "" H 1800 3300 50  0000 C CNN
 F 3 "" H 1800 3300 50  0000 C CNN
 	1    1800 3300
 	0    1    1    0   
+$EndComp
+$Comp
+L Device:R R108
+U 1 1 5FE52722
+P 3450 6450
+F 0 "R108" V 3350 6450 50  0000 C CNN
+F 1 "10k" V 3550 6450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 3380 6450 50  0001 C CNN
+F 3 "" H 3450 6450 50  0001 C CNN
+F 4 "311-10.0KCRCT-ND" H 3450 6450 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 3450 6450 60  0001 C CNN "Link"
+	1    3450 6450
+	-1   0    0    1   
 $EndComp
 Wire Bus Line
 	6300 4600 6300 7300
