@@ -17,7 +17,7 @@ MOD101 ,1,Arduino Pro Mini (5V Version),Modules:Arduino_Pro_Mini,<a href="https:
 P101 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
 PCB201 ,1,Printed Circuit Board,Oddities:Dummy_Empty,np,np
 Q101 ,1,MMBT2222,TO_SOT_Packages_SMD:SOT-23,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>,MMBT2222ATPMSCT-ND
-Q102 ,1,LMN400E01,TO_SOT_Packages_SMD:SOT-363,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>,LMN400E01DICT-ND
+Q102 ,1,LMN400E01,TO_SOT_Packages_SMD:SOT-363-0.65,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>,LMN400E01DICT-ND
 R103 R104 R108 ,3,10k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
 R109 ,1,470,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-470CRCT-ND">Link</a>,311-470CRCT-ND
 R107 ,1,162k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>,311-162KCRCT-ND

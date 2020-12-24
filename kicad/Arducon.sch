@@ -1174,10 +1174,6 @@ Wire Wire Line
 Connection ~ 9750 1600
 Wire Wire Line
 	9750 1600 9600 1600
-Wire Wire Line
-	10050 1700 9750 1700
-Wire Wire Line
-	9750 1700 9750 1600
 NoConn ~ 10650 1700
 $Comp
 L Device:C_Small C102
@@ -1378,7 +1374,7 @@ U 1 1 5FC59E4B
 P 13700 7700
 F 0 "Q102" H 13700 8300 61  0000 C CNB
 F 1 "LMN400E01" H 13700 8192 61  0000 C CNB
-F 2 "TO_SOT_Packages_SMD:SOT-363" H 13715 7500 50  0001 L CNN
+F 2 "TO_SOT_Packages_SMD:SOT-363-0.65" H 13715 7500 50  0001 L CNN
 F 3 "" H 13715 7500 50  0001 L CNN
 F 4 "LMN400E01DICT-ND" H 13700 7700 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND\">Link</a>" H 13700 7700 50  0001 C CNN "Link"
@@ -2415,6 +2411,8 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">L
 	1    3450 6450
 	-1   0    0    1   
 $EndComp
+Text GLabel 10050 1700 0    39   Input ~ 0
+PWDN
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC
