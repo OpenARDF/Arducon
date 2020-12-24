@@ -319,17 +319,6 @@ F 3 "" H 7550 2850 50  0000 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L power:GND #PWR0146
-U 1 1 59203AA4
-P 11350 10300
-F 0 "#PWR0146" H 11350 10050 50  0001 C CNN
-F 1 "GND" H 11350 10150 50  0000 C CNN
-F 2 "" H 11350 10300 50  0000 C CNN
-F 3 "" H 11350 10300 50  0000 C CNN
-	1    11350 10300
-	1    0    0    -1  
-$EndComp
-$Comp
 L power:GNDD #PWR0147
 U 1 1 59203F23
 P 11550 10300
@@ -627,8 +616,6 @@ Wire Wire Line
 Wire Wire Line
 	6400 6800 7000 6800
 Wire Wire Line
-	11350 10300 11350 10200
-Wire Wire Line
 	11550 9750 11550 9850
 Wire Wire Line
 	3100 6250 3450 6250
@@ -687,8 +674,6 @@ Text GLabel 6550 5000 2    39   Output ~ 0
 CW_KEY_LOGIC
 Text GLabel 6550 7000 2    39   Output ~ 0
 PWDN
-Text GLabel 14900 7250 0    39   Output ~ 0
-EXT_BATTERY+
 Text GLabel 1800 4250 2    39   Input ~ 0
 TONE_LOGIC
 Text GLabel 1800 4350 2    39   Input ~ 0
@@ -805,7 +790,7 @@ F 3 "" H 7500 6800 50  0000 C CNN
 $EndComp
 Text GLabel 1800 4450 2    39   Input ~ 0
 PTT_LOGIC
-Text GLabel 14900 7150 0    39   Output ~ 0
+Text GLabel 14750 8100 0    39   Output ~ 0
 EXT_PWR_GROUND
 $Comp
 L Arducon-rescue:CONN_01X04 J106
@@ -841,8 +826,6 @@ Text GLabel 11300 10050 0    39   Input ~ 0
 EXT_PWR_GROUND
 Text GLabel 3250 5850 0    39   Input ~ 0
 EXT_BATTERY
-Wire Wire Line
-	11350 10200 11550 10200
 $Comp
 L Device:R R107
 U 1 1 5F9E5B53
@@ -854,19 +837,6 @@ F 3 "" H 3450 6050 50  0001 C CNN
 F 4 "311-162KCRCT-ND" H 3450 6050 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-162KCRCT-ND\">Link</a>" H 3450 6050 50  0001 C CNN "Link"
 	1    3450 6050
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R R108
-U 1 1 5F9E5C35
-P 3450 6450
-F 0 "R108" V 3530 6450 50  0000 C CNN
-F 1 "12.4k" V 3350 6450 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" V 3380 6450 50  0001 C CNN
-F 3 "" H 3450 6450 50  0001 C CNN
-F 4 "P12.4KCCT-ND" H 3450 6450 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=P12.4KCCT-ND\">Link</a>" H 3450 6450 50  0001 C CNN "Link"
-	1    3450 6450
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -1187,10 +1157,6 @@ Wire Wire Line
 Connection ~ 9750 1600
 Wire Wire Line
 	9750 1600 9600 1600
-Wire Wire Line
-	10050 1700 9750 1700
-Wire Wire Line
-	9750 1700 9750 1600
 NoConn ~ 10650 1700
 $Comp
 L Device:C_Small C102
@@ -1388,64 +1354,60 @@ Wire Wire Line
 $Comp
 L Arducon-rescue:LMN200B01-Two-band-Tx Q102
 U 1 1 5FC59E4B
-P 13700 7700
-F 0 "Q102" H 13700 8300 61  0000 C CNB
-F 1 "LMN400E01" H 13700 8192 61  0000 C CNB
-F 2 "TO_SOT_Packages_SMD:SOT-363" H 13715 7500 50  0001 L CNN
-F 3 "" H 13715 7500 50  0001 L CNN
-F 4 "LMN400E01DICT-ND" H 13700 7700 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND\">Link</a>" H 13700 7700 50  0001 C CNN "Link"
-	1    13700 7700
+P 13550 7600
+F 0 "Q102" H 13550 8200 61  0000 C CNB
+F 1 "LMN400E01" H 13550 8092 61  0000 C CNB
+F 2 "TO_SOT_Packages_SMD:SOT-363-0.65" H 13565 7400 50  0001 L CNN
+F 3 "" H 13565 7400 50  0001 L CNN
+F 4 "LMN400E01DICT-ND" H 13550 7600 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND\">Link</a>" H 13550 7600 50  0001 C CNN "Link"
+	1    13550 7600
 	1    0    0    -1  
 $EndComp
-Text GLabel 13450 7500 0    39   Input ~ 0
+Text GLabel 13300 7400 0    39   Input ~ 0
 PWDN
 $Comp
 L power:GNDD #PWR0141
 U 1 1 5FC5EC97
-P 13950 7600
-F 0 "#PWR0141" H 13950 7350 50  0001 C CNN
-F 1 "GNDD" H 13950 7450 50  0000 C CNN
-F 2 "" H 13950 7600 50  0000 C CNN
-F 3 "" H 13950 7600 50  0000 C CNN
-	1    13950 7600
+P 13800 7500
+F 0 "#PWR0141" H 13800 7250 50  0001 C CNN
+F 1 "GNDD" H 13800 7350 50  0000 C CNN
+F 2 "" H 13800 7500 50  0000 C CNN
+F 3 "" H 13800 7500 50  0000 C CNN
+	1    13800 7500
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	13950 7350 14050 7350
+	13800 7250 13900 7250
 Wire Wire Line
-	14050 7350 14050 6950
+	13900 7250 13900 6850
 Wire Wire Line
-	14050 6950 13050 6950
+	13900 6850 12900 6850
 Wire Wire Line
-	13050 6950 13050 7900
+	12900 6850 12900 7800
 Wire Wire Line
-	13050 7900 13450 7900
+	12900 7800 13300 7800
 Wire Wire Line
-	13950 7800 14350 7800
+	13800 7700 14200 7700
 Wire Bus Line
 	12100 6700 12100 8250
-Wire Bus Line
-	12100 8250 16200 8250
 Wire Bus Line
 	16200 8250 16200 6700
 Wire Bus Line
 	16200 6700 12100 6700
 Text Notes 13150 6650 0    79   ~ 16
 OPTIONAL EXTERNAL POWER CONTROL
-Text GLabel 13950 8050 2    39   Input ~ 0
-EXT_BATTERY+
 $Comp
 L Connector_Generic:Conn_01x02 J108
 U 1 1 5FCE82B0
-P 15100 7900
-F 0 "J108" H 15180 7892 50  0000 L CNN
-F 1 "Controlled Device Power" H 15100 8000 50  0000 L CNN
-F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 15100 7900 50  0001 C CNN
-F 3 "" H 15100 7900 50  0001 C CNN
-F 4 "np" H 15100 7900 50  0001 C CNN "Part No."
-F 5 "np" H 15100 7900 50  0001 C CNN "Link"
-	1    15100 7900
+P 14950 7800
+F 0 "J108" H 15030 7792 50  0000 L CNN
+F 1 "Controlled Power" H 15100 7700 50  0000 L CNN
+F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 7800 50  0001 C CNN
+F 3 "" H 14950 7800 50  0001 C CNN
+F 4 "np" H 14950 7800 50  0001 C CNN "Part No."
+F 5 "np" H 14950 7800 50  0001 C CNN "Link"
+	1    14950 7800
 	1    0    0    1   
 $EndComp
 $Comp
@@ -2127,8 +2089,8 @@ F 5 "np" H 13150 4000 50  0001 C CNN "Link"
 $EndComp
 Wire Wire Line
 	14050 3750 14050 3650
-Text Notes 13200 800  0    79   ~ 16
-CW/FM to AM CONVERTER BOARD
+Text Notes 13450 800  0    79   ~ 16
+AM MODULATOR BOARD
 Wire Bus Line
 	8950 850  11950 850 
 Wire Bus Line
@@ -2138,7 +2100,7 @@ Wire Bus Line
 Wire Bus Line
 	8950 6000 8950 850 
 Text Notes 9050 800  0    79   ~ 16
-5V to 3.3V LEVEL SHIFTER FOR AM CONVERTER
+5V to 3.3V LEVEL SHIFTER FOR AM MODULATOR
 Wire Wire Line
 	11450 4600 12600 4600
 Connection ~ 11450 4600
@@ -2171,14 +2133,14 @@ Wire Wire Line
 	11450 3900 12600 3900
 Connection ~ 11450 3900
 Connection ~ 12600 3900
-Text GLabel 14400 7600 2    39   Output ~ 0
+Text GLabel 14250 7500 2    39   Output ~ 0
 Controlled_Power
 Wire Wire Line
-	14400 7600 14350 7600
+	14250 7500 14200 7500
 Wire Wire Line
-	14350 7600 14350 7800
+	14200 7500 14200 7700
 Wire Wire Line
-	14350 7800 14900 7800
+	14200 7700 14750 7700
 Text GLabel 1800 2900 2    39   Input ~ 0
 Controlled_Power
 Text GLabel 7050 6400 2    39   Output ~ 0
@@ -2189,21 +2151,21 @@ Text GLabel 1800 3200 2    39   Input ~ 0
 RXD
 Text GLabel 1800 3400 2    39   Input ~ 0
 TXD
-Text GLabel 14900 7900 0    39   Input ~ 0
+Text GLabel 14750 7800 0    39   Input ~ 0
 EXT_PWR_GROUND
-Connection ~ 14350 7800
+Connection ~ 14200 7700
 $Comp
 L Connector_Generic:Conn_01x02 J107
 U 1 1 5FE800D7
-P 15100 7150
-F 0 "J107" H 15180 7142 50  0000 L CNN
-F 1 "Conn_01x02" H 15180 7051 50  0000 L CNN
-F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 15100 7150 50  0001 C CNN
-F 3 "" H 15100 7150 50  0001 C CNN
-F 4 "np" H 15100 7150 50  0001 C CNN "Part No."
-F 5 "np" H 15100 7150 50  0001 C CNN "Link"
-	1    15100 7150
-	1    0    0    -1  
+P 14950 8100
+F 0 "J107" H 15030 8092 50  0000 L CNN
+F 1 "External Power Source" H 15100 8000 50  0000 L CNN
+F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 8100 50  0001 C CNN
+F 3 "" H 14950 8100 50  0001 C CNN
+F 4 "np" H 14950 8100 50  0001 C CNN "Part No."
+F 5 "np" H 14950 8100 50  0001 C CNN "Link"
+	1    14950 8100
+	1    0    0    1   
 $EndComp
 $Comp
 L Arducon-rescue:Vproc #PWR0113
@@ -2415,6 +2377,29 @@ F 3 "" H 1800 3300 50  0000 C CNN
 	1    1800 3300
 	0    1    1    0   
 $EndComp
+$Comp
+L Device:R R108
+U 1 1 5FE52722
+P 3450 6450
+F 0 "R108" V 3350 6450 50  0000 C CNN
+F 1 "10k" V 3550 6450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 3380 6450 50  0001 C CNN
+F 3 "" H 3450 6450 50  0001 C CNN
+F 4 "311-10.0KCRCT-ND" H 3450 6450 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 3450 6450 60  0001 C CNN "Link"
+	1    3450 6450
+	-1   0    0    1   
+$EndComp
+Text GLabel 10050 1700 0    39   Input ~ 0
+PWDN
+Wire Bus Line
+	12100 8250 16200 8250
+Wire Wire Line
+	13800 7950 14450 7950
+Wire Wire Line
+	14450 7950 14450 8000
+Wire Wire Line
+	14450 8000 14750 8000
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC
