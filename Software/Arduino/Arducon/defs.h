@@ -36,6 +36,7 @@
 
 #define COMPILE_FOR_ATMELSTUDIO7 FALSE
 #define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
+#define INCLUDE_RV3028_SUPPORT
 #define CAL_SIGNAL_ON_PD3 FALSE
 
 #if COMPILE_FOR_ATMELSTUDIO7
@@ -72,7 +73,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "Ver: 0.1"
+#define SW_REVISION "X0.2"
 
 /*#define TRANQUILIZE_WATCHDOG */
 
@@ -205,7 +206,27 @@ typedef enum
 	STATE_IDLE,
 	STATE_C,
 	STATE_RECEIVING_CALLSIGN,
+	STATE_RECEIVING_FOXFORMATANDID,
+	STATE_RECEIVING_START_TIME,
+	STATE_RECEIVING_FINISH_TIME,
+	STATE_RECEIVING_START_NOW,
+	STATE_RECEIVING_SET_CLOCK
 } KeyprocessState_t;
+
+
+typedef enum
+{
+	FOX_CLASSIC_BEACON = 0x00,
+	FOX_CLASSIC_FOX,
+	FOX_SPRINT_BEACON = 0x10,
+	FOX_SPRINT_FASTFOX,
+	FOX_SPRINT_SLOWFOX,
+	FOX_FOXORING_BEACON = 0x20,
+	FOX_FOXORING_FOXA,
+	FOX_FOXORING_FOXB,
+	FOX_FOXORING_FOXC
+} FoxFormat_t;
+
 
 /*******************************************************/
 

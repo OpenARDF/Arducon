@@ -37,6 +37,7 @@
 #include "linkbus.h"
 #include "Goertzel.h"
 #include "morse.h"
+#include "rv3028.h"
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/io.h>
@@ -164,7 +165,7 @@ void permCallsign(char* call);
 void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void doSynchronization(void);
-void setupForFox(void);
+void setupForFox(FoxType* fox);
 #if COMPILE_FOR_ATMELSTUDIO7
 	void loop(void);
 	int main(void)
@@ -173,28 +174,43 @@ void setupForFox(void);
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
 	initializeEEPROMVars(FALSE);
-	/* set pins as outputs */
-	pinMode(PIN_LED1, OUTPUT);                                           /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+
+	/* set active pins */
+	pinMode(PIN_LED1, OUTPUT);  /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
+
+	pinMode(PIN_LED2, OUTPUT);
+	digitalWrite(PIN_LED2, OFF);
+
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
+
 	pinMode(PIN_CW_TONE_LOGIC, OUTPUT);
 	digitalWrite(PIN_CW_TONE_LOGIC, OFF);
 
-	/* Set unused pins as outputs pulled high */
-	pinMode(PIN_LED2, INPUT_PULLUP);
-	pinMode(PIN_PTT_LOGIC, INPUT_PULLUP);
-	pinMode(PIN_CW_KEY_LOGIC, INPUT_PULLUP);
+	pinMode(PIN_PTT_LOGIC, OUTPUT);
+	digitalWrite(PIN_PTT_LOGIC, OFF);
+
+	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);
+	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
+
+	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
+	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
+
 	pinMode(PIN_MISO, INPUT_PULLUP);
-	pinMode(A0, INPUT); /* Audio input */
-	pinMode(A1, INPUT_PULLUP);
-	pinMode(A2, INPUT_PULLUP);
-	pinMode(A3, INPUT_PULLUP);
-	pinMode(A4, INPUT_PULLUP);
-	pinMode(A5, INPUT_PULLUP);
-	pinMode(PIN_AUDIO_INPUT, INPUT);        /* Receiver Audio sampling */
 	pinMode(PIN_MOSI, OUTPUT);
 	digitalWrite(PIN_MOSI, OFF);
+
+	pinMode(PIN_D0, OUTPUT);
+	pinMode(PIN_D1, OUTPUT);
+	pinMode(PIN_D2, OUTPUT);
+	pinMode(PIN_D3, OUTPUT);
+	pinMode(PIN_D4, OUTPUT);    /* Also RXD */
+	pinMode(PIN_D5, OUTPUT);    /* Also TXD */
+
+	/* Set unused pins as outputs pulled high */
+	pinMode(A4, INPUT_PULLUP);
+	pinMode(A5, INPUT_PULLUP);
 
 	ADCSRA = 0;                             /* clear ADCSRA register */
 	ADCSRB = 0;                             /* clear ADCSRB register */
@@ -225,6 +241,8 @@ void setupForFox(void);
 	ADCSRA |= (1 << ADEN);  /* enable ADC */
 	ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 
+	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
+	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
 	/**
 	 * TIMER2 is for periodic interrupts to drive Morse code generation */
@@ -262,9 +280,12 @@ void setupForFox(void);
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
-	sei();                      /* Enable interrupts */
+	i2c_init();
+//	rv3028_1s_sqw(ON); /* Only needs to run once to program RTC */
 
-	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
+	sei();              /* Enable interrupts */
+
+	linkbus_init(BAUD); /* Start the Link Bus serial comms */
 	lb_send_string((char*)SW_REVISION, FALSE);
 
 
@@ -282,8 +303,8 @@ void setupForFox(void);
 	dtostrf((double)threshold, 4, 0, s);
 	sprintf(g_tempStr, "Thresh=%s\n\n", s);
 	lb_send_string(g_tempStr, TRUE);
-/*	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13); */
-/*	lb_send_string(g_tempStr, TRUE); */
+/*	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13);
+ *	lb_send_string(g_tempStr, TRUE); */
 
 	lb_send_NewPrompt();
 
@@ -323,7 +344,7 @@ ISR(ADC_vect)
 /***********************************************************************
  * Pin Change Interrupt 2 ISR
  *
- * Handles SYNC pin operation
+ * Handles pushbutton presses
  *
  ************************************************************************/
 ISR(PCINT2_vect)
@@ -334,7 +355,7 @@ ISR(PCINT2_vect)
 	{
 		if(g_sync_pin_stable)
 		{
-			doSynchronization();
+/*			doSynchronization(); */
 		}
 	}
 
@@ -611,7 +632,7 @@ ISR( TIMER2_COMPB_vect )
 			if(g_sync_pin_timer > TIMER2_SECONDS_1)
 			{
 				g_sync_pin_stable = TRUE;
-//				digitalWrite(PIN_LED1, HIGH);
+				digitalWrite(PIN_LED2, HIGH);
 			}
 		}
 	}
@@ -621,28 +642,19 @@ ISR( TIMER2_COMPB_vect )
 		if(blink_counter < -BLINK_FAST)
 		{
 			blink_count_direction = 1;
-			digitalWrite(PIN_LED1,OFF);
+			digitalWrite(PIN_LED1, OFF);
 		}
 
 		if(blink_counter > BLINK_FAST)
 		{
 			blink_count_direction = -1;
-			digitalWrite(PIN_LED1,ON);
+			digitalWrite(PIN_LED1, ON);
 		}
 	}
 	else
 	{
 		blink_counter = BLINK_FAST;
 		blink_count_direction = 1;
-//		if(blink_counter < -BLINK_LONG)
-//		{
-//			blink_count_direction = 1;
-//		}
-
-//		if(blink_counter > BLINK_SHORT)
-//		{
-//			blink_count_direction = -1;
-//		}
 	}
 
 	blink_counter += blink_count_direction;
@@ -735,10 +747,10 @@ ISR( TIMER2_COMPB_vect )
 
 				if(key)
 				{
-//					if(!g_LEDs_Timed_Out)
-//					{
-//						digitalWrite(PIN_LED1, HIGH);   /*  LED */
-//					}
+					if(!g_LEDs_Timed_Out)
+					{
+						digitalWrite(PIN_LED2, HIGH);   /*  LED */
+					}
 
 					if(g_enable_transmitter)
 					{
@@ -754,10 +766,10 @@ ISR( TIMER2_COMPB_vect )
 		}
 		else
 		{
-//			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
-//			{
-//				digitalWrite(PIN_LED1, key);    /*  LED */
-//			}
+			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
+			{
+				digitalWrite(PIN_LED2, key);    /*  LED */
+			}
 
 			if(g_enable_transmitter)
 			{
@@ -777,10 +789,10 @@ ISR( TIMER2_COMPB_vect )
 		if(key)
 		{
 			key = OFF;
-//			if(!g_sync_pin_stable)
-//			{
-//				digitalWrite(PIN_LED1, OFF);        /*  LED Off */
-//			}
+			if(!g_sync_pin_stable)
+			{
+				digitalWrite(PIN_LED2, OFF);        /*  LED Off */
+			}
 
 			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 		}
@@ -793,18 +805,10 @@ ISR( TIMER2_COMPB_vect )
 }   /* End of Timer 2 ISR */
 
 
-
 /***********************************************************************
- * Timer/Counter1 Compare Match A ISR
- *
- * Handles once-per-second tasks
- ************************************************************************/
-/*
- * here is our main ISR for the ARDF 1-second timer
- * modified from ISR example for microfox by Jerry Boyd WB8WFK
- * this runs once a second and generates the cycle and sets control flags for the main controller.
- */
-ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
+ * Handle RTC 1-second interrupts
+ **********************************************************************/
+ISR( INT0_vect )
 {
 	static int id_countdown = 0;
 
@@ -840,8 +844,8 @@ ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
 				g_sync_enabled = FALSE;
 			}
 
-//			g_LEDs_Timed_Out = TRUE;
-//			digitalWrite(PIN_LED1, OFF);
+			g_LEDs_Timed_Out = TRUE;
+			digitalWrite(PIN_LED2, OFF);
 		}
 		g_fox_transition = TRUE;
 		g_fox_seconds_into_interval = 0;
@@ -994,7 +998,7 @@ void loop()
 		float largestX = 0;
 		float largestY = 0;
 		static char lastKey = '\0';
-		static int checkCount = 10;         /* Set above the threshold to prevent an initial false key detect */
+		static int checkCount = 10;                         /* Set above the threshold to prevent an initial false key detect */
 		static int quietCount = 0;
 		int x = -1,y = -1;
 
@@ -1125,20 +1129,20 @@ void loop()
 		ADCSRA |= (1 << ADIE);  /* enable ADC interrupt */
 	}
 
-//	if(!g_LEDs_Timed_Out)   /* flash LED */
-//	{
-//		if(g_dtmf_detected)
-//		{
-//			if(g_blinky_time)
-//			{
-//				digitalWrite(PIN_LED1,OFF);
-//			}
-//			else
-//			{
-//				digitalWrite(PIN_LED1,ON);
-//			}
-//		}
-//	}
+	if(!g_LEDs_Timed_Out)       /* flash LED */
+	{
+		if(g_dtmf_detected)
+		{
+			if(g_blinky_time)
+			{
+				digitalWrite(PIN_LED2,OFF);
+			}
+			else
+			{
+				digitalWrite(PIN_LED2,ON);
+			}
+		}
+	}
 }
 
 
@@ -1382,25 +1386,15 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 
 /*
- *  Commands:
- *  General (All foxes respond to these)
- *       C1 - Set callsign
- *       C2 - Set competition type
- *       C3 - Set clock date & time
- *       C4 - Synchronize transmit schedule immediately (ignoring clock time)
- *       C* - Start transmission schedule immediately (observe clock settings)
- *       C# - Cancel transmission schedule immediately
- *       C5 - Set start time
- *       C6 - Set finish time
- *       C7 nn nn nn nn- Lock DTMF access
- *
- *  Fox-specific
- *       D1 nn- Set unique fox ID#
- *       D2 nn nn nn nn - Set universal PIN number
- *       D2 nn - Report battery level
- *       D3 nn - Report all settings
- *       D* nn - Lock DTMF access
- *       D# nn - Unlock DTMF access
+ *  Command set:
+ *  C1 c...c # - Set callsign ID to c...c
+ *  C2 nn # - Set competition format (01 = Classic, 02 = Sprint, 03 = Foxoring)
+ *  C3 nn # - Set fox within format (00 = beacon, 01 = MOE, ... )
+ *  C4 tttttttt # - Set start date/time = tttttttt
+ *  C5 tttttttt # - Set finish date/time = tttttttt
+ *  C6# - Start competition immediately, ignoring RTC
+ *  C7 tttttttt # - Synchronize RTC to date/time = tttttttt
+ *  AA nn # - Address the following command to only those foxes in the specified competition format (in case more than one competition's foxes might be listening)
  *
  */
 void processKey(char key)
@@ -1431,6 +1425,26 @@ void processKey(char key)
 			if(key == '1')
 			{
 				state = STATE_RECEIVING_CALLSIGN;
+			}
+			else if(key == '3')
+			{
+				state = STATE_RECEIVING_FOXFORMATANDID;
+			}
+			else if(key == '4')
+			{
+				state = STATE_RECEIVING_START_TIME;
+			}
+			else if(key == '5')
+			{
+				state = STATE_RECEIVING_FINISH_TIME;
+			}
+			else if(key == '6')
+			{
+				state = STATE_RECEIVING_START_NOW;
+			}
+			else if(key == '7')
+			{
+				state = STATE_RECEIVING_SET_CLOCK;
 			}
 		}
 		break;
@@ -1464,6 +1478,74 @@ void processKey(char key)
 				}
 			}
 		}
+		break;
+
+		case STATE_RECEIVING_FOXFORMATANDID:
+		{
+			if(key == '#')
+			{
+				state = STATE_IDLE;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_START_TIME:
+		{
+			if(key == '#')
+			{
+				state = STATE_IDLE;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_FINISH_TIME:
+		{
+			if(key == '#')
+			{
+				state = STATE_IDLE;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_START_NOW:
+		{
+			if(key == '#')
+			{
+				state = STATE_IDLE;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_SET_CLOCK:
+		{
+			if(key == '#')
+			{
+				state = STATE_IDLE;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+
 	}
 }
 
@@ -1587,7 +1669,7 @@ void initializeEEPROMVars(BOOL resetAll)
 
 void doSynchronization()
 {
-	setupForFox();
+	setupForFox(NULL);
 	cli();
 	/* Sync button pin change interrupt */
 	PCMSK2 = 0x00;
@@ -1607,7 +1689,7 @@ void doSynchronization()
 	sei();
 }
 
-void setupForFox()
+void setupForFox(FoxType* fox)
 {
 	cli();
 
@@ -1667,9 +1749,13 @@ void setupForFox()
 	g_LEDs_Timed_Out = !g_enable_LEDs;
 
 	g_fox = BEACON;
-	if(g_fox == INVALID_FOX)
+
+	if(fox)
 	{
-		g_fox = BEACON;
+		if(*fox != INVALID_FOX)
+		{
+			g_fox = *fox;
+		}
 	}
 
 	switch(g_fox)
@@ -1744,4 +1830,3 @@ void permCallsign(char* call)
 
 	eeprom_update_byte((uint8_t*)&ee_stationID_text[i],0);
 }
-
