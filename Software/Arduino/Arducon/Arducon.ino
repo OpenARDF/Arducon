@@ -52,6 +52,7 @@
 
 #define MAX_PATTERN_TEXT_LENGTH 20
 #define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 10)
+#define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
 
 /*#define SAMPLE_RATE 9630 */
 #define SAMPLE_RATE 19260
@@ -143,8 +144,11 @@ const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 const float y_frequencies[4] = { 697., 770., 852., 941. };
 const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 const char key[16] = { '1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D' };
+const int numKeys = sizeof(key) / sizeof(key[0]);
 const char keyMorse[39] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
 							'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
+
 char g_lastKey = '\0';
 unsigned long g_last = 0;
 unsigned long g_tick_count = 0;
@@ -281,11 +285,13 @@ void setupForFox(FoxType* fox);
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
 	i2c_init();
-//	rv3028_1s_sqw(ON); /* Only needs to run once to program RTC */
+#ifdef ONETIME_SETUP_ONLY
+		rv3028_1s_sqw();        /* Only needs to run once to program RTC */
+#endif /* ONETIME_SETUP_ONLY */
 
-	sei();              /* Enable interrupts */
+	sei();                      /* Enable interrupts */
 
-	linkbus_init(BAUD); /* Start the Link Bus serial comms */
+	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
 	lb_send_string((char*)SW_REVISION, FALSE);
 
 
@@ -998,7 +1004,7 @@ void loop()
 		float largestX = 0;
 		float largestY = 0;
 		static char lastKey = '\0';
-		static int checkCount = 10;                         /* Set above the threshold to prevent an initial false key detect */
+		static int checkCount = 10;                                         /* Set above the threshold to prevent an initial false key detect */
 		static int quietCount = 0;
 		int x = -1,y = -1;
 
@@ -1364,6 +1370,26 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
+			case MESSAGE_CLOCK:
+			{
+				if(lb_buff->fields[FIELD1][0] == 'T')
+				{
+					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+
+					if(strlen(g_tempStr) <= MAX_PATTERN_TEXT_LENGTH)
+					{
+						strcat(g_tempStr,"Z");
+						rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+					}
+				}
+
+				time_t t = rv3028_get_epoch(NULL);
+
+				sprintf(g_tempStr,"CLK:%lu\n",t);
+				lb_send_string(g_tempStr,TRUE);
+			}
+			break;
+
 			case MESSAGE_TEMP:
 			{
 			}
@@ -1394,22 +1420,32 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
  *  C5 tttttttt # - Set finish date/time = tttttttt
  *  C6# - Start competition immediately, ignoring RTC
  *  C7 tttttttt # - Synchronize RTC to date/time = tttttttt
+ *  C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
  *  AA nn # - Address the following command to only those foxes in the specified competition format (in case more than one competition's foxes might be listening)
  *
  */
 void processKey(char key)
 {
-	static int state = STATE_IDLE;
+	static int state = STATE_SENTENCE_START;
 	static int digits;
 	static int value;
-	static int callsignLength;
-	static char callsign[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
+	static int stringLength;
+	static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 
 	switch(state)
 	{
-		case STATE_IDLE:
+		case STATE_SHUTDOWN:
 		{
-			callsignLength = 0;
+			if(key == '*')
+			{
+				state = STATE_SENTENCE_START;
+			}
+		}
+		break;
+
+		case STATE_SENTENCE_START:
+		{
+			stringLength = 0;
 			value = 0;
 			digits = 0;
 
@@ -1442,7 +1478,7 @@ void processKey(char key)
 			{
 				state = STATE_RECEIVING_START_NOW;
 			}
-			else if(key == '7')
+			else if(key == '7') /* *C7YYMMDDhhmmss# Set RTC to this time and date */
 			{
 				state = STATE_RECEIVING_SET_CLOCK;
 			}
@@ -1453,20 +1489,20 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				permCallsign(callsign);
-				lb_send_string(callsign,FALSE);
-				state = STATE_IDLE;
+				permCallsign(receivedString);
+				lb_send_string(receivedString,FALSE);
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
 				if(digits)
 				{
 					value = value * 10 + (key - '0');
-					if((value < 39) && (callsignLength < MAX_PATTERN_TEXT_LENGTH))
+					if((value < numMorseChars) && (stringLength < MAX_PATTERN_TEXT_LENGTH))
 					{
-						callsign[callsignLength] = keyMorse[value];
-						callsignLength++;
-						callsign[callsignLength] = '\0';
+						receivedString[stringLength] = keyMorse[value];
+						stringLength++;
+						receivedString[stringLength] = '\0';
 					}
 
 					digits = 0;
@@ -1484,7 +1520,7 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				state = STATE_IDLE;
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
@@ -1497,7 +1533,7 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				state = STATE_IDLE;
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
@@ -1510,7 +1546,7 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				state = STATE_IDLE;
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
@@ -1523,7 +1559,7 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				state = STATE_IDLE;
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
@@ -1536,16 +1572,25 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				state = STATE_IDLE;
+				if(stringLength == 12)
+				{
+					/* string = "YYMMDDhhmmss" */
+					sprintf(g_tempStr,"20%c%c-%c%c-%c%cT%c%c:%c%c:%c%c",receivedString[0],receivedString[1],receivedString[2],receivedString[3],receivedString[4],receivedString[5],receivedString[6],receivedString[7],receivedString[8],receivedString[9],receivedString[10],receivedString[11]);
+					rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+					state = STATE_SHUTDOWN;
+				}
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
-
+				if(stringLength < MAX_DTMF_ARG_LENGTH)
+				{
+					receivedString[stringLength] = key;
+					stringLength++;
+					receivedString[stringLength] = '\0';
+				}
 			}
 		}
 		break;
-
-
 	}
 }
 

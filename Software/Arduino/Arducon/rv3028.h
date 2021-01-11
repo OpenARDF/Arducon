@@ -23,23 +23,21 @@
  *
  * RV3028: Extremely Accurate I2C-Integrated RTC/TCXO/Crystal
  * The RV3028 is a low-cost, extremely accurate I2C real-time clock (RTC) with an integrated
- * temperature-compensated crystal oscillator (TCXO) and crystal. The device incorporates a
- * battery input, and maintains accurate timekeeping when main power to the device is interrupted.
- * The integration of the crystal resonator enhances the long-term accuracy of the device as well
- * as reduces the piece-part count in a manufacturing line. The RV3028 is available in commercial
- * and industrial temperature ranges, and is offered in a 16-pin, 300-mil SO package.
+ * crystal oscillator and crystal. The device incorporates a battery input, and maintains
+ * accurate timekeeping when main power to the device is interrupted.
  *
  */
 
 #include "defs.h"
 #include "i2c.h"
+#include <time.h>
 
 #ifndef RV3028_H_
 #define RV3028_H_
 
 #ifdef INCLUDE_RV3028_SUPPORT
 
-#define RV3028_BUS_BASE_ADDR 0xA4   /* corresponds to slave address = 0b10100100x */
+#define RV3028_I2C_SLAVE_ADDR 0xA4  /* corresponds to slave address = 0b10100100x */
 
 /**
  *  Reads hours, minutes and seconds from the RV3028 and returns them in the memory location pointed to by
@@ -48,18 +46,37 @@
  *  *char - if non-NULL will receive a string representation of the time
  *  format - specifies the string format to be used for the string time representation
  */
-		void rv3028_read_time(int32_t* val, char* buffer, TimeFormat format);
+#ifdef DATE_STRING_SUPPORT_ENABLED
+			void rv3028_read_date_time(int32_t* val, char* buffer, TimeFormat format);
+#endif  /* DATE_STRING_SUPPORT_ENABLED */
 
 /**
- *  Set hours, minutes and seconds of the RV3028 to the time passed in the argument.
- *  offset - time in seconds since midnight
+ *  Reads time from the DS3231 and returns the epoch
  */
-		void rv3028_set_time(int32_t offset);
+		time_t rv3028_get_epoch(bool *result);
+
 
 /**
- *  Turn on/off 1-second square wave on the INT/SQW pin.
+ *  Set year, month, date, day, hours, minutes and seconds of the rv3028 to the time passed in the argument.
+ * dateString has the format 2018-03-23T18:00:00
+ * ClockSetting setting = clock or alarm to be set
  */
-		void rv3028_1s_sqw(BOOL enable);
+		void rv3028_set_date_time(char * dateString);
+
+/**
+ *  Turn on 1-second square wave on the INT/SQW pin.
+ */
+		void rv3028_1s_sqw(void);
+
+/**
+ *
+ */
+		void rv3028_set_aging(int8_t* data);
+
+/**
+ *
+ */
+		int16_t rv3028_get_aging(void);
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */
 

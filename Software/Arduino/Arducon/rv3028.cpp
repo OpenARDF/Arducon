@@ -24,6 +24,9 @@
  */
 
 #include "defs.h"
+#if COMPILE_FOR_ATMELSTUDIO7
+#include <string.h>
+#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 #ifdef INCLUDE_RV3028_SUPPORT
 
@@ -37,7 +40,7 @@
    #define RTC_HOURS                       0x02
    #define RTC_WEEKDAY                     0x03
    #define RTC_DATE                        0x04
-   #define RTC_MONTH                                       0x05
+   #define RTC_MONTH                       0x05
    #define RTC_YEAR                        0x06
    #define RTC_ALARM_MINUTES               0x07
    #define RTC_ALARM_HOURS                 0x08
@@ -82,106 +85,180 @@
    #define RTC_EEPROM_OFFSET               0x36
    #define RTC_EEPROM_BACKUP               0x37
 
-	void rv3028_read_time(int32_t* val, char* buffer, TimeFormat format)
+	time_t rv3028_get_epoch(bool *result)
 	{
+		time_t epoch = 0;
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		uint8_t second10;
-		uint8_t second;
-		uint8_t minute10;
-		uint8_t minute;
-		uint8_t hour10;
-		uint8_t hour;
-		BOOL am_pm;
-		BOOL twelvehour;
+		BOOL res;
 
-		if(!i2c_device_read(RV3028_BUS_BASE_ADDR, RTC_SECONDS, data, 7))
+		res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+
+		if(!res)
 		{
-			second10 = ((data[0] & 0xf0) >> 4);
-			second = (data[0] & 0x0f);
+			struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+			int16_t year = 100; /* start at 100 years past 1900 */
+			uint8_t month;
+			uint8_t date;
+			uint8_t hours;
+			uint8_t minutes;
+			uint8_t seconds;
 
-			minute10 = ((data[1] & 0xf0) >> 4);
-			minute = (data[1] & 0x0f);
+			year += 10 * (data[6] >> 4) + (data[6] & 0x0F);
+			ltm.tm_year = year;                         /* year since 1900 */
 
-			am_pm = ((data[2] >> 5) & 0x01);
-			hour10 = ((data[2] >> 4) & 0x01);
-			hour = (data[2] & 0x0f);
+			year += 1900;                               /* adjust year to calendar year */
 
-			twelvehour = ((data[2] >> 6) & 0x01);
+			month = 10 * (data[5] >> 4) + (data[5] & 0x0F);
+			ltm.tm_mon = month - 1;                     /* mon 0 to 11 */
 
-			if(!twelvehour && am_pm)
+			date = 10 * (data[4] >> 4) + (data[4] & 0x0F);
+			ltm.tm_mday = date;                         /* month day 1 to 31 */
+
+			ltm.tm_yday = 0;
+			for(uint8_t mon = 1; mon < month; mon++)    /* months from 1 to 11 (excludes partial month) */
 			{
-				hour10 = 2;
+				ltm.tm_yday += month_length(year, mon);;
 			}
 
-			if(buffer)
+			ltm.tm_yday += (ltm.tm_mday - 1);
+
+			seconds = 10 * (data[0] >> 4) + (data[0] & 0x0F);
+			minutes = 10 * (data[1] >> 4) + (data[1] & 0x0F);
+			hours = 10 * (data[2] >> 4) + (data[2] & 0x0F);
+
+			ltm.tm_hour = hours;
+			ltm.tm_min = minutes;
+			ltm.tm_sec = seconds;
+
+			epoch = ltm.tm_sec + ltm.tm_min * 60 + ltm.tm_hour * 3600L + ltm.tm_yday * 86400L +
+					(ltm.tm_year - 70) * 31536000L + ((ltm.tm_year - 69) / 4) * 86400L -
+					((ltm.tm_year - 1) / 100) * 86400L + ((ltm.tm_year + 299) / 400) * 86400L;
+		}
+
+		if(result)
+		{
+			*result = res ? 1 : 0;
+		}
+		return(epoch);
+	}
+
+#ifdef DATE_STRING_SUPPORT_ENABLED
+		void rv3028_read_date_time(int32_t* val, char* buffer, TimeFormat format)
+		{
+			uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
+			uint8_t month;
+			uint8_t date;
+			uint16_t year = 2000;
+			uint8_t seconds;
+			uint8_t minutes;
+			uint8_t hours;
+
+			if(!i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7))
 			{
-				switch(format)
+				seconds = data[0];
+				minutes = data[1];
+				hours = data[2];
+
+				if(buffer)
 				{
-					case Minutes_Seconds:
+					switch(format)
 					{
-						sprintf(buffer, "%1d%1d:%1d%1d", minute10, minute, second10, second);
-					}
-					break;
-
-					case Hours_Minutes_Seconds:
-					{
-						if(twelvehour)  /* 12-hour */
+						case Minutes_Seconds:
 						{
-							sprintf(buffer, "%1d%1d:%1d%1d:%1d%1d%s", hour10, hour, minute10, minute, second10, second, am_pm ? "AM" : "PM");
+							sprintf(buffer, "%1d:%1d", minutes, seconds);
 						}
-						else            /* 24 hour */
-						{
-							sprintf(buffer, "%1d%1d:%1d%1d:%1d%1d", hour10, hour, minute10, minute, second10, second);
-						}
-					}
-					break;
+						break;
 
-					default:    /* Day_Month_Year_Hours_Minutes_Seconds: */
-					{
-						sprintf(buffer, "%1d%1d:%1d%1d", minute10, minute, second10, second);
+						case Hours_Minutes_Seconds:
+						{
+							sprintf(buffer, "%1d:%1d:%1d", hours, minutes, seconds);
+
+						}
+						break;
+
+						default:    /* Day_Month_Year_Hours_Minutes_Seconds: */
+						{
+							date = data[4] & 0x0f;
+							month = data[5] & 0x0f;
+							year += data[6];
+
+							sprintf(buffer, "%4d-%02d-%02dT%1d:%1d:%1d", year, month, date, hours, minutes, seconds);
+						}
+						break;
 					}
-					break;
+				}
+
+				if(val)
+				{
+					*val = seconds + 60 * (int32_t)minutes +  3600 * (int32_t)hours;
 				}
 			}
+		}
+#endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-			if(val)
-			{
-				*val = second + 10 * second10 + 60 * (int32_t)minute + 600 * (int32_t)minute10 +  3600 * (int32_t)hour + 36000 * (int32_t)hour10;
-			}
+	void rv3028_set_date_time(char * dateString)                 /* "2021-01-10T21:00:00Z" */
+	{
+		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
+		int length = strlen((const char*)dateString);
+
+		if(length >= 19)
+		{
+			data[0] = dateString[18] - '0';             /* seconds */
+			data[0] += ((dateString[17] - '0') << 4);   /* 10s of seconds */
+			data[1] = dateString[15] - '0';             /* minutes */
+			data[1] += ((dateString[14] - '0') << 4);   /* 10s of minutes */
+			data[2] = dateString[12] - '0';             /* hours */
+			data[2] += ((dateString[11] - '0') << 4);   /* 10s of hours */
+
+			/*data[3] = Skip day of week */
+
+			data[4] = dateString[9] - '0';              /* day of month digit 1 */
+			data[4] += ((dateString[8] - '0') << 4);    /* day of month */
+			data[5] = dateString[6] - '0';              /* month digit 1 */
+			data[5] += ((dateString[5] - '0') << 4);    /* month */
+			data[6] = dateString[3] - '0';              /* year digit 1 */
+			data[6] += ((dateString[2] - '0') << 4);    /* year - two digits */
+
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
 		}
 	}
 
 
-	void rv3028_set_time(int32_t offsetSeconds)
+	void rv3028_set_aging(int16_t* data)
 	{
-		int32_t timeVal;
-		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		int32_t temp;
-		uint8_t hold;
+/*	uint8_t byte = 0x08;    / * EERD = 1 * / */
 
-		rv3028_read_time(&timeVal, NULL, Time_Format_Not_Specified);
-		timeVal += offsetSeconds;
-
-		data[0] = timeVal % 10;     /* seconds */
-		temp = timeVal / 10;
-		data[0] |= (temp % 6) << 4; /* 10s of seconds */
-		temp /= 6;
-		data[1] = temp % 10;        /* minutes */
-		temp /= 10;
-		data[1] |= (temp % 6) << 4; /* 10s of minutes */
-		temp /= 6;
-		hold = temp % 24;
-		data[2] = hold % 10;        /* hours */
-		hold /= 10;
-		data[2] |= hold << 4;       /* 10s of hours */
-
-		i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_SECONDS, data, 3);
-
-/*	temp /= 24; */
-
+/*	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+ *	byte = data;            / * FD = 1 Hz * /
+ *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, &byte, 1);
+ *	byte = 0x00;
+ *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_BACKUP, &byte, 1);
+ *	byte = 0x00;
+ *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
+ *	byte = 0x11;
+ *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
+ *	byte = 0x00;    / * EERD = 0 * /
+ *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1); */
 	}
 
+
+	int16_t rv3028_get_aging()
+	{
+		uint8_t data[2];
+		int16_t result;
+
+		i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
+		result = data[0] << 1;
+		if(data[1] & 0x80)
+		{
+			result++;
+		}
+		return(result);
+	}
+
+#ifdef ONETIME_SETUP_ONLY
 /*
+ *  Instructions for setting EEPROM values:
  *       1. Enter the correct password PW (PW = EEPW) to unlock write protection
  *       2. Disable automatic refresh by setting EERD = 1
  *       3. Edit Configuration settings in registers 35h to 37h (RAM)
@@ -189,27 +266,21 @@
  *       5. Enable automatic refresh by setting EERD = 0
  *       6. Enter an incorrect password PW (PW ? EEPW) to lock the device
  */
-	void rv3028_1s_sqw(BOOL enable)
-	{
-		if(enable)
+		void rv3028_1s_sqw(void)
 		{
-			uint8_t byte = 0x08; // EERD = 1
-			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_CONTROL_1, &byte, 1);
-			byte = 0xC5; // FD = 1 Hz
-			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+			uint8_t byte = 0x08;    /* EERD = 1 */
+
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+			byte = 0xC5;            /* FD = 1 Hz */
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
 			byte = 0x00;
-			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_EE_COMMAND, &byte, 1);
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
 			byte = 0x11;
-			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_EE_COMMAND, &byte, 1);
-			byte = 0x00; // EERD = 0
-			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_CONTROL_1, &byte, 1);
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
+			byte = 0x00;    /* EERD = 0 */
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
 		}
-		else
-		{
-//			uint8_t byte = 0x04;
-//			i2c_device_write(RV3028_BUS_BASE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
-		}
-	}
+#endif /* ONETIME_SETUP_ONLY */
 
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */

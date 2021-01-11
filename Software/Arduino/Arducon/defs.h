@@ -73,7 +73,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "X0.2"
+#define SW_REVISION "X0.3"
 
 /*#define TRANQUILIZE_WATCHDOG */
 
@@ -203,7 +203,8 @@ typedef enum
 
 typedef enum
 {
-	STATE_IDLE,
+	STATE_SHUTDOWN,
+	STATE_SENTENCE_START,
 	STATE_C,
 	STATE_RECEIVING_CALLSIGN,
 	STATE_RECEIVING_FOXFORMATANDID,
@@ -232,6 +233,10 @@ typedef enum
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
 	#define SELECTIVELY_DISABLE_OPTIMIZATION
+#endif
+
+#ifndef ONETIME_SETUP_ONLY
+	#define ONETIME_SETUP_ONLY
 #endif
 
 /******************************************************

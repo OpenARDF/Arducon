@@ -32,7 +32,7 @@
 
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
-#define LINKBUS_MAX_MSG_FIELD_LENGTH 10
+#define LINKBUS_MAX_MSG_FIELD_LENGTH 20
 #define LINKBUS_MAX_MSG_NUMBER_OF_FIELDS 3
 #define LINKBUS_NUMBER_OF_RX_MSG_BUFFERS 2
 #define LINKBUS_MAX_TX_MSG_LENGTH 41
@@ -102,7 +102,7 @@ typedef enum
 	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',            /* Set Morse code speeds */
 	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A',     /* Enables/disables the Starting Timer Tones */
 	MESSAGE_TRANSMITTER_ENABLE = 'T' * 100 + 'X' * 10 + 'E',    /* Enables/disables transmitter keying */
-
+	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',                 /* Set RTC */
 	/* UTILITY MESSAGES */
 	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',                 /* Processor reset */
 	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',              /* S/W version number */
