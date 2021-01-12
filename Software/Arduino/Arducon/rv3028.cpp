@@ -196,7 +196,7 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	void rv3028_set_date_time(char * dateString)                 /* "2021-01-10T21:00:00Z" */
+	void rv3028_set_date_time(char * dateString)        /* "2021-01-10T21:00:00Z" */
 	{
 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
 		int length = strlen((const char*)dateString);
@@ -223,25 +223,6 @@
 		}
 	}
 
-
-	void rv3028_set_aging(int16_t* data)
-	{
-/*	uint8_t byte = 0x08;    / * EERD = 1 * / */
-
-/*	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
- *	byte = data;            / * FD = 1 Hz * /
- *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, &byte, 1);
- *	byte = 0x00;
- *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_BACKUP, &byte, 1);
- *	byte = 0x00;
- *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
- *	byte = 0x11;
- *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
- *	byte = 0x00;    / * EERD = 0 * /
- *	i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1); */
-	}
-
-
 	int16_t rv3028_get_aging()
 	{
 		uint8_t data[2];
@@ -254,6 +235,16 @@
 			result++;
 		}
 		return(result);
+	}
+
+	void rv3028_set_offset(uint16_t val)
+	{
+		uint8_t data[2] = {0,0x10};
+
+		data[0] = val >> 1;
+		if(val & 0x01) data[1] = 0x90;
+
+		i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
 	}
 
 #ifdef ONETIME_SETUP_ONLY

@@ -71,12 +71,13 @@
 /**
  *
  */
-		void rv3028_set_aging(int8_t* data);
+		int16_t rv3028_get_aging(void);
 
 /**
  *
  */
-		int16_t rv3028_get_aging(void);
+		void rv3028_set_offset(uint16_t val);
+
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */
 

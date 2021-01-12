@@ -92,9 +92,8 @@ typedef enum
 	MESSAGE_EMPTY = 0,
 
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
-	MESSAGE_CLOCK_CAL = 'C' * 100 + 'A' * 10 + 'L',             /* Set Jerry's clock calibration value */
 	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',         /* Sets EEPROM back to defaults */
-	MESSAGE_OVERRIDE_DIP = 'D' * 100 + 'I' * 10 + 'P',          /* Override DIP switch settings using this value */
+	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',          /* Override DIP switch settings using this value */
 	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',                  /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
 	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',                  /* Temperature  data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                    /* Sets amateur radio callsign text */
