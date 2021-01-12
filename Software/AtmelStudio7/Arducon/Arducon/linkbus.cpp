@@ -408,4 +408,3 @@ void lb_send_Help(void)
 
 	lb_send_NewLine();
 }
-

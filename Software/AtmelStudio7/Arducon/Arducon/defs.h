@@ -36,6 +36,7 @@
 
 #define COMPILE_FOR_ATMELSTUDIO7 TRUE
 #define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
+#define INCLUDE_RV3028_SUPPORT
 #define CAL_SIGNAL_ON_PD3 FALSE
 
 #if COMPILE_FOR_ATMELSTUDIO7
@@ -72,7 +73,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "Ver: 0.1"
+#define SW_REVISION "X0.3"
 
 /*#define TRANQUILIZE_WATCHDOG */
 
@@ -186,7 +187,7 @@ typedef enum
 	NO_CODE_START_TONES_2M,
 	NO_CODE_START_TONES_5M,
 	INVALID_FOX
-} FoxType;
+} Fox_t;
 
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
@@ -202,15 +203,26 @@ typedef enum
 
 typedef enum
 {
-	STATE_IDLE,
+	STATE_SHUTDOWN,
+	STATE_SENTENCE_START,
 	STATE_C,
 	STATE_RECEIVING_CALLSIGN,
+	STATE_RECEIVING_FOXFORMATANDID,
+	STATE_RECEIVING_START_TIME,
+	STATE_RECEIVING_FINISH_TIME,
+	STATE_RECEIVING_START_NOW,
+	STATE_RECEIVING_SET_CLOCK
 } KeyprocessState_t;
+
 
 /*******************************************************/
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
 	#define SELECTIVELY_DISABLE_OPTIMIZATION
+#endif
+
+#ifndef ONETIME_SETUP_ONLY
+	#define ONETIME_SETUP_ONLY
 #endif
 
 /******************************************************
@@ -231,7 +243,7 @@ typedef enum
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
 #define EEPROM_CLOCK_CALIBRATION_DEFAULT 15629
 #define EEPROM_TEMP_CALIBRATION_DEFAULT 147
-#define EEPROM_OVERRIDE_DIP_SW_DEFAULT 0
+#define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
 #define EEPROM_ENABLE_STARTTIMER_DEFAULT 1
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
@@ -277,6 +289,7 @@ typedef enum
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
 
+#define BLINK_FAST 30
 #define BLINK_SHORT 100
 #define BLINK_LONG 500
 

@@ -32,7 +32,7 @@
 
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
-#define LINKBUS_MAX_MSG_FIELD_LENGTH 10
+#define LINKBUS_MAX_MSG_FIELD_LENGTH 20
 #define LINKBUS_MAX_MSG_NUMBER_OF_FIELDS 3
 #define LINKBUS_NUMBER_OF_RX_MSG_BUFFERS 2
 #define LINKBUS_MAX_TX_MSG_LENGTH 41
@@ -92,9 +92,8 @@ typedef enum
 	MESSAGE_EMPTY = 0,
 
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
-	MESSAGE_CLOCK_CAL = 'C' * 100 + 'A' * 10 + 'L',             /* Set Jerry's clock calibration value */
 	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',         /* Sets EEPROM back to defaults */
-	MESSAGE_OVERRIDE_DIP = 'D' * 100 + 'I' * 10 + 'P',          /* Override DIP switch settings using this value */
+	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',          /* Override DIP switch settings using this value */
 	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',                  /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
 	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',                  /* Temperature  data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                    /* Sets amateur radio callsign text */
@@ -102,7 +101,7 @@ typedef enum
 	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',            /* Set Morse code speeds */
 	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A',     /* Enables/disables the Starting Timer Tones */
 	MESSAGE_TRANSMITTER_ENABLE = 'T' * 100 + 'X' * 10 + 'E',    /* Enables/disables transmitter keying */
-
+	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',                 /* Set RTC */
 	/* UTILITY MESSAGES */
 	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',                 /* Processor reset */
 	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',              /* S/W version number */
