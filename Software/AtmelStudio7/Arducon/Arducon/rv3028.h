@@ -69,14 +69,19 @@
 		void rv3028_1s_sqw(void);
 
 /**
- *
+ *  Turn on 32kHz square wave on the INT/SQW pin.
  */
-		int16_t rv3028_get_aging(void);
+		void rv3028_32kHz_sqw(void);
 
 /**
  *
  */
-		void rv3028_set_offset(uint16_t val);
+		int16_t rv3028_get_offset_RAM(void);
+
+/**
+ *
+ */
+		void rv3028_set_offset_RAM(uint16_t val);
 
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */

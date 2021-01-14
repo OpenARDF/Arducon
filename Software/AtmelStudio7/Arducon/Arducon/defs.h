@@ -26,6 +26,12 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+/******************************************************
+ *  Set for the IDE being used: Arduino or Atmel Studio 7
+ */
+#define COMPILE_FOR_ATMELSTUDIO7 TRUE
+/*******************************************************/
+
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -34,20 +40,15 @@
 #define TRUE !FALSE
 #endif
 
-#define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
-#define INCLUDE_RV3028_SUPPORT
-#define CAL_SIGNAL_ON_PD3 FALSE
-
 #if COMPILE_FOR_ATMELSTUDIO7
-	#include <avr/io.h>
-	#include <util/delay.h>
-	#include <avr/interrupt.h>
-	#define USE_WDT_RESET TRUE
+		#include <avr/io.h>
+		#include <util/delay.h>
+		#include <avr/interrupt.h>
+		#define USE_WDT_RESET TRUE
 #else
-	#include "Arduino.h"
-	#define USE_WDT_RESET FALSE
-#endif // COMPILE_FOR_ATMELSTUDIO7
+		#include "Arduino.h"
+		#define USE_WDT_RESET FALSE
+#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 #ifndef HIGH
 #define HIGH 0x1
@@ -73,13 +74,18 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "X0.3"
+#define SW_REVISION "0.4"
 
 /*#define TRANQUILIZE_WATCHDOG */
 
-#define PRODUCT_NAME_SHORT "ARDF Tx"
-#define PRODUCT_NAME_LONG "Arducon"
+#define PRODUCT_NAME_SHORT "Arducon"
+#define PRODUCT_NAME_LONG "Arducon Fox Controller"
+
 /*#define DEBUG_DTMF */
+#define INIT_EEPROM_ONLY FALSE
+
+#define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
+#define INCLUDE_RV3028_SUPPORT
 
 /*******************************************************/
 
@@ -218,11 +224,7 @@ typedef enum
 /*******************************************************/
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
-	#define SELECTIVELY_DISABLE_OPTIMIZATION
-#endif
-
-#ifndef ONETIME_SETUP_ONLY
-	#define ONETIME_SETUP_ONLY
+		#define SELECTIVELY_DISABLE_OPTIMIZATION
 #endif
 
 /******************************************************

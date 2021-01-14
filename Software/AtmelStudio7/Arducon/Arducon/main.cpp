@@ -141,6 +141,7 @@ static volatile uint8_t g_enable_start_timer;
 static volatile uint8_t g_enable_transmitter;
 static volatile uint8_t g_temperature_check_countdown = 60;
 static volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
+extern BOOL g_allow_rv3028_eeprom_changes;
 
 #define _N 201
 const int N = _N;
@@ -238,10 +239,6 @@ void setUpAudioSampling(BOOL enableSampling);
 	TCCR2A = 0;
 	TCCR2B = 0;
 	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
-#if CAL_SIGNAL_ON_PD3
-		pinMode(PIN_MOSI, OUTPUT);                      /* 601Hz Calibration Signal */
-		TCCR2A |= (1 << COM2A0);                        /* Toggle OC2A (PB3) on compare match */
-#endif /* CAL_SIGNAL_ON_PD3 */
 	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
 
 	OCR2A = 0x0C;                                       /* set frequency to ~300 Hz (0x0c) */
@@ -268,9 +265,7 @@ void setUpAudioSampling(BOOL enableSampling);
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
-#ifdef ONETIME_SETUP_ONLY
-/*		rv3028_1s_sqw();        / * Only needs to run once to program RTC * / */
-#endif  /* ONETIME_SETUP_ONLY */
+	rv3028_1s_sqw();        /* Only needs to run once on a new board to program RTC */
 
 	sei();                                                      /* Enable interrupts */
 
@@ -292,8 +287,6 @@ void setUpAudioSampling(BOOL enableSampling);
 	dtostrf((double)threshold, 4, 0, s);
 	sprintf(g_tempStr, "Thresh=%s\n\n", s);
 	lb_send_string(g_tempStr, TRUE);
-/*	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13);
- *	lb_send_string(g_tempStr, TRUE); */
 
 	lb_send_NewPrompt();
 
@@ -890,12 +883,15 @@ SIGNAL(TIMER0_COMPA_vect)
  * */
 void loop()
 {
+#if !INIT_EEPROM_ONLY
 	static int time_for_id = 99;
 	static BOOL id_set = TRUE;
 	static BOOL proceed = FALSE;
+#endif // !INIT_EEPROM_ONLY
 
 	handleLinkBusMsgs();
 
+#if !INIT_EEPROM_ONLY
 	if(!g_on_the_air || proceed)
 	{
 		proceed = FALSE;
@@ -1006,7 +1002,7 @@ void loop()
 				g_temperature = temp;
 				int8_t delta25 = 25 - temp;
 				int8_t adj = eeprom_read_byte((uint8_t*)&ee_temperature_table[delta25]);
-				rv3028_set_offset(g_rv3028_offset+adj);
+				rv3028_set_offset_RAM(g_rv3028_offset+adj);
 			}
 
 			setUpAudioSampling(false);
@@ -1155,6 +1151,7 @@ void loop()
 			}
 		}
 	}
+#endif // !INIT_EEPROM_ONLY
 }
 
 
@@ -1377,30 +1374,6 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_TRANSMITTER_ENABLE:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					if((lb_buff->fields[FIELD1][1] == 'F') || (lb_buff->fields[FIELD1][0] == '0'))
-					{
-						cli();
-						g_enable_transmitter = FALSE;
-						digitalWrite(PIN_CW_KEY_LOGIC,OFF);
-						sei();
-					}
-					else
-					{
-						g_enable_transmitter = TRUE;
-					}
-
-					eeprom_update_byte(&ee_enable_transmitter,g_enable_transmitter);
-				}
-
-				sprintf(g_tempStr,"TXE:%s\n",g_enable_transmitter ? "ON" : "OFF");
-				lb_send_string(g_tempStr,FALSE);
-			}
-			break;
-
 			case MESSAGE_GO:
 			{
 				setupForFox(NULL);
@@ -1499,12 +1472,6 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 					sprintf(g_tempStr,"CLK:%lu\n",t);
 					doprint = true;
 				}
-				else if(lb_buff->fields[FIELD1][0] == 'A')
-				{
-					int a = rv3028_get_aging();
-					sprintf(g_tempStr,"A=%d\n",a);
-					doprint = true;
-				}
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -1513,13 +1480,18 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 						if(o < 512)
 						{
-							rv3028_set_offset(o);
+							rv3028_set_offset_RAM(o);
 						}
 					}
 
-					int a = rv3028_get_aging();
+					int a = rv3028_get_offset_RAM();
 					sprintf(g_tempStr,"C=%d\n",a);
 					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'X')
+				{
+					EIMSK &= ~(1 << INT0);   /* Disable INT0 interrupts */
+					rv3028_32kHz_sqw();
 				}
 
 				if(doprint)
@@ -1832,10 +1804,11 @@ void initializeEEPROMVars(BOOL resetAll)
 			g_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration);
 		}
 
-		if(resetAll || ((uint16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset) == 0xFFFF))
+		if((uint16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset) == 0xFFFF)
 		{
-			g_rv3028_offset = rv3028_get_aging();
+			g_rv3028_offset = rv3028_get_offset_RAM();
 			eeprom_update_word((uint16_t*)&ee_rv3028_offset,(uint16_t)g_rv3028_offset);
+			g_allow_rv3028_eeprom_changes = TRUE; /* Allow 1-sec interrupt to get permanently saved within the RTC EEPROM */
 		}
 		else
 		{
