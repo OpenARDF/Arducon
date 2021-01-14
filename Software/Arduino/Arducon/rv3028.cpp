@@ -85,6 +85,8 @@
    #define RTC_EEPROM_OFFSET               0x36
    #define RTC_EEPROM_BACKUP               0x37
 
+	volatile BOOL g_allow_rv3028_eeprom_changes = FALSE;
+
 	time_t rv3028_get_epoch(bool *result)
 	{
 		time_t epoch = 0;
@@ -196,7 +198,7 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	void rv3028_set_date_time(char * dateString)        /* "2021-01-10T21:00:00Z" */
+	void rv3028_set_date_time(char * dateString)                                /* "2021-01-10T21:00:00Z" */
 	{
 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
 		int length = strlen((const char*)dateString);
@@ -223,7 +225,7 @@
 		}
 	}
 
-	int16_t rv3028_get_aging()
+	int16_t rv3028_get_offset_RAM()
 	{
 		uint8_t data[2];
 		int16_t result;
@@ -237,17 +239,19 @@
 		return(result);
 	}
 
-	void rv3028_set_offset(uint16_t val)
+	void rv3028_set_offset_RAM(uint16_t val)
 	{
-		uint8_t data[2] = {0,0x10};
-
+		uint8_t data[2] = { 0, 0x10 };
 		data[0] = val >> 1;
-		if(val & 0x01) data[1] = 0x90;
+		if(val & 0x01)
+		{
+			data[1] = 0x90;
+		}
 
 		i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
 	}
 
-#ifdef ONETIME_SETUP_ONLY
+#ifdef INIT_EEPROM_ONLY
 /*
  *  Instructions for setting EEPROM values:
  *       1. Enter the correct password PW (PW = EEPW) to unlock write protection
@@ -259,19 +263,35 @@
  */
 		void rv3028_1s_sqw(void)
 		{
-			uint8_t byte = 0x08;    /* EERD = 1 */
-
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
-			byte = 0xC5;            /* FD = 1 Hz */
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
-			byte = 0x00;
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
-			byte = 0x11;
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
-			byte = 0x00;    /* EERD = 0 */
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+			if(g_allow_rv3028_eeprom_changes)
+			{
+				uint8_t byte = 0x08;    /* EERD = 1 */
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+				byte = 0xC5;            /* FD = 1 Hz */
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+				byte = 0x00;            /* EECMD = 00h followed by 11h to update EEPROM */
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
+				byte = 0x11;
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
+				byte = 0x00;            /* EERD = 0 */
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+				g_allow_rv3028_eeprom_changes = FALSE;
+			}
+			else                        /* Just set RAM value */
+			{
+				uint8_t byte = 0xC5;    /* FD = 1 Hz */
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+			}
 		}
-#endif /* ONETIME_SETUP_ONLY */
 
+#endif  /* INIT_EEPROM_ONLY */
+
+	void rv3028_32kHz_sqw(void)
+	{
+		/* Just set RAM value */
+		uint8_t byte = 0xC0;    /* FD = 32.768 kHz */
+
+		i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+	}
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */
