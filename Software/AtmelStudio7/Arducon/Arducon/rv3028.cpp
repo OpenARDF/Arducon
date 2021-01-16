@@ -87,13 +87,39 @@
 
 	volatile BOOL g_allow_rv3028_eeprom_changes = FALSE;
 
-	time_t rv3028_get_epoch(bool *result)
+	uint8_t bcd2dec(uint8_t val)
+	{
+		uint8_t result = 10 * (val >> 4) + (val & 0x0F);
+
+		return( result);
+	}
+
+	uint8_t char2bcd(char c[])
+	{
+		uint8_t result = (c[1] - '0') + ((c[0] - '0') << 4);
+		return result;
+	}
+
+	time_t rv3028_get_epoch(bool *result, char *datetime)
 	{
 		time_t epoch = 0;
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
-		BOOL res;
+		BOOL res = 0;
 
-		res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+		if(datetime)                                    /* String format "YYMMDDhhmmss" */
+		{
+			data[0] = char2bcd(&datetime[10]); /* seconds in BCD */
+			data[1] = char2bcd(&datetime[8]);  /* minutes in BCD */
+			data[2] = char2bcd(&datetime[6]);  /* hours in BCD */
+			/* data[3] =  not used */
+			data[4] = char2bcd(&datetime[4]);  /* day of month in BCD */
+			data[5] = char2bcd(&datetime[2]);  /* month in BCD */
+			data[6] = char2bcd(&datetime[0]);  /* 2-digit year in BCD */
+		}
+		else
+		{
+			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+		}
 
 		if(!res)
 		{
@@ -105,15 +131,15 @@
 			uint8_t minutes;
 			uint8_t seconds;
 
-			year += 10 * (data[6] >> 4) + (data[6] & 0x0F);
+			year += (int16_t)bcd2dec(data[6]);
 			ltm.tm_year = year;                         /* year since 1900 */
 
 			year += 1900;                               /* adjust year to calendar year */
 
-			month = 10 * (data[5] >> 4) + (data[5] & 0x0F);
+			month = bcd2dec(data[5]);
 			ltm.tm_mon = month - 1;                     /* mon 0 to 11 */
 
-			date = 10 * (data[4] >> 4) + (data[4] & 0x0F);
+			date = bcd2dec(data[4]);
 			ltm.tm_mday = date;                         /* month day 1 to 31 */
 
 			ltm.tm_yday = 0;
@@ -124,9 +150,9 @@
 
 			ltm.tm_yday += (ltm.tm_mday - 1);
 
-			seconds = 10 * (data[0] >> 4) + (data[0] & 0x0F);
-			minutes = 10 * (data[1] >> 4) + (data[1] & 0x0F);
-			hours = 10 * (data[2] >> 4) + (data[2] & 0x0F);
+			seconds = bcd2dec(data[0]);
+			minutes = bcd2dec(data[1]);
+			hours = bcd2dec(data[2]);
 
 			ltm.tm_hour = hours;
 			ltm.tm_min = minutes;
@@ -141,6 +167,7 @@
 		{
 			*result = res ? 1 : 0;
 		}
+
 		return(epoch);
 	}
 
@@ -157,9 +184,9 @@
 
 			if(!i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7))
 			{
-				seconds = data[0];
-				minutes = data[1];
-				hours = data[2];
+				seconds = bcd2dec(data[0]);
+				minutes = bcd2dec(data[1]);
+				hours = bcd2dec(data[2]);
 
 				if(buffer)
 				{
@@ -180,9 +207,9 @@
 
 						default:    /* Day_Month_Year_Hours_Minutes_Seconds: */
 						{
-							date = data[4] & 0x0f;
-							month = data[5] & 0x0f;
-							year += data[6];
+							date = bcd2dec(data[4]);
+							month = bcd2dec(data[5]);
+							year += bcd2dec(data[6]);
 
 							sprintf(buffer, "%4d-%02d-%02dT%1d:%1d:%1d", year, month, date, hours, minutes, seconds);
 						}
@@ -198,28 +225,28 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	void rv3028_set_date_time(char * dateString)                                /* "2021-01-10T21:00:00Z" */
+	void rv3028_set_date_time(char * dateString)     /* String format "YYMMDDhhmmss" */
 	{
 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
 		int length = strlen((const char*)dateString);
 
 		if(length >= 19)
 		{
-			data[0] = dateString[18] - '0';             /* seconds */
-			data[0] += ((dateString[17] - '0') << 4);   /* 10s of seconds */
-			data[1] = dateString[15] - '0';             /* minutes */
-			data[1] += ((dateString[14] - '0') << 4);   /* 10s of minutes */
-			data[2] = dateString[12] - '0';             /* hours */
-			data[2] += ((dateString[11] - '0') << 4);   /* 10s of hours */
+			data[0] = dateString[11] - '0';             /* seconds */
+			data[0] += ((dateString[10] - '0') << 4);   /* 10s of seconds */
+			data[1] = dateString[9] - '0';              /* minutes */
+			data[1] += ((dateString[8] - '0') << 4);    /* 10s of minutes */
+			data[2] = dateString[7] - '0';              /* hours */
+			data[2] += ((dateString[6] - '0') << 4);    /* 10s of hours */
 
 			/*data[3] = Skip day of week */
 
-			data[4] = dateString[9] - '0';              /* day of month digit 1 */
-			data[4] += ((dateString[8] - '0') << 4);    /* day of month */
-			data[5] = dateString[6] - '0';              /* month digit 1 */
-			data[5] += ((dateString[5] - '0') << 4);    /* month */
-			data[6] = dateString[3] - '0';              /* year digit 1 */
-			data[6] += ((dateString[2] - '0') << 4);    /* year - two digits */
+			data[4] = dateString[5] - '0';              /* day of month digit 1 */
+			data[4] += ((dateString[4] - '0') << 4);    /* day of month */
+			data[5] = dateString[3] - '0';              /* month digit 1 */
+			data[5] += ((dateString[2] - '0') << 4);    /* month */
+			data[6] = dateString[1] - '0';              /* year digit 1 */
+			data[6] += ((dateString[0] - '0') << 4);    /* year - two digits */
 
 			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
 		}
@@ -242,6 +269,7 @@
 	void rv3028_set_offset_RAM(uint16_t val)
 	{
 		uint8_t data[2] = { 0, 0x10 };
+
 		data[0] = val >> 1;
 		if(val & 0x01)
 		{

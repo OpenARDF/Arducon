@@ -71,6 +71,11 @@ volatile BOOL g_callsign_sent = FALSE;
 
 volatile BOOL g_blinky_time = FALSE;
 
+volatile time_t g_current_epoch = 0;
+volatile time_t g_event_start_epoch = 0;
+volatile time_t g_event_finish_epoch = 0;
+
+volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
 volatile int g_fox_seconds_into_interval = 0;
 volatile int g_fox_counter = 1;
@@ -90,6 +95,8 @@ volatile BOOL g_sync_enabled = TRUE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 int8_t g_temperature = 0;
+volatile BOOL g_config_error = FALSE;
+volatile BOOL g_use_rtc_to_start = FALSE;
 
 #if !COMPILE_FOR_ATMELSTUDIO7
 	Fox_t operator++(volatile Fox_t &orig, int)
@@ -121,19 +128,21 @@ static char EEMEM ee_stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
 #define SIZE_OF_TEMPERATURE_TABLE 60
 static uint16_t EEMEM ee_temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 static uint8_t EEMEM ee_id_codespeed;
-static uint16_t EEMEM ee_clock_calibration;
+/*static uint16_t EEMEM ee_clock_calibration; */
 static uint8_t EEMEM ee_fox_setting;
 static uint8_t EEMEM ee_enable_LEDs;
 static int16_t EEMEM ee_temp_calibration;
 static int16_t EEMEM ee_rv3028_offset;
 static uint8_t EEMEM ee_enable_start_timer;
 static uint8_t EEMEM ee_enable_transmitter;
+static time_t EEMEM ee_event_start_epoch;
+static time_t EEMEM ee_event_finish_epoch;
 
 static char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
 static volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 static volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 static volatile uint16_t g_time_needed_for_ID = 0;
-static volatile uint16_t g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
+/*static volatile uint16_t g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT; */
 static volatile int16_t g_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 /*static volatile uint8_t g_override_DIP_switches = EEPROM_OVERRIDE_DIP_SW_DEFAULT; */
 static volatile uint8_t g_enable_LEDs;
@@ -190,7 +199,7 @@ void setUpAudioSampling(BOOL enableSampling);
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
 	/* set active pins */
-	pinMode(PIN_LED1, OUTPUT);  /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);              /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -226,12 +235,12 @@ void setUpAudioSampling(BOOL enableSampling);
 	pinMode(A4, INPUT_PULLUP);
 	pinMode(A5, INPUT_PULLUP);
 
-	initializeEEPROMVars(FALSE); /* Must happen after pins are configure due to I2C access */
+	initializeEEPROMVars(FALSE);    /* Must happen after pins are configure due to I2C access */
 
 	setUpAudioSampling(true);
 
-	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
-	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
+	EICRA  |= (1 << ISC01);         /* Configure INT0 falling edge for RTC 1-second interrupts */
+	EIMSK |= (1 << INT0);           /* Enable INT0 interrupts */
 
 	/**
 	 * TIMER2 is for periodic interrupts to drive Morse code generation */
@@ -265,30 +274,31 @@ void setUpAudioSampling(BOOL enableSampling);
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
-	rv3028_1s_sqw();        /* Only needs to run once on a new board to program RTC */
+	rv3028_1s_sqw();            /* Only needs to run once on a new board to program RTC */
 
-	sei();                                                      /* Enable interrupts */
+	sei();                      /* Enable interrupts */
 
-	linkbus_init(BAUD);                                         /* Start the Link Bus serial comms */
+	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
 	lb_send_string((char*)SW_REVISION, FALSE);
 
 
 	lb_send_string((char*)"\n\nStored Data:\n", TRUE);
 	sprintf(g_tempStr, "  ID: %s\n", g_messages_text[STATION_ID]);
 	lb_send_string(g_tempStr, TRUE);
-	sprintf(g_tempStr, "  CAL: %u\n", g_clock_calibration);
-	lb_send_string(g_tempStr, TRUE);
-	sprintf(g_tempStr, "  LED: %s\n", g_enable_LEDs ? "ON" : "OFF");
-	lb_send_string(g_tempStr, TRUE);
-	sprintf(g_tempStr, "  STA: %s\n", g_enable_start_timer ? "ON" : "OFF");
-	lb_send_string(g_tempStr, TRUE);
-	sprintf(g_tempStr, "  TXE: %s\n", g_enable_transmitter ? "ON" : "OFF");
-	lb_send_string(g_tempStr, TRUE);
-	dtostrf((double)threshold, 4, 0, s);
-	sprintf(g_tempStr, "Thresh=%s\n\n", s);
-	lb_send_string(g_tempStr, TRUE);
+/*	sprintf(g_tempStr, "  CAL: %u\n", g_clock_calibration);
+ *	lb_send_string(g_tempStr, TRUE);
+ *	sprintf(g_tempStr, "  LED: %s\n", g_enable_LEDs ? "ON" : "OFF");
+ *	lb_send_string(g_tempStr, TRUE);
+ *	sprintf(g_tempStr, "  STA: %s\n", g_enable_start_timer ? "ON" : "OFF");
+ *	lb_send_string(g_tempStr, TRUE);
+ *	sprintf(g_tempStr, "  TXE: %s\n", g_enable_transmitter ? "ON" : "OFF");
+ *	lb_send_string(g_tempStr, TRUE);
+ *	dtostrf((double)threshold, 4, 0, s);
+ *	sprintf(g_tempStr, "Thresh=%s\n\n", s);
+ *	lb_send_string(g_tempStr, TRUE); */
 
 	lb_send_NewPrompt();
+	setupForFox(NULL);
 
 	/*  Serial.print("SAMPLING_RATE = ");
 	 *  Serial.println(_SAMPLING_FREQUENCY);
@@ -300,6 +310,12 @@ void setUpAudioSampling(BOOL enableSampling);
 	 *  Serial.print(k);
 	 *  Serial.print(" coeff = ");
 	 *  Serial.println(g_coeff); */
+
+	time_t now = rv3028_get_epoch(NULL, NULL);
+	if(now < g_event_finish_epoch)  /* event has not finished */
+	{
+		g_use_rtc_to_start = TRUE;
+	}
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -707,7 +723,7 @@ ISR( TIMER2_COMPB_vect )
 
 	static BOOL key = OFF;
 
-	if(g_on_the_air > 0)
+	if(!g_transmissions_disabled && g_on_the_air)
 	{
 		if(codeInc)
 		{
@@ -766,7 +782,7 @@ ISR( TIMER2_COMPB_vect )
 			}
 		}
 	}
-	else if(!g_on_the_air)
+	else
 	{
 		if(key)
 		{
@@ -794,11 +810,14 @@ ISR( INT0_vect )
 {
 	static int id_countdown = 0;
 
+	g_current_epoch++;
+
 	if(g_seconds_since_sync == 0)   /* sync just occurred */
 	{
 		id_countdown = g_id_interval;
 		g_fox_counter = 1;
 		g_lastSeconds = 0;
+		g_current_epoch = rv3028_get_epoch(NULL, NULL); /* resync to RTC periodically */
 	}
 
 	g_seconds_since_sync++; /* Total elapsed time counter */
@@ -812,6 +831,8 @@ ISR( INT0_vect )
 	if(g_temperature_check_countdown)
 	{
 		g_temperature_check_countdown--;
+
+		g_current_epoch = rv3028_get_epoch(NULL, NULL); /* resync to RTC periodically */
 	}
 
 	if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
@@ -884,274 +905,319 @@ SIGNAL(TIMER0_COMPA_vect)
 void loop()
 {
 #if !INIT_EEPROM_ONLY
-	static int time_for_id = 99;
-	static BOOL id_set = TRUE;
-	static BOOL proceed = FALSE;
-#endif // !INIT_EEPROM_ONLY
+		static int time_for_id = 99;
+		static BOOL id_set = TRUE;
+		static BOOL proceed = FALSE;
+#endif  /* !INIT_EEPROM_ONLY */
 
 	handleLinkBusMsgs();
 
 #if !INIT_EEPROM_ONLY
-	if(!g_on_the_air || proceed)
-	{
-		proceed = FALSE;
+		if(g_transmissions_disabled)
+		{
+			if(g_use_rtc_to_start)
+			{
+				if(g_current_epoch < g_event_start_epoch)   /* event has not started yet */
+				{
 
-		/* Choose the appropriate Morse pattern to be sent */
-		if(g_fox == FOX_DEMO)
-		{
-			strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox_counter]);
-		}
-		else if(g_fox == SPRINT_DEMO)
-		{
-			strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox_counter + 8]);
+				}
+				else /* event has started already */
+				{
+					/* TODO: need to adjust settings to put the transmitter into the state as if it had started at the correct time */
+
+					g_transmissions_disabled = FALSE;
+				}
+			}
 		}
 		else
 		{
-			strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox]);
-		}
-
-		/* At the appropriate time set the pattern to be sent and start transmissions */
-		if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO) || (g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
-		{
-			BOOL repeat = TRUE;
-			g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
-			makeMorse(g_messages_text[PATTERN_TEXT],&repeat,NULL);
-
-			if(g_time_to_ID || (g_id_interval <= g_on_air_interval))
+			if(!g_on_the_air || proceed)
 			{
-				time_for_id = g_on_air_interval - (500 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID],g_id_codespeed)) / 1000;
-				g_time_to_ID = FALSE;
+				proceed = FALSE;
+
+				/* Choose the appropriate Morse pattern to be sent */
+				if(g_fox == FOX_DEMO)
+				{
+					strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox_counter]);
+				}
+				else if(g_fox == SPRINT_DEMO)
+				{
+					strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox_counter + 8]);
+				}
+				else
+				{
+					strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox]);
+				}
+
+				/* At the appropriate time set the pattern to be sent and start transmissions */
+				if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO) || (g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
+				{
+					BOOL repeat = TRUE;
+					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
+					makeMorse(g_messages_text[PATTERN_TEXT],&repeat,NULL);
+
+					if(g_time_to_ID || (g_id_interval <= g_on_air_interval))
+					{
+						time_for_id = g_on_air_interval - (500 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID],g_id_codespeed)) / 1000;
+						g_time_to_ID = FALSE;
+					}
+					else
+					{
+						time_for_id = g_on_air_interval + 99;   /* prevent sending ID */
+					}
+
+					id_set = FALSE;
+					g_on_the_air = TRUE;
+					g_callsign_sent = FALSE;
+					g_fox_transition = FALSE;
+					g_fox_tone_offset = g_fox_counter;
+				}
 			}
 			else
 			{
-				time_for_id = g_on_air_interval + 99;   /* prevent sending ID */
-			}
-
-			id_set = FALSE;
-			g_on_the_air = TRUE;
-			g_callsign_sent = FALSE;
-			g_fox_transition = FALSE;
-			g_fox_tone_offset = g_fox_counter;
-		}
-	}
-	else
-	{
-		if(!id_set && (g_fox_seconds_into_interval == time_for_id)) /* Send the call sign at the right time */
-		{
-			g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
-			BOOL repeat = FALSE;
-			makeMorse(g_messages_text[STATION_ID],&repeat,NULL);
-			id_set = TRUE;
-			g_callsign_sent = FALSE;
-		}
-		else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_DEMO))
-		{
-			if(g_fox_transition)
-			{
-				g_fox_transition = FALSE;
-				g_on_the_air = FALSE;
-				proceed = TRUE;
-			}
-		}
-
-		if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO))
-		{
-			if((g_callsign_sent) && g_fox_transition)   /* Ensure we've begun the next minute before proceeding */
-			{
-				proceed = TRUE;
-			}
-		}
-		else if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))   /* Proceed as soon as the callsign has been sent */
-		{
-			if(g_callsign_sent)
-			{
-				proceed = TRUE;
-			}
-		}
-		else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5) && g_callsign_sent)
-		{
-			g_on_the_air = FALSE;
-		}
-		else if((g_fox != g_fox_counter) && g_callsign_sent)    /* Turn off transmissions during minutes when this fox should be silent */
-		{
-			g_on_the_air = FALSE;
-		}
-	}
-
-	if(g_goertzel.SamplesReady())
-	{
-		float magnitudeX;
-		float magnitudeY;
-#ifdef DEBUG_DTMF
-			float magnitudeM;
-#endif  /* DEBUG_DTMF */
-		float largestX = 0;
-		float largestY = 0;
-		static char lastKey = '\0';
-		static int checkCount = 10;                                                    /* Set above the threshold to prevent an initial false key detect */
-		static int quietCount = 0;
-		int x = -1,y = -1;
-
-		if(!g_temperature_check_countdown)
-		{
-
-			setUpTemp();
-			int8_t temp = (int8_t)getTemp();
-			if(temp != g_temperature)
-			{
-				g_temperature = temp;
-				int8_t delta25 = 25 - temp;
-				int8_t adj = eeprom_read_byte((uint8_t*)&ee_temperature_table[delta25]);
-				rv3028_set_offset_RAM(g_rv3028_offset+adj);
-			}
-
-			setUpAudioSampling(false);
-			g_temperature_check_countdown = 60;
-		}
-
-		for(int i = 0; i < 4; i++)
-		{
-			g_goertzel.SetTargetFrequency(y_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
-			magnitudeY = g_goertzel.Magnitude2();               /*check them for target_freq */
-
-			if(magnitudeY > largestY)                           /*if you're getting false hits or no hits adjust the threshold */
-			{
-				largestY = magnitudeY;
-				if(magnitudeY > threshold)
+				if(!id_set && (g_fox_seconds_into_interval == time_for_id)) /* Send the call sign at the right time */
 				{
-					y = i;
+					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
+					BOOL repeat = FALSE;
+					makeMorse(g_messages_text[STATION_ID],&repeat,NULL);
+					id_set = TRUE;
+					g_callsign_sent = FALSE;
+				}
+				else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_DEMO))
+				{
+					if(g_fox_transition)
+					{
+						g_fox_transition = FALSE;
+						g_on_the_air = FALSE;
+						proceed = TRUE;
+					}
+				}
+
+				if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO))
+				{
+					if((g_callsign_sent) && g_fox_transition)   /* Ensure we've begun the next minute before proceeding */
+					{
+						proceed = TRUE;
+					}
+				}
+				else if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))   /* Proceed as soon as the callsign has been sent */
+				{
+					if(g_callsign_sent)
+					{
+						proceed = TRUE;
+					}
+				}
+				else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5) && g_callsign_sent)
+				{
+					g_on_the_air = FALSE;
+				}
+				else if((g_fox != g_fox_counter) && g_callsign_sent)    /* Turn off transmissions during minutes when this fox should be silent */
+				{
+					g_on_the_air = FALSE;
 				}
 			}
-
-#ifdef DEBUG_DTMF
-				if(magnitudeY > threshold)
-				{
-					dtostrf((double)y_frequencies[i],4,0,s);
-					sprintf(g_tempStr,"Y(%s)=",s);
-					lb_send_string(g_tempStr,TRUE);
-					dtostrf((double)magnitudeY,4,0,s);
-					sprintf(g_tempStr,"%s\n",s);
-					lb_send_string(g_tempStr,TRUE);
-				}
-#endif  /* DEBUG_DTMF */
 		}
 
-		if(y >= 0)
+
+		if(g_goertzel.SamplesReady())
 		{
+			float magnitudeX;
+			float magnitudeY;
+#ifdef DEBUG_DTMF
+				float magnitudeM;
+#endif  /* DEBUG_DTMF */
+			float largestX = 0;
+			float largestY = 0;
+			static char lastKey = '\0';
+			static int checkCount = 10;                                                                                    /* Set above the threshold to prevent an initial false key detect */
+			static int quietCount = 0;
+			int x = -1,y = -1;
+
+			if(!g_temperature_check_countdown)
+			{
+
+				setUpTemp();
+				int8_t temp = (int8_t)getTemp();
+				if(temp != g_temperature)
+				{
+					g_temperature = temp;
+					int8_t delta25 = 25 - temp;
+					int8_t adj = eeprom_read_byte((uint8_t*)&ee_temperature_table[delta25]);
+					rv3028_set_offset_RAM(g_rv3028_offset + adj);
+				}
+
+				setUpAudioSampling(false);
+				g_temperature_check_countdown = 60;
+			}
+
 			for(int i = 0; i < 4; i++)
 			{
-				g_goertzel.SetTargetFrequency(x_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
-				magnitudeX = g_goertzel.Magnitude2();               /*check them for target_freq */
+				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
+				magnitudeY = g_goertzel.Magnitude2();               /*check them for target_freq */
 
-				if(magnitudeX > largestX)                           /*if you're getting false hits or no hits adjust the threshold */
+				if(magnitudeY > largestY)                           /*if you're getting false hits or no hits adjust the threshold */
 				{
-					largestX = magnitudeX;
-					if(magnitudeX > threshold)
+					largestY = magnitudeY;
+					if(magnitudeY > threshold)
 					{
-						x = i;
+						y = i;
 					}
-/*					break; */
 				}
 
 #ifdef DEBUG_DTMF
-					if(magnitudeX > threshold)
+					if(magnitudeY > threshold)
 					{
-						dtostrf((double)x_frequencies[i],4,0,s);
-						sprintf(g_tempStr,"X(%s)=",s);
+						dtostrf((double)y_frequencies[i],4,0,s);
+						sprintf(g_tempStr,"Y(%s)=",s);
 						lb_send_string(g_tempStr,TRUE);
-						dtostrf((double)magnitudeX,4,0,s);
+						dtostrf((double)magnitudeY,4,0,s);
 						sprintf(g_tempStr,"%s\n",s);
 						lb_send_string(g_tempStr,TRUE);
 					}
 #endif  /* DEBUG_DTMF */
 			}
 
-			if(x >= 0)
+			if(y >= 0)
 			{
-				char newKey = key[4 * y + x];
-
-				if(lastKey == newKey)
+				for(int i = 0; i < 4; i++)
 				{
-					checkCount++;
+					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
+					magnitudeX = g_goertzel.Magnitude2();               /*check them for target_freq */
 
-					if(checkCount == 3)
+					if(magnitudeX > largestX)                           /*if you're getting false hits or no hits adjust the threshold */
 					{
-						g_dtmf_detected = TRUE;
-						quietCount = 0;
-						g_lastKey = newKey;
-						sprintf(g_tempStr,"\"%c\"\n",g_lastKey);
-						lb_send_string(g_tempStr,TRUE);
-
-						processKey(newKey);
+						largestX = magnitudeX;
+						if(magnitudeX > threshold)
+						{
+							x = i;
+						}
+/*					break; */
+					}
 
 #ifdef DEBUG_DTMF
-							lb_send_string((char*)"Mag X/Y=",TRUE);
-							dtostrf((double)largestX,4,0,s);
-							sprintf(g_tempStr,"%s / ",s);
+						if(magnitudeX > threshold)
+						{
+							dtostrf((double)x_frequencies[i],4,0,s);
+							sprintf(g_tempStr,"X(%s)=",s);
 							lb_send_string(g_tempStr,TRUE);
-							dtostrf((double)largestY,4,0,s);
+							dtostrf((double)magnitudeX,4,0,s);
 							sprintf(g_tempStr,"%s\n",s);
 							lb_send_string(g_tempStr,TRUE);
+						}
+#endif  /* DEBUG_DTMF */
+				}
 
-							for(int i = 0; i < 7; i++)
-							{
-								g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /*initialize library function with the given sampling frequency no of samples and target freq */
-								magnitudeM = g_goertzel.Magnitude2();               /*check them for target_freq */
-								dtostrf((double)mid_frequencies[i],4,0,s);
-								sprintf(g_tempStr,"%s=",s);
+				if(x >= 0)
+				{
+					char newKey = key[4 * y + x];
+
+					if(lastKey == newKey)
+					{
+						checkCount++;
+
+						if(checkCount == 3)
+						{
+							g_dtmf_detected = TRUE;
+							quietCount = 0;
+							g_lastKey = newKey;
+							sprintf(g_tempStr,"\"%c\"\n",g_lastKey);
+							lb_send_string(g_tempStr,TRUE);
+
+							processKey(newKey);
+
+#ifdef DEBUG_DTMF
+								lb_send_string((char*)"Mag X/Y=",TRUE);
+								dtostrf((double)largestX,4,0,s);
+								sprintf(g_tempStr,"%s / ",s);
 								lb_send_string(g_tempStr,TRUE);
-								dtostrf((double)magnitudeM,4,0,s);
+								dtostrf((double)largestY,4,0,s);
 								sprintf(g_tempStr,"%s\n",s);
 								lb_send_string(g_tempStr,TRUE);
-							}
-#endif  /* DEBUG_DTMF */
-					}
-				}
 
-				lastKey = newKey;
+								for(int i = 0; i < 7; i++)
+								{
+									g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /*initialize library function with the given sampling frequency no of samples and target freq */
+									magnitudeM = g_goertzel.Magnitude2();               /*check them for target_freq */
+									dtostrf((double)mid_frequencies[i],4,0,s);
+									sprintf(g_tempStr,"%s=",s);
+									lb_send_string(g_tempStr,TRUE);
+									dtostrf((double)magnitudeM,4,0,s);
+									sprintf(g_tempStr,"%s\n",s);
+									lb_send_string(g_tempStr,TRUE);
+								}
+#endif  /* DEBUG_DTMF */
+						}
+					}
+
+					lastKey = newKey;
+				}
 			}
-		}
-		else    /* Quiet detected */
-		{
-			unsigned long delta = g_tick_count - g_last;
+			else    /* Quiet detected */
+			{
+				unsigned long delta = g_tick_count - g_last;
 /*			lb_send_string((char*)".", FALSE); */
 
-			/* Quieting must be detected at least 3 times in less than 5 seconds before another key can be accepted */
-			if(quietCount++ > 2)
-			{
-				g_dtmf_detected = FALSE;
-				digitalWrite(PIN_LED1,OFF);
-
-				if(delta < 1500)
+				/* Quieting must be detected at least 3 times in less than 5 seconds before another key can be accepted */
+				if(quietCount++ > 2)
 				{
-					checkCount = 0;
+					g_dtmf_detected = FALSE;
+					digitalWrite(PIN_LED1,OFF);
+
+					if(delta < 1500)
+					{
+						checkCount = 0;
+					}
+
+					quietCount = 0;
+					g_last = g_tick_count;
+					lastKey = '\0';
 				}
-
-				quietCount = 0;
-				g_last = g_tick_count;
-				lastKey = '\0';
 			}
+
+			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 		}
 
-		ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
-	}
-
-	if(!g_LEDs_Timed_Out)       /* flash LED */
-	{
-		if(g_dtmf_detected)
+		if(g_event_finish_epoch <= g_event_start_epoch)
 		{
-			if(g_blinky_time)
+			g_config_error = TRUE;
+		}
+		else if(g_transmissions_disabled && (g_current_epoch > g_event_finish_epoch))   /* The scheduled event is over */
+		{
+			g_config_error = TRUE;
+		}
+		else
+		{
+			g_config_error = FALSE;
+		}
+
+		if(!g_LEDs_Timed_Out)   /* flash LED */
+		{
+			if(g_dtmf_detected)
 			{
-				digitalWrite(PIN_LED2,OFF);
+				if(g_blinky_time)
+				{
+					digitalWrite(PIN_LED2,OFF);
+				}
+				else
+				{
+					digitalWrite(PIN_LED2,ON);
+				}
 			}
-			else
+
+			if(g_config_error)
 			{
-				digitalWrite(PIN_LED2,ON);
+				if(g_blinky_time)
+				{
+					digitalWrite(PIN_LED1,OFF);
+				}
+				else
+				{
+					digitalWrite(PIN_LED1,ON);
+				}
 			}
 		}
-	}
-#endif // !INIT_EEPROM_ONLY
+#endif  /* !INIT_EEPROM_ONLY */
 }
 
 
@@ -1374,10 +1440,31 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_GO:
+			case MESSAGE_SYNC:
 			{
+				if(lb_buff->fields[FIELD1][0])
+				{
+					if(lb_buff->fields[FIELD1][0] == '0')       /* Stop the event. Resync will occur on next start */
+					{
+						g_transmissions_disabled = TRUE;
+					}
+					else if(lb_buff->fields[FIELD1][0] == '1')  /* Start the event, resyncing to a start time of now - same as a button press */
+					{
+						g_transmissions_disabled = FALSE;
+					}
+					else if(lb_buff->fields[FIELD1][0] == '2')  /* Start the event at the programmed start time */
+					{
+						if(!g_config_error)
+						{
+							g_use_rtc_to_start = TRUE;
+						}
+					}
+				}
+
+				sprintf(g_tempStr,"STA:%s\n",g_enable_start_timer ? "ON" : "OFF");
+				lb_send_string(g_tempStr,FALSE);
 				setupForFox(NULL);
-				lb_send_string((char*)"Re-sync successful!\n",FALSE);
+				lb_send_string((char*)"Synchronized\n",FALSE);
 			}
 			break;
 
@@ -1458,29 +1545,56 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			{
 				BOOL doprint = false;
 
-				if(lb_buff->fields[FIELD1][0] == 'T')
+				if(lb_buff->fields[FIELD1][0] == 'T')   /* Current time format "YYMMDDhhmmss" */
 				{
 					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
 
-					if(strlen(g_tempStr) <= MAX_PATTERN_TEXT_LENGTH)
+					if(strlen(g_tempStr) == 12)
 					{
-						strcat(g_tempStr,"Z");
-						rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+						rv3028_set_date_time(g_tempStr);    /* String format "YYMMDDhhmmss" */
 					}
 
-					time_t t = rv3028_get_epoch(NULL);
-					sprintf(g_tempStr,"CLK:%lu\n",t);
+					g_current_epoch = rv3028_get_epoch(NULL,NULL);
+					sprintf(g_tempStr,"CLK:%lu\n",g_current_epoch);
 					doprint = true;
 				}
-				else if(lb_buff->fields[FIELD1][0] == 'O')
+				else if(lb_buff->fields[FIELD1][0] == 'S')  /* Event start time */
+				{
+					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+
+					if(strlen(g_tempStr) == 12)
+					{
+						g_event_start_epoch = rv3028_get_epoch(NULL,g_tempStr); /* String format "YYMMDDhhmmss" */
+
+						eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
+					}
+
+					sprintf(g_tempStr,"Start:%lu\n",g_event_start_epoch);
+					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
+				{
+					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+
+					if(strlen(g_tempStr) == 12)
+					{
+						g_event_finish_epoch = rv3028_get_epoch(NULL,g_tempStr);    /* String format "YYMMDDhhmmss" */
+
+						eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
+					}
+
+					sprintf(g_tempStr,"Finish:%lu\n",g_event_finish_epoch);
+					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'C')
 				{
 					if(lb_buff->fields[FIELD2][0])
 					{
-						uint16_t o = (uint16_t)atoi(lb_buff->fields[FIELD2]);
+						uint16_t c = (uint16_t)atoi(lb_buff->fields[FIELD2]);
 
-						if(o < 512)
+						if(c < 512)
 						{
-							rv3028_set_offset_RAM(o);
+							rv3028_set_offset_RAM(c);
 						}
 					}
 
@@ -1490,7 +1604,7 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'X')
 				{
-					EIMSK &= ~(1 << INT0);   /* Disable INT0 interrupts */
+					EIMSK &= ~(1 << INT0);  /* Disable INT0 interrupts */
 					rv3028_32kHz_sqw();
 				}
 
@@ -1543,15 +1657,17 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 /*
  *  Command set:
- *  C1 c...c # - Set callsign ID to c...c
- *  C2 n...n # - Set fox ID and format (0 = beacon, 1 = MOE Classic, ... )
- *  C4 tttttttt # - Set start date/time = tttttttt
- *  C5 tttttttt # - Set finish date/time = tttttttt
- *  C6# - Start competition immediately, synchronize now, ignore RTC start time
- *  C7 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
- *  C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
- *  AA nn # - Address the following command to only those foxes in the specified competition format (used in case more than one competition's foxes might be listening)
- *
+ *  *C1 c...c # - Set callsign ID to c...c
+ *  *C2 n...n # - Set fox ID and format (0 = beacon, 1 = MOE Classic, ... )
+ *  *C4 tttttttt # - Set start date/time = tttttttt
+ *  *C5 tttttttt # - Set finish date/time = tttttttt
+ *  *C6# - Start competition immediately, synchronize now, ignore RTC start time
+ *  *C7 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
+ *  *C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
+ *  *An # - n=0: stop transmissions, n=1: re-sync and start transmissions, n=3: re-start transmissions from stop
+ *  *B nn # - Address the following command to only those foxes in the specified competition format (used in case more than one competition's foxes might be listening)
+ *  *D c...c # - Unlock Arducon (re-enable DTMF commands) where c...c is the password
+ *  *D# - Lock Arducon (disables all DTMF commands except *Dc...c#)
  */
 void processKey(char key)
 {
@@ -1582,6 +1698,52 @@ void processKey(char key)
 			{
 				state = STATE_C;
 			}
+			else if(key == 'A')
+			{
+				state = STATE_A;
+			}
+		}
+		break;
+
+		case STATE_A:
+		{
+			if(key == '0')
+			{
+				state = STATE_PAUSE_TRANSMISSIONS;
+			}
+			else if(key == '1')
+			{
+				state = STATE_START_TRANSMISSIONS;
+			}
+			else if(key == '2')
+			{
+				state = STATE_RESTART_TRANSMISSIONS;
+			}
+		}
+		break;
+
+		case STATE_PAUSE_TRANSMISSIONS:
+		{
+			if(key == '#')
+			{
+				state = STATE_SHUTDOWN;
+			}
+			else
+			{
+
+			}
+		}
+		break;
+
+		case STATE_START_TRANSMISSIONS:
+		{
+
+		}
+		break;
+
+		case STATE_RESTART_TRANSMISSIONS:
+		{
+
 		}
 		break;
 
@@ -1712,9 +1874,7 @@ void processKey(char key)
 			{
 				if(stringLength == 12)
 				{
-					/* string = "YYMMDDhhmmss" */
-					sprintf(g_tempStr,"20%c%c-%c%c-%c%cT%c%c:%c%c:%c%c",receivedString[0],receivedString[1],receivedString[2],receivedString[3],receivedString[4],receivedString[5],receivedString[6],receivedString[7],receivedString[8],receivedString[9],receivedString[10],receivedString[11]);
-					rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+					rv3028_set_date_time(receivedString);   /* String format "YYMMDDhhmmss" */
 					state = STATE_SHUTDOWN;
 				}
 			}
@@ -1740,18 +1900,20 @@ void initializeEEPROMVars(BOOL resetAll)
 	uint16_t i;
 	uint8_t initialization_flag = eeprom_read_byte(&ee_interface_eeprom_initialization_flag);
 
-	i2c_init(); /* Needs to happen here */
+	i2c_init();                                                         /* Needs to happen here */
 
 	if(!resetAll && (initialization_flag == EEPROM_INITIALIZED_FLAG))   /* EEPROM is up to date */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
-		g_clock_calibration = eeprom_read_word(&ee_clock_calibration);
+/*		g_clock_calibration = eeprom_read_word(&ee_clock_calibration); */
 		g_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration);
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
 		g_enable_LEDs = eeprom_read_byte(&ee_enable_LEDs);
 		g_enable_start_timer = eeprom_read_byte(&ee_enable_start_timer);
 		g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
+		g_event_start_epoch = eeprom_read_dword(&ee_event_start_epoch);
+		g_event_finish_epoch = eeprom_read_dword(&ee_event_finish_epoch);
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
@@ -1784,15 +1946,15 @@ void initializeEEPROMVars(BOOL resetAll)
 			g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
 		}
 
-		if(resetAll || (eeprom_read_word(&ee_clock_calibration) == 0xFFFF))
-		{
-			g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
-			eeprom_update_word(&ee_clock_calibration,g_clock_calibration);  /* Calibration only gets set by a serial command */
-		}
-		else
-		{
-			g_clock_calibration = eeprom_read_word(&ee_clock_calibration);
-		}
+/*      if(resetAll || (eeprom_read_word(&ee_clock_calibration) == 0xFFFF))
+ *      {
+ *          g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
+ *          eeprom_update_word(&ee_clock_calibration,g_clock_calibration);  / * Calibration only gets set by a serial command * /
+ *      }
+ *      else
+ *      {
+ *          g_clock_calibration = eeprom_read_word(&ee_clock_calibration);
+ *      } */
 
 		if(resetAll || ((uint16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration) == 0xFFFF))
 		{
@@ -1808,7 +1970,7 @@ void initializeEEPROMVars(BOOL resetAll)
 		{
 			g_rv3028_offset = rv3028_get_offset_RAM();
 			eeprom_update_word((uint16_t*)&ee_rv3028_offset,(uint16_t)g_rv3028_offset);
-			g_allow_rv3028_eeprom_changes = TRUE; /* Allow 1-sec interrupt to get permanently saved within the RTC EEPROM */
+			g_allow_rv3028_eeprom_changes = TRUE;   /* Allow 1-sec interrupt to get permanently saved within the RTC EEPROM */
 		}
 		else
 		{
@@ -1843,6 +2005,26 @@ void initializeEEPROMVars(BOOL resetAll)
 		else
 		{
 			g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
+		}
+
+		if(resetAll || (eeprom_read_dword(&ee_event_finish_epoch) == 0xFFFFFFFF))
+		{
+			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
+			eeprom_update_dword(&ee_event_finish_epoch,g_event_start_epoch);
+		}
+		else
+		{
+			g_event_start_epoch = eeprom_read_dword(&ee_event_finish_epoch);
+		}
+
+		if(resetAll || (eeprom_read_dword(&ee_event_start_epoch) == 0xFFFFFFFF))
+		{
+			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
+			eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
+		}
+		else
+		{
+			g_event_start_epoch = eeprom_read_dword(&ee_event_start_epoch);
 		}
 
 		if(resetAll || (eeprom_read_byte((uint8_t*)(&ee_stationID_text[0])) == 0xFF))
@@ -1903,8 +2085,6 @@ void setupForFox(Fox_t* fox)
 
 	g_LEDs_Timed_Out = !g_enable_LEDs;
 	digitalWrite(PIN_LED2,OFF); /*  LED Off - in case it was on in the middle of a transmission */
-
-	g_fox = BEACON;
 
 	if(fox)
 	{

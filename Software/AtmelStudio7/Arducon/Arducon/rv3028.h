@@ -53,7 +53,7 @@
 /**
  *  Reads time from the DS3231 and returns the epoch
  */
-		time_t rv3028_get_epoch(bool *result);
+		time_t rv3028_get_epoch(bool *result, char *datetime);
 
 
 /**

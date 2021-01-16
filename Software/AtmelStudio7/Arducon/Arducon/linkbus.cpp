@@ -44,10 +44,10 @@ static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
 
 #if INIT_EEPROM_ONLY
-#define HELP_TEXT ("\nCommands:\n  CLK [T|O time|cal] - Read/set clock time/cal\n  FOX [role]- Set fox role\n  ID -  Set callsign\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  TXE - Tx enable\n  VER - S/W version\0" )
+#define HELP_TEXT ("\nCommands:\n  CLK [T|C [time|cal]] - Read/set time/start/finish \"YYMMDDhhmmss\"\n  FOX [n]- Set fox role\n  ID -  Set callsign\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  TXE - Tx enable\n  VER - S/W version\0" )
 	static char EEMEM ee_textHelp[sizeof(HELP_TEXT)];
 #else
-	static char EEMEM ee_textHelp[193]; /* Value is printed when this program is compiled and run with INIT_EEPROM_ONLY = TRUE */
+	static char EEMEM ee_textHelp[210]; /* Value is printed when this program is compiled and run with INIT_EEPROM_ONLY = TRUE */
 #endif  /* INIT_EEPROM_ONLY */
 
 static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
