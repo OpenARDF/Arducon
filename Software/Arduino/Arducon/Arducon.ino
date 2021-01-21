@@ -37,6 +37,7 @@
 #include "linkbus.h"
 #include "Goertzel.h"
 #include "morse.h"
+#include "rv3028.h"
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/io.h>
@@ -51,6 +52,7 @@
 
 #define MAX_PATTERN_TEXT_LENGTH 20
 #define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 10)
+#define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
 
 /*#define SAMPLE_RATE 9630 */
 #define SAMPLE_RATE 19260
@@ -59,7 +61,7 @@
  *#define SAMPLE_RATE 154080 */
 
 volatile int32_t g_seconds_since_sync = 0;  /* Total elapsed time counter */
-volatile FoxType g_fox          = BEACON;   /* Sets Fox number not set by ISR. Set in startup and checked in main. */
+volatile Fox_t g_fox            = BEACON;   /* Sets Fox number not set by ISR. Set in startup and checked in main. */
 volatile int g_active           = 0;        /* Disable active. set and clear in ISR. Checked in main. */
 
 volatile int g_on_the_air       = 0;        /* Controls transmitter Morse activity */
@@ -87,11 +89,12 @@ volatile BOOL g_sync_pin_stable = FALSE;
 volatile BOOL g_sync_enabled = TRUE;
 
 volatile BOOL g_dtmf_detected = FALSE;
+int8_t g_temperature = 0;
 
 #if !COMPILE_FOR_ATMELSTUDIO7
-	FoxType operator++(volatile FoxType &orig, int)
+	Fox_t operator++(volatile Fox_t &orig, int)
 	{
-		orig = static_cast < FoxType > (orig + 1);  /* static_cast required because enum + int -> int */
+		orig = static_cast < Fox_t > (orig + 1);    /* static_cast required because enum + int -> int */
 		if(orig > INVALID_FOX)
 		{
 			orig = INVALID_FOX;
@@ -99,9 +102,9 @@ volatile BOOL g_dtmf_detected = FALSE;
 		return( orig);
 	}
 
-	FoxType operator +=(volatile FoxType &a, int b)
+	Fox_t operator +=(volatile Fox_t &a, int b)
 	{
-		a = static_cast < FoxType > (a + b);    /* static_cast required because enum + int -> int */
+		a = static_cast < Fox_t > (a + b);  /* static_cast required because enum + int -> int */
 		return( a);
 	}
  #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
@@ -115,11 +118,14 @@ volatile BOOL g_dtmf_detected = FALSE;
  ************************************************************************/
 static uint8_t EEMEM ee_interface_eeprom_initialization_flag = EEPROM_UNINITIALIZED;
 static char EEMEM ee_stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
+#define SIZE_OF_TEMPERATURE_TABLE 60
+static uint16_t EEMEM ee_temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 static uint8_t EEMEM ee_id_codespeed;
 static uint16_t EEMEM ee_clock_calibration;
-/*static uint8_t EEMEM ee_override_DIP_switches; */
+static uint8_t EEMEM ee_fox_setting;
 static uint8_t EEMEM ee_enable_LEDs;
 static int16_t EEMEM ee_temp_calibration;
+static int16_t EEMEM ee_rv3028_offset;
 static uint8_t EEMEM ee_enable_start_timer;
 static uint8_t EEMEM ee_enable_transmitter;
 
@@ -133,6 +139,9 @@ static volatile int16_t g_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 static volatile uint8_t g_enable_LEDs;
 static volatile uint8_t g_enable_start_timer;
 static volatile uint8_t g_enable_transmitter;
+static volatile uint8_t g_temperature_check_countdown = 60;
+static volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
+extern BOOL g_allow_rv3028_eeprom_changes;
 
 #define _N 201
 const int N = _N;
@@ -142,8 +151,11 @@ const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 const float y_frequencies[4] = { 697., 770., 852., 941. };
 const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 const char key[16] = { '1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D' };
+const int numKeys = sizeof(key) / sizeof(key[0]);
 const char keyMorse[39] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
 							'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
+
 char g_lastKey = '\0';
 unsigned long g_last = 0;
 unsigned long g_tick_count = 0;
@@ -161,10 +173,15 @@ void handleLinkBusMsgs(void);
 void processKey(char key);
 void initializeEEPROMVars(BOOL resetAll);
 void permCallsign(char* call);
+void permFox(Fox_t fox);
 void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
-void doSynchronization(void);
-void setupForFox(void);
+void setupForFox(Fox_t* fox);
+void setUpTemp(void);
+uint16_t readADC();
+float getTemp(void);
+void setUpAudioSampling(BOOL enableSampling);
+
 #if COMPILE_FOR_ATMELSTUDIO7
 	void loop(void);
 	int main(void)
@@ -172,59 +189,49 @@ void setupForFox(void);
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	initializeEEPROMVars(FALSE);
-	/* set pins as outputs */
-	pinMode(PIN_LED1, OUTPUT);                                           /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	/* set active pins */
+	pinMode(PIN_LED1, OUTPUT);  /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
+
+	pinMode(PIN_LED2, OUTPUT);
+	digitalWrite(PIN_LED2, OFF);
+
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
+
 	pinMode(PIN_CW_TONE_LOGIC, OUTPUT);
 	digitalWrite(PIN_CW_TONE_LOGIC, OFF);
 
-	/* Set unused pins as outputs pulled high */
-	pinMode(PIN_LED2, INPUT_PULLUP);
-	pinMode(PIN_PTT_LOGIC, INPUT_PULLUP);
-	pinMode(PIN_CW_KEY_LOGIC, INPUT_PULLUP);
+	pinMode(PIN_PTT_LOGIC, OUTPUT);
+	digitalWrite(PIN_PTT_LOGIC, OFF);
+
+	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);
+	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
+
+	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
+	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
+
 	pinMode(PIN_MISO, INPUT_PULLUP);
-	pinMode(A0, INPUT); /* Audio input */
-	pinMode(A1, INPUT_PULLUP);
-	pinMode(A2, INPUT_PULLUP);
-	pinMode(A3, INPUT_PULLUP);
-	pinMode(A4, INPUT_PULLUP);
-	pinMode(A5, INPUT_PULLUP);
-	pinMode(PIN_AUDIO_INPUT, INPUT);        /* Receiver Audio sampling */
 	pinMode(PIN_MOSI, OUTPUT);
 	digitalWrite(PIN_MOSI, OFF);
 
-	ADCSRA = 0;                             /* clear ADCSRA register */
-	ADCSRB = 0;                             /* clear ADCSRB register */
-	ADMUX |= 0x06;                          /* set A6 analog input pin */
-/*	ADMUX |= (1 << REFS0);					/ * set reference voltage to AVcc */
-	ADMUX |= (1 << REFS1) | (1 << REFS0);   /* set reference voltage to internal 1.1V */
-	ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
+	pinMode(PIN_D0, OUTPUT);
+	pinMode(PIN_D1, OUTPUT);
+	pinMode(PIN_D2, OUTPUT);
+	pinMode(PIN_D3, OUTPUT);
+	pinMode(PIN_D4, OUTPUT);    /* Also RXD */
+	pinMode(PIN_D5, OUTPUT);    /* Also TXD */
 
-	/* sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
-	 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
+	/* Set unused pins as outputs pulled high */
+	pinMode(A4, INPUT_PULLUP);
+	pinMode(A5, INPUT_PULLUP);
 
-#if SAMPLE_RATE == 154080
-		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
-#elif SAMPLE_RATE == 77040
-		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
-#elif SAMPLE_RATE == 38520
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
-#elif SAMPLE_RATE == 19260
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
-#elif SAMPLE_RATE == 9630
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
-#else
-#error "Select a valid sample rate."
-#endif
+	initializeEEPROMVars(FALSE); /* Must happen after pins are configure due to I2C access */
 
-	ADCSRA |= (1 << ADATE); /* enable auto trigger */
-	ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-	ADCSRA |= (1 << ADEN);  /* enable ADC */
-	ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+	setUpAudioSampling(true);
 
+	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
+	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
 	/**
 	 * TIMER2 is for periodic interrupts to drive Morse code generation */
@@ -232,10 +239,6 @@ void setupForFox(void);
 	TCCR2A = 0;
 	TCCR2B = 0;
 	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
-#if CAL_SIGNAL_ON_PD3
-		pinMode(PIN_MOSI, OUTPUT);                      /* 601Hz Calibration Signal */
-		TCCR2A |= (1 << COM2A0);                        /* Toggle OC2A (PB3) on compare match */
-#endif /* CAL_SIGNAL_ON_PD3 */
 	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
 
 	OCR2A = 0x0C;                                       /* set frequency to ~300 Hz (0x0c) */
@@ -262,9 +265,11 @@ void setupForFox(void);
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
-	sei();                      /* Enable interrupts */
+	rv3028_1s_sqw();        /* Only needs to run once on a new board to program RTC */
 
-	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
+	sei();                                                      /* Enable interrupts */
+
+	linkbus_init(BAUD);                                         /* Start the Link Bus serial comms */
 	lb_send_string((char*)SW_REVISION, FALSE);
 
 
@@ -282,8 +287,6 @@ void setupForFox(void);
 	dtostrf((double)threshold, 4, 0, s);
 	sprintf(g_tempStr, "Thresh=%s\n\n", s);
 	lb_send_string(g_tempStr, TRUE);
-/*	sprintf(g_tempStr, "D2 - D10 = %d %d %d %d %d %d %d %d %d\n", D5, D6, D7, D8, D9, D10, D11, D12, D13); */
-/*	lb_send_string(g_tempStr, TRUE); */
 
 	lb_send_NewPrompt();
 
@@ -323,7 +326,7 @@ ISR(ADC_vect)
 /***********************************************************************
  * Pin Change Interrupt 2 ISR
  *
- * Handles SYNC pin operation
+ * Handles pushbutton presses
  *
  ************************************************************************/
 ISR(PCINT2_vect)
@@ -334,7 +337,7 @@ ISR(PCINT2_vect)
 	{
 		if(g_sync_pin_stable)
 		{
-			doSynchronization();
+/*			setupForFox(NULL); */
 		}
 	}
 
@@ -611,7 +614,7 @@ ISR( TIMER2_COMPB_vect )
 			if(g_sync_pin_timer > TIMER2_SECONDS_1)
 			{
 				g_sync_pin_stable = TRUE;
-//				digitalWrite(PIN_LED1, HIGH);
+				digitalWrite(PIN_LED2, HIGH);
 			}
 		}
 	}
@@ -621,28 +624,19 @@ ISR( TIMER2_COMPB_vect )
 		if(blink_counter < -BLINK_FAST)
 		{
 			blink_count_direction = 1;
-			digitalWrite(PIN_LED1,OFF);
+			digitalWrite(PIN_LED1, OFF);
 		}
 
 		if(blink_counter > BLINK_FAST)
 		{
 			blink_count_direction = -1;
-			digitalWrite(PIN_LED1,ON);
+			digitalWrite(PIN_LED1, ON);
 		}
 	}
 	else
 	{
 		blink_counter = BLINK_FAST;
 		blink_count_direction = 1;
-//		if(blink_counter < -BLINK_LONG)
-//		{
-//			blink_count_direction = 1;
-//		}
-
-//		if(blink_counter > BLINK_SHORT)
-//		{
-//			blink_count_direction = -1;
-//		}
 	}
 
 	blink_counter += blink_count_direction;
@@ -735,10 +729,10 @@ ISR( TIMER2_COMPB_vect )
 
 				if(key)
 				{
-//					if(!g_LEDs_Timed_Out)
-//					{
-//						digitalWrite(PIN_LED1, HIGH);   /*  LED */
-//					}
+					if(!g_LEDs_Timed_Out)
+					{
+						digitalWrite(PIN_LED2, HIGH);   /*  LED */
+					}
 
 					if(g_enable_transmitter)
 					{
@@ -754,10 +748,10 @@ ISR( TIMER2_COMPB_vect )
 		}
 		else
 		{
-//			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
-//			{
-//				digitalWrite(PIN_LED1, key);    /*  LED */
-//			}
+			if(!g_LEDs_Timed_Out && !g_sync_pin_stable)
+			{
+				digitalWrite(PIN_LED2, key);    /*  LED */
+			}
 
 			if(g_enable_transmitter)
 			{
@@ -777,10 +771,10 @@ ISR( TIMER2_COMPB_vect )
 		if(key)
 		{
 			key = OFF;
-//			if(!g_sync_pin_stable)
-//			{
-//				digitalWrite(PIN_LED1, OFF);        /*  LED Off */
-//			}
+			if(!g_sync_pin_stable)
+			{
+				digitalWrite(PIN_LED2, OFF);        /*  LED Off */
+			}
 
 			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 		}
@@ -793,18 +787,10 @@ ISR( TIMER2_COMPB_vect )
 }   /* End of Timer 2 ISR */
 
 
-
 /***********************************************************************
- * Timer/Counter1 Compare Match A ISR
- *
- * Handles once-per-second tasks
- ************************************************************************/
-/*
- * here is our main ISR for the ARDF 1-second timer
- * modified from ISR example for microfox by Jerry Boyd WB8WFK
- * this runs once a second and generates the cycle and sets control flags for the main controller.
- */
-ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
+ * Handle RTC 1-second interrupts
+ **********************************************************************/
+ISR( INT0_vect )
 {
 	static int id_countdown = 0;
 
@@ -821,6 +807,11 @@ ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
 	if(id_countdown)
 	{
 		id_countdown--;
+	}
+
+	if(g_temperature_check_countdown)
+	{
+		g_temperature_check_countdown--;
 	}
 
 	if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
@@ -840,8 +831,8 @@ ISR(TIMER1_COMPA_vect)              /*timer1 interrupt 1Hz */
 				g_sync_enabled = FALSE;
 			}
 
-//			g_LEDs_Timed_Out = TRUE;
-//			digitalWrite(PIN_LED1, OFF);
+			g_LEDs_Timed_Out = TRUE;
+			digitalWrite(PIN_LED2, OFF);
 		}
 		g_fox_transition = TRUE;
 		g_fox_seconds_into_interval = 0;
@@ -892,12 +883,15 @@ SIGNAL(TIMER0_COMPA_vect)
  * */
 void loop()
 {
+#if !INIT_EEPROM_ONLY
 	static int time_for_id = 99;
 	static BOOL id_set = TRUE;
 	static BOOL proceed = FALSE;
+#endif // !INIT_EEPROM_ONLY
 
 	handleLinkBusMsgs();
 
+#if !INIT_EEPROM_ONLY
 	if(!g_on_the_air || proceed)
 	{
 		proceed = FALSE;
@@ -994,9 +988,26 @@ void loop()
 		float largestX = 0;
 		float largestY = 0;
 		static char lastKey = '\0';
-		static int checkCount = 10;         /* Set above the threshold to prevent an initial false key detect */
+		static int checkCount = 10;                                                    /* Set above the threshold to prevent an initial false key detect */
 		static int quietCount = 0;
 		int x = -1,y = -1;
+
+		if(!g_temperature_check_countdown)
+		{
+
+			setUpTemp();
+			int8_t temp = (int8_t)getTemp();
+			if(temp != g_temperature)
+			{
+				g_temperature = temp;
+				int8_t delta25 = 25 - temp;
+				int8_t adj = eeprom_read_byte((uint8_t*)&ee_temperature_table[delta25]);
+				rv3028_set_offset_RAM(g_rv3028_offset+adj);
+			}
+
+			setUpAudioSampling(false);
+			g_temperature_check_countdown = 60;
+		}
 
 		for(int i = 0; i < 4; i++)
 		{
@@ -1122,23 +1133,25 @@ void loop()
 			}
 		}
 
-		ADCSRA |= (1 << ADIE);  /* enable ADC interrupt */
+		ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 	}
 
-//	if(!g_LEDs_Timed_Out)   /* flash LED */
-//	{
-//		if(g_dtmf_detected)
-//		{
-//			if(g_blinky_time)
-//			{
-//				digitalWrite(PIN_LED1,OFF);
-//			}
-//			else
-//			{
-//				digitalWrite(PIN_LED1,ON);
-//			}
-//		}
-//	}
+	if(!g_LEDs_Timed_Out)       /* flash LED */
+	{
+		if(g_dtmf_detected)
+		{
+			if(g_blinky_time)
+			{
+				digitalWrite(PIN_LED2,OFF);
+			}
+			else
+			{
+				digitalWrite(PIN_LED2,ON);
+			}
+		}
+	}
+#endif // !INIT_EEPROM_ONLY
 }
 
 
@@ -1188,8 +1201,132 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_OVERRIDE_DIP:
+			case MESSAGE_SET_FOX:
 			{
+				int c = (int)(lb_buff->fields[FIELD1][0]);
+
+				if(c)
+				{
+					if(c == 'B')
+					{
+						c = BEACON;
+					}
+					else if(c == 'D')
+					{
+						char t = lb_buff->fields[FIELD2][0];
+
+						if(t == 'S')
+						{
+							c = SPRINT_DEMO;
+						}
+						else
+						{
+							c = FOX_DEMO;
+						}
+					}
+					else if(c == 'F')
+					{
+						c = FOXORING;
+					}
+					else if(c == 'C')
+					{
+						char t = lb_buff->fields[FIELD2][0];
+						lb_buff->fields[FIELD2][1] = '\0';
+
+						if(t == 'B')
+						{
+							t = '0';
+						}
+
+						if(isdigit(t))
+						{
+							c = CLAMP(BEACON,atoi(lb_buff->fields[FIELD2]),FOX_5);
+						}
+					}
+					else if(c == 'S')
+					{
+						int x = 0;
+						char t = lb_buff->fields[FIELD2][0];
+						char u = lb_buff->fields[FIELD2][1];
+						lb_buff->fields[FIELD2][2] = '\0';
+
+						if(t == 'B')
+						{
+							x = BEACON;
+						}
+						else if(t == 'F')
+						{
+							if((u > '0') && (u < '6'))
+							{
+								x = SPRINT_F1 + (u - '1');
+							}
+						}
+						else if(t == 'S')
+						{
+							if((u > '0') && (u < '6'))
+							{
+								x = SPRINT_S1 + (u - '1');
+							}
+							else
+							{
+								x = SPECTATOR;
+							}
+						}
+						else if(u == 'F')
+						{
+							if((t > '0') && (t < '6'))
+							{
+								x = SPRINT_F1 + (t - '1');
+							}
+						}
+						else if(u == 'S')
+						{
+							if((t > '0') && (t < '6'))
+							{
+								x = SPRINT_S1 + (t - '1');
+							}
+						}
+
+						if(x != BEACON)
+						{
+							c = CLAMP(SPECTATOR,x,SPRINT_F5);
+						}
+					}
+					else if(c == 'N')
+					{
+						char t = lb_buff->fields[FIELD2][0];
+
+						if(t == '2')
+						{
+							c = NO_CODE_START_TONES_2M;
+						}
+						else if(t == '5')
+						{
+							c = NO_CODE_START_TONES_5M;
+						}
+						else
+						{
+							c = BEACON;
+						}
+					}
+					else
+					{
+						c = atoi(lb_buff->fields[FIELD1]);
+					}
+
+					if((c >= BEACON) && (c < INVALID_FOX))
+					{
+						Fox_t holdFox = (Fox_t)c;
+						permFox(holdFox);
+						if(holdFox != g_fox)
+						{
+							setupForFox(&holdFox);
+						}
+					}
+				}
+
+				sprintf(g_tempStr,"Fox=%u\n",g_fox);
+				lb_send_string(g_tempStr,FALSE);
 			}
 			break;
 
@@ -1237,33 +1374,9 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_TRANSMITTER_ENABLE:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					if((lb_buff->fields[FIELD1][1] == 'F') || (lb_buff->fields[FIELD1][0] == '0'))
-					{
-						cli();
-						g_enable_transmitter = FALSE;
-						digitalWrite(PIN_CW_KEY_LOGIC,OFF);
-						sei();
-					}
-					else
-					{
-						g_enable_transmitter = TRUE;
-					}
-
-					eeprom_update_byte(&ee_enable_transmitter,g_enable_transmitter);
-				}
-
-				sprintf(g_tempStr,"TXE:%s\n",g_enable_transmitter ? "ON" : "OFF");
-				lb_send_string(g_tempStr,FALSE);
-			}
-			break;
-
 			case MESSAGE_GO:
 			{
-				doSynchronization();
+				setupForFox(NULL);
 				lb_send_string((char*)"Re-sync successful!\n",FALSE);
 			}
 			break;
@@ -1272,25 +1385,6 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			{
 /*				initializeEEPROMVars(TRUE);
  *				softwareReset(); */
-			}
-			break;
-
-			case MESSAGE_CLOCK_CAL:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					uint16_t c = (uint16_t)atoi(lb_buff->fields[FIELD1]);
-
-					if(c > 100)
-					{
-						g_clock_calibration = c;
-						OCR1A = g_clock_calibration;
-						eeprom_update_word(&ee_clock_calibration,g_clock_calibration);
-					}
-				}
-
-				sprintf(g_tempStr,"Cal=%u\n",g_clock_calibration);
-				lb_send_string(g_tempStr,FALSE);
 			}
 			break;
 
@@ -1360,8 +1454,74 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			}
 			break;
 
+			case MESSAGE_CLOCK:
+			{
+				BOOL doprint = false;
+
+				if(lb_buff->fields[FIELD1][0] == 'T')
+				{
+					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+
+					if(strlen(g_tempStr) <= MAX_PATTERN_TEXT_LENGTH)
+					{
+						strcat(g_tempStr,"Z");
+						rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+					}
+
+					time_t t = rv3028_get_epoch(NULL);
+					sprintf(g_tempStr,"CLK:%lu\n",t);
+					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'O')
+				{
+					if(lb_buff->fields[FIELD2][0])
+					{
+						uint16_t o = (uint16_t)atoi(lb_buff->fields[FIELD2]);
+
+						if(o < 512)
+						{
+							rv3028_set_offset_RAM(o);
+						}
+					}
+
+					int a = rv3028_get_offset_RAM();
+					sprintf(g_tempStr,"C=%d\n",a);
+					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'X')
+				{
+					EIMSK &= ~(1 << INT0);   /* Disable INT0 interrupts */
+					rv3028_32kHz_sqw();
+				}
+
+				if(doprint)
+				{
+					lb_send_string(g_tempStr,TRUE);
+				}
+			}
+			break;
+
 			case MESSAGE_TEMP:
 			{
+				if(lb_buff->fields[FIELD1][0] == 'C')
+				{
+					if(lb_buff->fields[FIELD2][0])
+					{
+						int16_t v = atoi(lb_buff->fields[FIELD2]);
+
+						if((v > -2000) && (v < 2000))
+						{
+							g_temp_calibration = v;
+							eeprom_update_word((uint16_t*)&ee_temp_calibration,(int16_t)g_temp_calibration);
+						}
+					}
+
+					sprintf(g_tempStr,"T Cal= %d\n",g_temp_calibration);
+					lb_send_string(g_tempStr,FALSE);
+				}
+
+				sprintf(g_tempStr,"T=%d\n",g_temperature);
+				lb_send_string(g_tempStr,TRUE);
 			}
 			break;
 
@@ -1382,40 +1542,41 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 
 /*
- *  Commands:
- *  General (All foxes respond to these)
- *       C1 - Set callsign
- *       C2 - Set competition type
- *       C3 - Set clock date & time
- *       C4 - Synchronize transmit schedule immediately (ignoring clock time)
- *       C* - Start transmission schedule immediately (observe clock settings)
- *       C# - Cancel transmission schedule immediately
- *       C5 - Set start time
- *       C6 - Set finish time
- *       C7 nn nn nn nn- Lock DTMF access
- *
- *  Fox-specific
- *       D1 nn- Set unique fox ID#
- *       D2 nn nn nn nn - Set universal PIN number
- *       D2 nn - Report battery level
- *       D3 nn - Report all settings
- *       D* nn - Lock DTMF access
- *       D# nn - Unlock DTMF access
- *
+ *  Command set:
+ *  *C1 c...c # - Set callsign ID to c...c
+ *  *C2 n...n # - Set fox ID and format (0 = beacon, 1 = MOE Classic, ... )
+ *  *C4 tttttttt # - Set start date/time = tttttttt
+ *  *C5 tttttttt # - Set finish date/time = tttttttt
+ *  *C6# - Start competition immediately, synchronize now, ignore RTC start time
+ *  *C7 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
+ *  *C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
+ *  *An # - n=0: stop transmissions, n=1: re-sync and start transmissions, n=3: re-start transmissions from stop
+ *  *B nn # - Address the following command to only those foxes in the specified competition format (used in case more than one competition's foxes might be listening)
+ *  *D c...c # - Unlock Arducon (re-enable DTMF commands) where c...c is the password
+ *  *D# - Lock Arducon (disables all DTMF commands except *Dc...c#)
  */
 void processKey(char key)
 {
-	static int state = STATE_IDLE;
+	static int state = STATE_SENTENCE_START;
 	static int digits;
 	static int value;
-	static int callsignLength;
-	static char callsign[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
+	static int stringLength;
+	static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 
 	switch(state)
 	{
-		case STATE_IDLE:
+		case STATE_SHUTDOWN:
 		{
-			callsignLength = 0;
+			if(key == '*')
+			{
+				state = STATE_SENTENCE_START;
+			}
+		}
+		break;
+
+		case STATE_SENTENCE_START:
+		{
+			stringLength = 0;
 			value = 0;
 			digits = 0;
 
@@ -1423,6 +1584,52 @@ void processKey(char key)
 			{
 				state = STATE_C;
 			}
+			else if(key == 'A')
+			{
+				state = STATE_A;
+			}
+		}
+		break;
+
+		case STATE_A:
+		{
+			if(key == '0')
+			{
+				state = STATE_PAUSE_TRANSMISSIONS;
+			}
+			else if(key == '1')
+			{
+				state = STATE_START_TRANSMISSIONS;
+			}
+			else if(key == '2')
+			{
+				state = STATE_RESTART_TRANSMISSIONS;
+			}
+		}
+		break;
+
+		case STATE_PAUSE_TRANSMISSIONS:
+		{
+			if(key == '#')
+			{
+				state = STATE_SHUTDOWN;
+			}
+			else
+			{
+
+			}
+		}
+		break;
+
+		case STATE_START_TRANSMISSIONS:
+		{
+
+		}
+		break;
+
+		case STATE_RESTART_TRANSMISSIONS:
+		{
+
 		}
 		break;
 
@@ -1432,6 +1639,26 @@ void processKey(char key)
 			{
 				state = STATE_RECEIVING_CALLSIGN;
 			}
+			else if(key == '2')
+			{
+				state = STATE_RECEIVING_FOXFORMATANDID;
+			}
+			else if(key == '4')
+			{
+				state = STATE_RECEIVING_START_TIME;
+			}
+			else if(key == '5')
+			{
+				state = STATE_RECEIVING_FINISH_TIME;
+			}
+			else if(key == '6')
+			{
+				state = STATE_RECEIVING_START_NOW;
+			}
+			else if(key == '7') /* *C7YYMMDDhhmmss# Set RTC to this time and date */
+			{
+				state = STATE_RECEIVING_SET_CLOCK;
+			}
 		}
 		break;
 
@@ -1439,20 +1666,20 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				permCallsign(callsign);
-				lb_send_string(callsign,FALSE);
-				state = STATE_IDLE;
+				permCallsign(receivedString);
+				lb_send_string(receivedString,FALSE);
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
 				if(digits)
 				{
 					value = value * 10 + (key - '0');
-					if((value < 39) && (callsignLength < MAX_PATTERN_TEXT_LENGTH))
+					if((value < numMorseChars) && (stringLength < MAX_PATTERN_TEXT_LENGTH))
 					{
-						callsign[callsignLength] = keyMorse[value];
-						callsignLength++;
-						callsign[callsignLength] = '\0';
+						receivedString[stringLength] = keyMorse[value];
+						stringLength++;
+						receivedString[stringLength] = '\0';
 					}
 
 					digits = 0;
@@ -1464,6 +1691,92 @@ void processKey(char key)
 				}
 			}
 		}
+		break;
+
+		case STATE_RECEIVING_FOXFORMATANDID:
+		{
+			if(key == '#')
+			{
+				if((value >= BEACON) && (value < INVALID_FOX))
+				{
+					Fox_t holdFox = (Fox_t)value;
+					permFox(holdFox);
+					if(holdFox != g_fox)
+					{
+						setupForFox(&holdFox);
+					}
+				}
+				state = STATE_SHUTDOWN;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+				value += key - '0';
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_START_TIME:
+		{
+			if(key == '#')
+			{
+				state = STATE_SHUTDOWN;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_FINISH_TIME:
+		{
+			if(key == '#')
+			{
+				state = STATE_SHUTDOWN;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_START_NOW:
+		{
+			if(key == '#')
+			{
+				state = STATE_SHUTDOWN;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+
+			}
+		}
+		break;
+
+		case STATE_RECEIVING_SET_CLOCK:
+		{
+			if(key == '#')
+			{
+				if(stringLength == 12)
+				{
+					/* string = "YYMMDDhhmmss" */
+					sprintf(g_tempStr,"20%c%c-%c%c-%c%cT%c%c:%c%c:%c%c",receivedString[0],receivedString[1],receivedString[2],receivedString[3],receivedString[4],receivedString[5],receivedString[6],receivedString[7],receivedString[8],receivedString[9],receivedString[10],receivedString[11]);
+					rv3028_set_date_time(g_tempStr);    /* "2018-03-23T18:00:00Z" */
+					state = STATE_SHUTDOWN;
+				}
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+				if(stringLength < MAX_DTMF_ARG_LENGTH)
+				{
+					receivedString[stringLength] = key;
+					stringLength++;
+					receivedString[stringLength] = '\0';
+				}
+			}
+		}
+		break;
 	}
 }
 
@@ -1472,15 +1785,18 @@ void processKey(char key)
  */
 void initializeEEPROMVars(BOOL resetAll)
 {
-	uint8_t i;
-
+	uint16_t i;
 	uint8_t initialization_flag = eeprom_read_byte(&ee_interface_eeprom_initialization_flag);
+
+	i2c_init(); /* Needs to happen here */
 
 	if(!resetAll && (initialization_flag == EEPROM_INITIALIZED_FLAG))   /* EEPROM is up to date */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
+		g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
 		g_clock_calibration = eeprom_read_word(&ee_clock_calibration);
 		g_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration);
+		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
 		g_enable_LEDs = eeprom_read_byte(&ee_enable_LEDs);
 		g_enable_start_timer = eeprom_read_byte(&ee_enable_start_timer);
 		g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
@@ -1506,6 +1822,16 @@ void initializeEEPROMVars(BOOL resetAll)
 			g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
 		}
 
+		if(resetAll || (eeprom_read_byte(&ee_fox_setting) == 0xFF))
+		{
+			g_fox = EEPROM_FOX_SETTING_DEFAULT;
+			eeprom_update_byte(&ee_fox_setting,g_fox);
+		}
+		else
+		{
+			g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
+		}
+
 		if(resetAll || (eeprom_read_word(&ee_clock_calibration) == 0xFFFF))
 		{
 			g_clock_calibration = EEPROM_CLOCK_CALIBRATION_DEFAULT;
@@ -1524,6 +1850,17 @@ void initializeEEPROMVars(BOOL resetAll)
 		else
 		{
 			g_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration);
+		}
+
+		if((uint16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset) == 0xFFFF)
+		{
+			g_rv3028_offset = rv3028_get_offset_RAM();
+			eeprom_update_word((uint16_t*)&ee_rv3028_offset,(uint16_t)g_rv3028_offset);
+			g_allow_rv3028_eeprom_changes = TRUE; /* Allow 1-sec interrupt to get permanently saved within the RTC EEPROM */
+		}
+		else
+		{
+			g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
 		}
 
 		if(resetAll || (eeprom_read_byte(&ee_enable_LEDs) == 0xFF))
@@ -1579,76 +1916,24 @@ void initializeEEPROMVars(BOOL resetAll)
 			}
 		}
 
+		/* Each correction pulse = 1 tick corresponds to 1 / (16384 × 64) = 0.9537 ppm.
+		 * ppm frequency change = -0.035 * (T-T0)^2 (±10%)
+		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
+		for(i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
+		{
+			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
+			eeprom_update_byte((uint8_t*)&ee_temperature_table[i],val);
+		}
+
 		eeprom_write_byte(&ee_interface_eeprom_initialization_flag,EEPROM_INITIALIZED_FLAG);
 	}
 
 	return;
 }
 
-void doSynchronization()
-{
-	setupForFox();
-	cli();
-	/* Sync button pin change interrupt */
-	PCMSK2 = 0x00;
-	PCMSK2 = (1 << PCINT19);    /* Enable PCINT19 */
-	PCICR = 0x00;
-	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
-	pinMode(PIN_SYNC,INPUT_PULLUP);
-	g_sync_enabled = TRUE;
-
-	TCNT1 = 0;                  /* Initialize 1-second counter value to 0 */
-	g_seconds_since_sync = 0;
-	g_fox_seconds_into_interval = 0;
-	g_sync_pin_stable = FALSE;
-	digitalWrite(PIN_LED1,LOW);
-	g_on_the_air = FALSE;
-	g_fox_counter = 1;  /* Don't count on the 1-sec timer resetting this quickly enough */
-	sei();
-}
-
-void setupForFox()
+void setupForFox(Fox_t* fox)
 {
 	cli();
-
-/*	pinMode(PIN_RXD,INPUT_PULLUP);              / * Arduino Pro Mini pin# 1/28 = PD0 * /
- *	pinMode(PIN_TXD,INPUT_PULLUP);              / * Arduino Pro Mini pin# 2/29 = PD1 * / */
-	pinMode(PIN_D4,OUTPUT);             /* Arduino Pro Mini pin# 1/28 = PD0 */
-	pinMode(PIN_D5,OUTPUT);             /* Arduino Pro Mini pin# 2/29 = PD1 */
-	pinMode(PIN_RTC_SQW,INPUT_PULLUP);  /* Arduino Pro Mini pin# 5 = PD2 */
-	pinMode(PIN_RTC_INT,INPUT_PULLUP);  /* Arduino Pro Mini pin# 6 = PD3 */
-	pinMode(PIN_SYNC,INPUT_PULLUP);     /* Arduino Pro Mini pin# 7 = PD4 */
-	pinMode(PIN_UNUSED_1,INPUT_PULLUP); /* Arduino Pro Mini pin# 8 = PD5 */
-	pinMode(PIN_PWDN,OUTPUT);           /* Arduino Pro Mini pin# 9 = PD6 */
-	pinMode(PIN_LED2,OUTPUT);           /* Arduino Pro Mini pin# 10 = PD7 */
-	pinMode(PIN_PTT_LOGIC,OUTPUT);      /* Arduino Pro Mini pin# 11 = PB0 */
-	pinMode(PIN_CW_TONE_LOGIC,OUTPUT);  /* Arduino Pro Mini pin# 12 = PB1 */
-	pinMode(PIN_CW_KEY_LOGIC,OUTPUT);   /* Arduino Pro Mini pin# 13 = PB2 */
-/*	pinMode(PIN_MOSI,INPUT_PULLUP);             / * Arduino Pro Mini pin# 14 = PB3 * /
- *	pinMode(PIN_MISO,INPUT_PULLUP);             / * Arduino Pro Mini pin# 15 = PB4 * / */
-	pinMode(PIN_LED1,OUTPUT);           /* Arduino Pro Mini pin# 16 = PB5 = SCK */
-	pinMode(PIN_D0,OUTPUT);             /* Arduino Pro Mini pin# 17 = PC0 */
-	pinMode(PIN_D1,OUTPUT);             /* Arduino Pro Mini pin# 18 = PC1 */
-	pinMode(PIN_D2,OUTPUT);             /* Arduino Pro Mini pin# 19 = PC2 */
-	pinMode(PIN_D3,OUTPUT);             /* Arduino Pro Mini pin# 20 = PC3 */
-/*	pinMode(PIN_AUDIO_INPUT,INPUT);      / * Arduino Pro Mini pin# 31 = ADC6 * /
- *	pinMode(PIN_BATTERY_LEVEL,INPUT);    / * Arduino Pro Mini pin# 32 = ADC7 * /
- *	pinMode(PIN_SDA,INPUT_PULLUP);              / * Arduino Pro Mini pin# 33 = SDA * /
- *	pinMode(PIN_SCL,INPUT_PULLUP);              / * Arduino Pro Mini pin# 34 = SCL * / */
-
-	digitalWrite(PIN_LED1,OFF);         /* Turn off LED1 */
-	digitalWrite(PIN_LED2,OFF);         /* Turn off LED2 */
-	digitalWrite(PIN_D0,OFF);
-	digitalWrite(PIN_D1,OFF);
-	digitalWrite(PIN_D2,OFF);
-	digitalWrite(PIN_D3,OFF);
-	digitalWrite(PIN_D4,OFF);
-	digitalWrite(PIN_D5,OFF);
-	digitalWrite(PIN_PWDN,OFF);
-	digitalWrite(PIN_PTT_LOGIC,OFF);
-	digitalWrite(PIN_CW_TONE_LOGIC,OFF);
-	digitalWrite(PIN_CW_KEY_LOGIC,OFF);
-
 	g_seconds_since_sync = 0;   /* Total elapsed time counter */
 	g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
 	g_code_throttle    = 0;     /* Adjusts Morse code speed */
@@ -1665,11 +1950,16 @@ void setupForFox()
 	sei();
 
 	g_LEDs_Timed_Out = !g_enable_LEDs;
+	digitalWrite(PIN_LED2,OFF); /*  LED Off - in case it was on in the middle of a transmission */
 
 	g_fox = BEACON;
-	if(g_fox == INVALID_FOX)
+
+	if(fox)
 	{
-		g_fox = BEACON;
+		if(*fox != INVALID_FOX)
+		{
+			g_fox = *fox;
+		}
 	}
 
 	switch(g_fox)
@@ -1745,3 +2035,94 @@ void permCallsign(char* call)
 	eeprom_update_byte((uint8_t*)&ee_stationID_text[i],0);
 }
 
+void permFox(Fox_t fox)
+{
+	eeprom_update_byte((uint8_t*)&ee_fox_setting,(uint8_t)fox);
+}
+
+
+/*
+ * Set up registers for measuring processor temperature
+ */
+void setUpTemp(void)
+{
+	/* The internal temperature has to be used
+	 * with the internal reference of 1.1V.
+	 * Channel 8 can not be selected with
+	 * the analogRead function yet. */
+	/* Set the internal reference and mux. */
+	ADMUX = ((1 << REFS1) | (1 << REFS0) | (1 << MUX3));
+
+	/* Slow the ADC clock down to 125 KHz
+	 * by dividing by 128. Assumes that the
+	 * standard Arduino 16 MHz clock is in use. */
+	ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	ADCSRA |= (1 << ADEN);  /* enable the ADC */
+	ADCSRA |= (1 << ADSC);  /* Start the ADC */
+	readADC();
+}
+
+/*
+ * Read the temperature ADC value
+ */
+uint16_t readADC()
+{
+	/* Make sure the most recent ADC read is complete. */
+	while((ADCSRA & (1 << ADSC)))
+	{
+		;   /* Just wait for ADC to finish. */
+	}
+	uint16_t result = ADCW;
+	/* Initiate another reading. */
+	ADCSRA |= (1 << ADSC);
+	return( result);
+}
+
+/*
+ * Returns the most recent temperature reading
+ */
+float getTemp(void)
+{
+	float offset = CLAMP(-200.,(float)g_temp_calibration / 10.,200.);
+
+	/* The offset in 1/10ths C (first term) was determined empirically */
+	readADC();  /* throw away first reading */
+	return(roundf(offset + (readADC() - 324.31) / 1.22));
+}
+
+void setUpAudioSampling(BOOL enableSampling)
+{
+	ADCSRA = 0;                             /* clear ADCSRA register */
+	ADCSRB = 0;                             /* clear ADCSRB register */
+	ADMUX = 0;
+	ADMUX |= 0x06;                          /* set A6 analog input pin */
+	ADMUX |= (1 << REFS1) | (1 << REFS0);   /* set reference voltage to internal 1.1V */
+	ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
+
+	/* sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
+	 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
+
+#if SAMPLE_RATE == 154080
+		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
+#elif SAMPLE_RATE == 77040
+		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
+#elif SAMPLE_RATE == 38520
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
+#elif SAMPLE_RATE == 19260
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
+#elif SAMPLE_RATE == 9630
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
+#else
+#error "Select a valid sample rate."
+#endif
+
+	ADCSRA |= (1 << ADATE);     /* enable auto trigger */
+	ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
+	ADCSRA |= (1 << ADEN);      /* enable ADC */
+
+	if(enableSampling)
+	{
+		ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+	}
+}

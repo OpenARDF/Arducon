@@ -29,6 +29,10 @@
 #include "defs.h"
 
 #if COMPILE_FOR_ATMELSTUDIO7
+#include <avr/eeprom.h>
+#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+
+#if COMPILE_FOR_ATMELSTUDIO7
 #include <string.h>
 #include <stdio.h>
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
@@ -39,18 +43,19 @@ static const char crlf[] = "\n";
 static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
 
-static const char textHelp[][23] = { "\nCommands:\n",
-									 "  GO  - Sync clock\n",
-									 "  ID -  Set callsign\n",
-									 "  VER - S/W version\n",
-									 "  TXE - Tx enable" };
+#if INIT_EEPROM_ONLY
+#define HELP_TEXT ("\nCommands:\n  CLK [T|C [time|cal]] - Read/set time/start/finish \"YYMMDDhhmmss\"\n  FOX [n]- Set fox role\n  ID -  Set callsign\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  TXE - Tx enable\n  VER - S/W version\0" )
+	static char EEMEM ee_textHelp[sizeof(HELP_TEXT)];
+#else
+	static char EEMEM ee_textHelp[210]; /* Value is printed when this program is compiled and run with INIT_EEPROM_ONLY = TRUE */
+#endif  /* INIT_EEPROM_ONLY */
 
 static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
 
 /* Local function prototypes */
 BOOL linkbus_start_tx(void);
 BOOL linkbus_send_text(char* text);
-
+void saveEEPROM(void);
 
 /* Module global variables */
 static volatile BOOL linkbus_tx_active = FALSE; /* volatile is required to ensure optimizer handles this properly */
@@ -235,6 +240,12 @@ void linkbus_init(uint32_t baud)
  * Set frame format: 8data, 2stop bit */
 	UCSR0C = (1 << USBS0) | (3 << UCSZ00);
 	g_bus_disabled = FALSE;
+
+#if INIT_EEPROM_ONLY
+saveEEPROM();
+uint16_t x = sizeof(HELP_TEXT);
+lb_send_value(x,(char*)"Size of HELP_TEXT");
+#endif // INIT_EEPROM_ONLY
 }
 
 void linkbus_disable(void)
@@ -393,13 +404,13 @@ void lb_send_Help(void)
 		;
 	}
 
-	size_t n = sizeof(textHelp) / sizeof(textHelp[0]);
-	for(uint8_t i = 0; i < n; i++)
+	char c = eeprom_read_byte((uint8_t*)&ee_textHelp[0]);
+	int i = 0;
+	while(c)
 	{
-		while(linkbus_send_text((char*)textHelp[i]))
-		{
-			;
-		}
+		lb_echo_char(c);
+		c = eeprom_read_byte((uint8_t*)&ee_textHelp[++i]);
+
 		while(linkbusTxInProgress())
 		{
 			;
@@ -409,3 +420,18 @@ void lb_send_Help(void)
 	lb_send_NewLine();
 }
 
+#if INIT_EEPROM_ONLY
+	void saveEEPROM(void)
+	{
+		uint8_t i;
+		char *tempText;
+
+		tempText = (char*)&HELP_TEXT[0];
+		for(i = 0; i < strlen(HELP_TEXT); i++)
+		{
+			eeprom_update_byte((uint8_t*)&ee_textHelp[i], (uint8_t)tempText[i]);
+		}
+
+		eeprom_update_byte((uint8_t*)&ee_textHelp[i], 0);
+	}
+#endif  /* INIT_EEPROM_ONLY */

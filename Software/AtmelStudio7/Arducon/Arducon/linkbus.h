@@ -32,7 +32,7 @@
 
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
-#define LINKBUS_MAX_MSG_FIELD_LENGTH 10
+#define LINKBUS_MAX_MSG_FIELD_LENGTH 20
 #define LINKBUS_MAX_MSG_NUMBER_OF_FIELDS 3
 #define LINKBUS_NUMBER_OF_RX_MSG_BUFFERS 2
 #define LINKBUS_MAX_TX_MSG_LENGTH 41
@@ -56,35 +56,12 @@ typedef enum
 
 /*  Linkbus Messages
  *       Message formats:
- *               $id,f1,f2... fn;
- *               !id,f1,f2,... fn;
- *               $id,f1,f2,... fn?
+ *               CMD [a1 [a2]]
  *
  *               where
- *                       $ = command - ! indicates a response or broadcast to subscribers
- *                       id = linkbus MessageID
- *                       fn = variable length fields
- *                       ; = end of message flag - ? = end of query
- *       Null fields in settings commands indicates no change should be applied
- *       All null fields indicates a polling request for current settings
- *       ? terminator indicates subscription request to value changes
- *       Sending a query with fields containing data, is the equivalent of sending
- *         a command followed by a query (i.e., a response is requested).
+ *                       CMD = command
+ *                       a1, a2 = optional arguments or data fields
  *
- *       TEST EQUIPMENT MESSAGE FAMILY (DEVICE MESSAGING)
- *       $TST - Test message
- *       !ACK - Simple acknowledgment to a command (sent when required)
- *       $CK0 - Set Si5351 CLK0: field1 = freq (Hz); field2 = enable (BOOL)
- *       $CK1 - Set Si5351 CLK1: field1 = freq (Hz); field2 = enable (BOOL)
- *       $CK2 - Set Si5351 CLK2: field1 = freq (Hz); field2 = enable (BOOL)
- *       $VOL - Set audio volume: field1 = inc/decr (BOOL); field2 = % (int)
- *       $BAT? - Subscribe to battery voltage reports
- *
- *       DUAL-BAND RX MESSAGE FAMILY (FUNCTIONAL MESSAGING)
- *       $BND  - Set/Get radio band to 2m or 80m
- *       $S?   - Subscribe to signal strength reports
- *                 - Subscribe to gain setting reports
- *                 -
  */
 
 typedef enum
@@ -92,22 +69,20 @@ typedef enum
 	MESSAGE_EMPTY = 0,
 
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
-	MESSAGE_CLOCK_CAL = 'C' * 100 + 'A' * 10 + 'L',             /* Set Jerry's clock calibration value */
-	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',         /* Sets EEPROM back to defaults */
-	MESSAGE_OVERRIDE_DIP = 'D' * 100 + 'I' * 10 + 'P',          /* Override DIP switch settings using this value */
-	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',                  /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
-	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',                  /* Temperature  data */
-	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                    /* Sets amateur radio callsign text */
-	MESSAGE_GO = 'G' * 10 + 'O',                                /* Synchronizes clock */
-	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',            /* Set Morse code speeds */
-	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A',     /* Enables/disables the Starting Timer Tones */
-	MESSAGE_TRANSMITTER_ENABLE = 'T' * 100 + 'X' * 10 + 'E',    /* Enables/disables transmitter keying */
-
+	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',     /* Sets EEPROM back to defaults */
+	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Override DIP switch settings using this value */
+	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',              /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
+	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',              /* Temperature  data */
+	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
+	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
+	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',        /* Set Morse code speeds */
+	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A', /* Enables/disables the Starting Timer Tones */
+	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
 	/* UTILITY MESSAGES */
-	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',                 /* Processor reset */
-	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',              /* S/W version number */
+	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',             /* Processor reset */
+	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
 
-	INVALID_MESSAGE = UINT16_MAX                                /* This value must never overlap a valid message ID */
+	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;
 
 #define MESSAGE_VER_LABEL "VER"

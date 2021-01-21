@@ -714,4 +714,3 @@ MorseCharacter getMorseChar(char c)
 
 	return( morse);
 }
-

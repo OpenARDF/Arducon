@@ -26,6 +26,14 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+/******************************************************
+ *  Set for the IDE being used: Arduino or Atmel Studio 7
+ */
+#define COMPILE_FOR_ATMELSTUDIO7 TRUE
+#define INIT_EEPROM_ONLY FALSE
+
+/*******************************************************/
+
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -34,19 +42,15 @@
 #define TRUE !FALSE
 #endif
 
-#define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
-#define CAL_SIGNAL_ON_PD3 FALSE
-
 #if COMPILE_FOR_ATMELSTUDIO7
-	#include <avr/io.h>
-	#include <util/delay.h>
-	#include <avr/interrupt.h>
-	#define USE_WDT_RESET TRUE
+		#include <avr/io.h>
+		#include <util/delay.h>
+		#include <avr/interrupt.h>
+		#define USE_WDT_RESET TRUE
 #else
-	#include "Arduino.h"
-	#define USE_WDT_RESET FALSE
-#endif // COMPILE_FOR_ATMELSTUDIO7
+		#include "Arduino.h"
+		#define USE_WDT_RESET FALSE
+#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 #ifndef HIGH
 #define HIGH 0x1
@@ -72,13 +76,17 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "Ver: 0.1"
+#define SW_REVISION "0.4"
 
 /*#define TRANQUILIZE_WATCHDOG */
 
-#define PRODUCT_NAME_SHORT "ARDF Tx"
-#define PRODUCT_NAME_LONG "Arducon"
+#define PRODUCT_NAME_SHORT "Arducon"
+#define PRODUCT_NAME_LONG "Arducon Fox Controller"
+
 /*#define DEBUG_DTMF */
+
+#define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
+#define INCLUDE_RV3028_SUPPORT
 
 /*******************************************************/
 
@@ -186,7 +194,7 @@ typedef enum
 	NO_CODE_START_TONES_2M,
 	NO_CODE_START_TONES_5M,
 	INVALID_FOX
-} FoxType;
+} Fox_t;
 
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
@@ -202,20 +210,31 @@ typedef enum
 
 typedef enum
 {
-	STATE_IDLE,
+	STATE_SHUTDOWN,
+	STATE_SENTENCE_START,
+	STATE_A,
+	STATE_PAUSE_TRANSMISSIONS,
+	STATE_START_TRANSMISSIONS,
+	STATE_RESTART_TRANSMISSIONS,
 	STATE_C,
 	STATE_RECEIVING_CALLSIGN,
+	STATE_RECEIVING_FOXFORMATANDID,
+	STATE_RECEIVING_START_TIME,
+	STATE_RECEIVING_FINISH_TIME,
+	STATE_RECEIVING_START_NOW,
+	STATE_RECEIVING_SET_CLOCK
 } KeyprocessState_t;
+
 
 /*******************************************************/
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
-	#define SELECTIVELY_DISABLE_OPTIMIZATION
+		#define SELECTIVELY_DISABLE_OPTIMIZATION
 #endif
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG 0xB8    /* Never set to 0xFF */
+#define EEPROM_INITIALIZED_FLAG 0xB9    /* Never set to 0xFF */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -229,12 +248,15 @@ typedef enum
 #define EEPROM_ON_AIR_TIME_DEFAULT 60
 #define EEPROM_OFF_AIR_TIME_DEFAULT 240
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
-#define EEPROM_CLOCK_CALIBRATION_DEFAULT 15629
-#define EEPROM_TEMP_CALIBRATION_DEFAULT 147
-#define EEPROM_OVERRIDE_DIP_SW_DEFAULT 0
+//#define EEPROM_CLOCK_CALIBRATION_DEFAULT 15629
+#define EEPROM_TEMP_CALIBRATION_DEFAULT -110
+#define EEPROM_RV3028_OFFSET_DEFAULT 0
+#define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
 #define EEPROM_ENABLE_STARTTIMER_DEFAULT 1
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
+#define EEPROM_START_EPOCH_DEFAULT 0
+#define EEPROM_FINISH_EPOCH_DEFAULT 0
 
 #ifndef BOOL
 	typedef uint8_t BOOL;
@@ -277,6 +299,7 @@ typedef enum
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
 
+#define BLINK_FAST 30
 #define BLINK_SHORT 100
 #define BLINK_LONG 500
 
