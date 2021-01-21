@@ -281,7 +281,7 @@ Text Label 5000 7700 2    39   ~ 0
 PB4
 Text Label 5000 7800 2    39   ~ 0
 PB5
-Text Notes 6850 2400 0    79   ~ 16
+Text Notes 6000 2250 0    79   ~ 16
 Real-Time Clock
 Text Notes 12350 9500 0    118  ~ 24
 PCB: Arducon ARDF Controller (p. 1/2)
@@ -412,12 +412,12 @@ $EndComp
 $Comp
 L Arducon-rescue:Vproc #PWR0107
 U 1 1 5AB7DABB
-P 7350 2750
-F 0 "#PWR0107" H 7350 2600 50  0001 C CNN
-F 1 "Vproc" H 7350 2900 50  0000 C CNN
-F 2 "" H 7350 2750 50  0000 C CNN
-F 3 "" H 7350 2750 50  0000 C CNN
-	1    7350 2750
+P 7350 2450
+F 0 "#PWR0107" H 7350 2300 50  0001 C CNN
+F 1 "Vproc" H 7350 2600 50  0000 C CNN
+F 2 "" H 7350 2450 50  0000 C CNN
+F 3 "" H 7350 2450 50  0000 C CNN
+	1    7350 2450
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -790,7 +790,7 @@ F 3 "" H 7500 6800 50  0000 C CNN
 $EndComp
 Text GLabel 1800 4450 2    39   Input ~ 0
 PTT_LOGIC
-Text GLabel 14750 8100 0    39   Output ~ 0
+Text GLabel 14750 8300 0    39   Output ~ 0
 EXT_PWR_GROUND
 $Comp
 L Arducon-rescue:CONN_01X04 J106
@@ -1267,14 +1267,6 @@ Text GLabel 9250 4150 0    39   Input ~ 0
 D4
 Text GLabel 9250 4050 0    39   Input ~ 0
 D5
-Wire Bus Line
-	12100 6200 16200 6200
-Wire Bus Line
-	16200 6200 16200 850 
-Wire Bus Line
-	16200 850  12100 850 
-Wire Bus Line
-	12100 850  12100 6200
 $Comp
 L power:GNDD #PWR0123
 U 1 1 60055305
@@ -1389,12 +1381,6 @@ Wire Wire Line
 	12900 7800 13300 7800
 Wire Wire Line
 	13800 7700 14200 7700
-Wire Bus Line
-	12100 6700 12100 8250
-Wire Bus Line
-	16200 8250 16200 6700
-Wire Bus Line
-	16200 6700 12100 6700
 Text Notes 13150 6650 0    79   ~ 16
 OPTIONAL EXTERNAL POWER CONTROL
 $Comp
@@ -1545,19 +1531,6 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link
 	0    -1   1    0   
 $EndComp
 $Comp
-L Device:C_Small C104
-U 1 1 5FCCFFBE
-P 7450 2850
-F 0 "C104" V 7350 2700 50  0000 L CNN
-F 1 "100nF" V 7550 2700 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 7450 2850 50  0001 C CNN
-F 3 "" H 7450 2850 50  0001 C CNN
-F 4 "478-1395-1-ND" H 7450 2850 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 7450 2850 60  0001 C CNN "Link"
-	1    7450 2850
-	0    -1   1    0   
-$EndComp
-$Comp
 L Device:C_Small C109
 U 1 1 5FCD929C
 P 3100 6450
@@ -1568,19 +1541,6 @@ F 3 "" H 3100 6450 50  0001 C CNN
 F 4 "478-1395-1-ND" H 3100 6450 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 3100 6450 60  0001 C CNN "Link"
 	1    3100 6450
-	-1   0    0    -1  
-$EndComp
-$Comp
-L Device:C_Small C105
-U 1 1 5FCE388F
-P 7900 3850
-F 0 "C105" V 7800 3750 50  0000 L CNN
-F 1 "100nF" V 8000 3750 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 7900 3850 50  0001 C CNN
-F 3 "" H 7900 3850 50  0001 C CNN
-F 4 "478-1395-1-ND" H 7900 3850 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 7900 3850 60  0001 C CNN "Link"
-	1    7900 3850
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
@@ -2091,14 +2051,6 @@ Wire Wire Line
 	14050 3750 14050 3650
 Text Notes 13450 800  0    79   ~ 16
 AM MODULATOR BOARD
-Wire Bus Line
-	8950 850  11950 850 
-Wire Bus Line
-	11950 850  11950 6000
-Wire Bus Line
-	11950 6000 8950 6000
-Wire Bus Line
-	8950 6000 8950 850 
 Text Notes 9050 800  0    79   ~ 16
 5V to 3.3V LEVEL SHIFTER FOR AM MODULATOR
 Wire Wire Line
@@ -2157,14 +2109,14 @@ Connection ~ 14200 7700
 $Comp
 L Connector_Generic:Conn_01x02 J107
 U 1 1 5FE800D7
-P 14950 8100
-F 0 "J107" H 15030 8092 50  0000 L CNN
-F 1 "External Power Source" H 15100 8000 50  0000 L CNN
-F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 8100 50  0001 C CNN
-F 3 "" H 14950 8100 50  0001 C CNN
-F 4 "np" H 14950 8100 50  0001 C CNN "Part No."
-F 5 "np" H 14950 8100 50  0001 C CNN "Link"
-	1    14950 8100
+P 14950 8300
+F 0 "J107" H 15030 8292 50  0000 L CNN
+F 1 "External Power Source" H 15100 8200 50  0000 L CNN
+F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 8300 50  0001 C CNN
+F 3 "" H 14950 8300 50  0001 C CNN
+F 4 "np" H 14950 8300 50  0001 C CNN "Part No."
+F 5 "np" H 14950 8300 50  0001 C CNN "Link"
+	1    14950 8300
 	1    0    0    1   
 $EndComp
 $Comp
@@ -2392,14 +2344,93 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">L
 $EndComp
 Text GLabel 10050 1700 0    39   Input ~ 0
 PWDN
-Wire Bus Line
-	12100 8250 16200 8250
 Wire Wire Line
 	13800 7950 14450 7950
 Wire Wire Line
-	14450 7950 14450 8000
+	14450 7950 14450 8200
 Wire Wire Line
-	14450 8000 14750 8000
+	14450 8200 14750 8200
+Text GLabel 13700 8200 0    39   Input ~ 0
+EXT_BATTERY
+$Comp
+L Jumper:SolderJumper_2_Open SJ109
+U 1 1 5FEA63C0
+P 13850 8200
+F 0 "SJ109" H 13850 8300 50  0000 C CNN
+F 1 "SolderJumper_2_Open" H 13850 8314 50  0001 C CNN
+F 2 "Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small" H 13850 8200 50  0001 C CNN
+F 3 "" H 13850 8200 50  0001 C CNN
+F 4 "np" H 13850 8200 50  0001 C CNN "Part No."
+F 5 "np" H 13850 8200 50  0001 C CNN "Link"
+	1    13850 8200
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	14000 8200 14450 8200
+Connection ~ 14450 8200
+Wire Notes Line
+	12100 6700 16200 6700
+Wire Notes Line
+	16200 6700 16200 8600
+Wire Notes Line
+	16200 8600 12100 8600
+Wire Notes Line
+	12100 8600 12100 6700
+Wire Notes Line
+	8750 850  11950 850 
+Wire Notes Line
+	11950 850  11950 6000
+Wire Notes Line
+	11950 6000 8750 6000
+Wire Notes Line
+	8750 6000 8750 850 
+Wire Notes Line
+	12150 850  15900 850 
+Wire Notes Line
+	15900 850  15900 6000
+Wire Notes Line
+	15900 6000 12150 6000
+Wire Notes Line
+	12150 6000 12150 850 
+$Comp
+L Device:R R111
+U 1 1 600A7372
+P 7350 2600
+F 0 "R111" H 7450 2750 50  0000 C CNN
+F 1 "1k" V 7250 2600 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 7280 2600 50  0001 C CNN
+F 3 "" H 7350 2600 50  0001 C CNN
+F 4 "311-1.00KCRCT-ND" H 7350 2600 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-1.00KCRCT-ND\">Link</a>" H 7350 2600 60  0001 C CNN "Link"
+	1    7350 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C104
+U 1 1 60097870
+P 7450 2850
+F 0 "C104" V 7550 2750 50  0000 L CNN
+F 1 "10uF" V 7350 2750 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 7450 2850 50  0001 C CNN
+F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 7450 2850 50  0001 C CNN
+F 4 "490-5523-1-ND" H 7450 2850 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 7450 2850 60  0001 C CNN "Link"
+	1    7450 2850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:C_Small C105
+U 1 1 600ABBF4
+P 7900 3850
+F 0 "C105" V 8000 3750 50  0000 L CNN
+F 1 "10uF" V 7800 3750 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 7900 3850 50  0001 C CNN
+F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 7900 3850 50  0001 C CNN
+F 4 "490-5523-1-ND" H 7900 3850 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 7900 3850 60  0001 C CNN "Link"
+	1    7900 3850
+	-1   0    0    1   
+$EndComp
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC
