@@ -69,20 +69,20 @@ typedef enum
 	MESSAGE_EMPTY = 0,
 
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
-	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',         /* Sets EEPROM back to defaults */
-	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',          /* Override DIP switch settings using this value */
-	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',                  /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
-	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',                  /* Temperature  data */
-	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                    /* Sets amateur radio callsign text */
-	MESSAGE_GO = 'G' * 10 + 'O',                                /* Synchronizes clock */
-	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',            /* Set Morse code speeds */
-	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A',     /* Enables/disables the Starting Timer Tones */
-	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',                 /* Set or read the RTC */
+	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',     /* Sets EEPROM back to defaults */
+	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Override DIP switch settings using this value */
+	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',              /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
+	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',              /* Temperature  data */
+	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
+	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
+	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',        /* Set Morse code speeds */
+	MESSAGE_STARTTONES_ENABLE = 'S' * 100 + 'T' * 10 + 'A', /* Enables/disables the Starting Timer Tones */
+	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
 	/* UTILITY MESSAGES */
-	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',                 /* Processor reset */
-	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',              /* S/W version number */
+	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',             /* Processor reset */
+	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
 
-	INVALID_MESSAGE = UINT16_MAX                                /* This value must never overlap a valid message ID */
+	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;
 
 #define MESSAGE_VER_LABEL "VER"
@@ -197,9 +197,5 @@ BOOL lb_send_string(char* str, BOOL wait);
 /**
  */
 void lb_send_value(uint16_t value, char* label);
-
-/**
- */
-void lb_send_Help(void);
 
 #endif  /* LINKBUS_H_ */
