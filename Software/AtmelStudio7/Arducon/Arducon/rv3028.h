@@ -35,6 +35,12 @@
 #ifndef RV3028_H_
 #define RV3028_H_
 
+#define RTC_STATUS_NORMAL 0x00
+#define RTC_STATUS_I2C_ERROR 7
+#define RTC_STATUS_BACKUP_SWITCHOVER_OCCURRED 5
+#define RTC_STATUS_EVF_OCCURRED 1
+#define RTC_STATUS_CLOCK_CORRUPT 0
+
 #ifdef INCLUDE_RV3028_SUPPORT
 
 #define RV3028_I2C_SLAVE_ADDR 0xA4  /* corresponds to slave address = 0b10100100x */
@@ -61,12 +67,12 @@
  * dateString has the format 2018-03-23T18:00:00
  * ClockSetting setting = clock or alarm to be set
  */
-		void rv3028_set_date_time(char * dateString);
+		BOOL rv3028_set_date_time(char * dateString);
 
 /**
  *  Turn on 1-second square wave on the INT/SQW pin.
  */
-		void rv3028_1s_sqw(void);
+		BOOL rv3028_1s_sqw(void);
 
 /**
  *  Turn on 32kHz square wave on the INT/SQW pin.

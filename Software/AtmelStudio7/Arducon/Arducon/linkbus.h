@@ -198,8 +198,4 @@ BOOL lb_send_string(char* str, BOOL wait);
  */
 void lb_send_value(uint16_t value, char* label);
 
-/**
- */
-void lb_send_Help(void);
-
 #endif  /* LINKBUS_H_ */

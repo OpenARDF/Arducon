@@ -85,7 +85,20 @@
    #define RTC_EEPROM_OFFSET               0x36
    #define RTC_EEPROM_BACKUP               0x37
 
+   #define EEbusy 7
+   #define EERD   3
+   #define EE_COMMAND_WRITE_ONE_BYTE      0x21
+   #define EE_COMMAND_READ_ONE_BYTE       0x22
+   #define EE_COMMAND_WRITE_ALL_EEPROM    0x11
+   #define EE_COMMAND_READ_ALL_EEPROM     0x12
+
+
 	volatile BOOL g_allow_rv3028_eeprom_changes = FALSE;
+
+	BOOL waitForEEPROMReady(void);
+	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val);
+	uint8_t readOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t* val);
+
 
 	uint8_t bcd2dec(uint8_t val)
 	{
@@ -97,24 +110,158 @@
 	uint8_t char2bcd(char c[])
 	{
 		uint8_t result = (c[1] - '0') + ((c[0] - '0') << 4);
-		return result;
+
+		return( result);
 	}
 
+/*
+ *  Handles setting a single RTC EEPROM register. The first argument holds the RTC register address.
+ *  The second argument holds a mask field indicating which bits are being changed, where
+ *  changing bits are indicated by a "1" bit in the mask. The third argument holds the bit values
+ *  to be written.
+ */
+	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val)
+	{
+		uint8_t temp = 0;
+		uint8_t hold;
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = (1 << EERD); /* EERD = 1 Disable automatic refresh - setting other bits to zero */
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
+		{
+			return( 1);
+		}
+
+		/* Save existing value stored in RAM - Note: we are assuming that RAM still holds unchanged EEPROM value */
+		i2c_device_read(RV3028_I2C_SLAVE_ADDR, rtc_ee_addr, &hold, 1);
+		hold &= ~mask;  /* Set mask 1-bits to zero */
+		val &= mask;    /* Ensure only mask 1-bits get applied */
+		val = hold | val;
+
+		/* Set up single-byte write to EEPROM */
+
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_ADDRESS, &rtc_ee_addr, 1))
+		{
+			return( 1);
+		}
+
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_DATA, &val, 1))
+		{
+			return( 1);
+		}
+
+		temp = 0x00;
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
+		{
+			return( 1);
+		}
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = EE_COMMAND_WRITE_ONE_BYTE;
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
+		{
+			return( 1);
+		}
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = 0;   /* EERD = 0 Re-enable automatic refresh - setting other bits to zero */
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
+		{
+			return( 1);
+		}
+
+		return( 0);
+	}
+
+	uint8_t readOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t* val)
+	{
+		uint8_t temp = 0;
+
+		if(!val)
+		{
+			return(1);
+		}
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = (1 << EERD); /* EERD = 1 Disable automatic refresh - setting other bits to zero */
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
+		{
+			return( 1);
+		}
+
+		/* Set up single-byte read from EEPROM */
+
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_ADDRESS, &rtc_ee_addr, 1))
+		{
+			return( 1);
+		}
+
+		temp = 0x00;
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
+		{
+			return( 1);
+		}
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = EE_COMMAND_READ_ONE_BYTE;
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
+		{
+			return( 1);
+		}
+
+		if(waitForEEPROMReady())
+		{
+			return( 1);
+		}
+
+		temp = 0;   /* EERD = 0 Re-enable automatic refresh - setting other bits to zero */
+		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
+		{
+			return( 1);
+		}
+
+		/* Read the value from RAM */
+		i2c_device_read(RV3028_I2C_SLAVE_ADDR, rtc_ee_addr, val, 1);
+
+		return(0);
+	}
+
+/* Note: this is not thread safe */
 	time_t rv3028_get_epoch(bool *result, char *datetime)
 	{
-		time_t epoch = 0;
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		BOOL res = 0;
+		time_t epoch = 0;
 
-		if(datetime)                                    /* String format "YYMMDDhhmmss" */
+		if(datetime)                            /* String format "YYMMDDhhmmss" */
 		{
-			data[0] = char2bcd(&datetime[10]); /* seconds in BCD */
-			data[1] = char2bcd(&datetime[8]);  /* minutes in BCD */
-			data[2] = char2bcd(&datetime[6]);  /* hours in BCD */
+			data[0] = char2bcd(&datetime[10]);  /* seconds in BCD */
+			data[1] = char2bcd(&datetime[8]);   /* minutes in BCD */
+			data[2] = char2bcd(&datetime[6]);   /* hours in BCD */
 			/* data[3] =  not used */
-			data[4] = char2bcd(&datetime[4]);  /* day of month in BCD */
-			data[5] = char2bcd(&datetime[2]);  /* month in BCD */
-			data[6] = char2bcd(&datetime[0]);  /* 2-digit year in BCD */
+			data[4] = char2bcd(&datetime[4]);   /* day of month in BCD */
+			data[5] = char2bcd(&datetime[2]);   /* month in BCD */
+			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
 		}
 		else
 		{
@@ -225,12 +372,13 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	void rv3028_set_date_time(char * dateString)     /* String format "YYMMDDhhmmss" */
+	BOOL rv3028_set_date_time(char * dateString)                                                                                         /* String format "YYMMDDhhmmss" */
 	{
+		BOOL fail = TRUE;
 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
 		int length = strlen((const char*)dateString);
 
-		if(length >= 19)
+		if(length >= 12)
 		{
 			data[0] = dateString[11] - '0';             /* seconds */
 			data[0] += ((dateString[10] - '0') << 4);   /* 10s of seconds */
@@ -248,8 +396,10 @@
 			data[6] = dateString[1] - '0';              /* year digit 1 */
 			data[6] += ((dateString[0] - '0') << 4);    /* year - two digits */
 
-			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+			fail = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
 		}
+
+		return( fail);
 	}
 
 	int16_t rv3028_get_offset_RAM()
@@ -288,29 +438,106 @@
  *       4. Update EEPROM (all Configuration RAM ? EEPROM) by setting EECMD = 00h followed by 11h
  *       5. Enable automatic refresh by setting EERD = 0
  *       6. Enter an incorrect password PW (PW ? EEPW) to lock the device
+ *
+ #define RTC_EE_ADDRESS                  0x25
+ #define RTC_EE_DATA                     0x26
+ #define RTC_EE_COMMAND                  0x27
+ #define RTC_STATUS                      0x0E
  */
-		void rv3028_1s_sqw(void)
+		uint8_t rv3028_1s_sqw(void)
 		{
+			uint8_t status = FALSE;
+			uint8_t temp = 0, mask;
+
 			if(g_allow_rv3028_eeprom_changes)
 			{
-				uint8_t byte = 0x08;    /* EERD = 1 */
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
-				byte = 0xC5;            /* FD = 1 Hz */
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
-				byte = 0x00;            /* EECMD = 00h followed by 11h to update EEPROM */
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
-				byte = 0x11;
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &byte, 1);
-				byte = 0x00;            /* EERD = 0 */
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &byte, 1);
+
+				if(waitForEEPROMReady())
+				{
+					return( 1);
+				}
+
+				temp = 0xC5;    /* Enable 1Hz Output */
+				mask = 0xFF;    /* 11111111 */
+				if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
+				{
+					return( 1);
+				}
+
+				temp = 0x04;    /* Enable direct switching mode */
+				mask = 0x06;    /* 00001100 */
+				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
+				{
+					return( 1);
+				}
+
+/*				temp = 0x01;
+ *				mask = 0xFF;
+ *				if(writeOneEEPROMByte(RTC_EEPROM_OFFSET, mask, temp))
+ *				{
+ *					return 1;
+ *				} */
+
+/*				temp = 0x80; / * set offset lsb * /
+ *				mask = 0x80; / * 10000000 * /
+ *				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
+ *				{
+ *					return( 1);
+ *				} */
+
 				g_allow_rv3028_eeprom_changes = FALSE;
 			}
-			else                        /* Just set RAM value */
+			else    /* Read values from EEPROM - happens automatically for POR but not debugger reset */
 			{
-				uint8_t byte = 0xC5;    /* FD = 1 Hz */
-				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+				temp = 0x00;
+				status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+				waitForEEPROMReady();
+				temp = 0x12;    /* Refresh RAM from EEPROM */
+				status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+				waitForEEPROMReady();
 			}
+
+/* Debug only */
+/*			for(g_temp_byte = 0x30; g_temp_byte <= 0x37; g_temp_byte++) */
+/*			{ */
+			/*i2c_device_read(RV3028_I2C_SLAVE_ADDR, g_temp_byte, &g_hold_byte, 1); */
+/*				readOneEEPROMByte(g_temp_byte, &g_hold_byte); */
+/*			} */
+/* End debugging */
+
+			if(!status)
+			{
+				temp = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_STATUS, &status, 1);
+				status &= 0x6F; /* Mask off relevant flags: 01101111 */
+			}
+			else
+			{
+				status = 1 << RTC_STATUS_I2C_ERROR;
+			}
+
+			temp = 0x00;    /* Clear status flags */
+			i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_STATUS, &temp, 1);
+
+			return(status);
 		}
+
+		BOOL waitForEEPROMReady(void)
+		{
+			uint8_t status = 1;
+			BOOL failure = FALSE;
+
+			while(status && !failure)
+			{
+				failure |= i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_STATUS, &status, 1);
+				if(!failure)
+				{
+					status &= (1 << EEbusy);
+				}
+			}
+
+			return(status);
+		}
+
 
 #endif  /* INIT_EEPROM_ONLY */
 
