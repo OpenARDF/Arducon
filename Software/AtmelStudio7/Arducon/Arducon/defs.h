@@ -76,7 +76,7 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.5 ***"
+#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.6 ***"
 
 /*#define TRANQUILIZE_WATCHDOG */
 /*#define DEBUG_DTMF */
@@ -107,6 +107,22 @@
 
 #ifndef PI
 #define PI 3.141592653589793
+#endif
+
+#ifndef MINUTE
+#define MINUTE 60UL
+#endif
+
+#ifndef HOUR
+#define HOUR 3600UL
+#endif
+
+#ifndef DAY
+#define DAY 86400UL
+#endif
+
+#ifndef YEAR
+#define YEAR 31536000UL
 #endif
 
 /*
