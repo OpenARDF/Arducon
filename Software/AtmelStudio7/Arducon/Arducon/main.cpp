@@ -38,6 +38,7 @@
 #include "Goertzel.h"
 #include "morse.h"
 #include "rv3028.h"
+#include "eepromStrings.h"
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/io.h>
@@ -50,8 +51,14 @@
 #include "ardooweeno.h"
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
+extern char EEMEM ee_textHelp[];            /* Size is printed when this program is compiled and run with INIT_EEPROM_ONLY = TRUE */
+extern char EEMEM ee_textVersion[];
+extern char EEMEM ee_textSetTime[];
+extern char EEMEM ee_textSetStart[];
+extern char EEMEM ee_textSetFinish[];
+
 #define MAX_PATTERN_TEXT_LENGTH 20
-#define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 10)
+#define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 20)
 #define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
 
 /*#define SAMPLE_RATE 9630 */
@@ -190,6 +197,12 @@ void setUpTemp(void);
 uint16_t readADC();
 float getTemp(void);
 void setUpAudioSampling(BOOL enableSampling);
+BOOL only_digits(char *s);
+BOOL clockConfigurationError(void);
+void startEventNow(void);
+void reportClockConfigErrors(void);
+/*char* convertEpochToTimeString(unsigned long epoch); */
+BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 
 #if COMPILE_FOR_ATMELSTUDIO7
 	void loop(void);
@@ -199,7 +212,7 @@ void setUpAudioSampling(BOOL enableSampling);
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
 	/* set active pins */
-	pinMode(PIN_LED1, OUTPUT);              /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                                                                                                                                                                                              /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -224,23 +237,28 @@ void setUpAudioSampling(BOOL enableSampling);
 	pinMode(PIN_MOSI, OUTPUT);
 	digitalWrite(PIN_MOSI, OFF);
 
-	pinMode(PIN_D0, OUTPUT);
-	pinMode(PIN_D1, OUTPUT);
+	pinMode(PIN_SYNC, INPUT_PULLUP);
+
+	pinMode(PIN_D0, OUTPUT);    /* Also RXD */
+	pinMode(PIN_D1, OUTPUT);    /* Also TXD */
 	pinMode(PIN_D2, OUTPUT);
 	pinMode(PIN_D3, OUTPUT);
-	pinMode(PIN_D4, OUTPUT);    /* Also RXD */
-	pinMode(PIN_D5, OUTPUT);    /* Also TXD */
+	pinMode(PIN_D5, OUTPUT);
 
 	/* Set unused pins as outputs pulled high */
 	pinMode(A4, INPUT_PULLUP);
 	pinMode(A5, INPUT_PULLUP);
 
-	initializeEEPROMVars(FALSE);    /* Must happen after pins are configure due to I2C access */
+#if INIT_EEPROM_ONLY
+		initializeEEPROMVars(TRUE);     /* Must happen after pins are configure due to I2C access */
+#else
+		initializeEEPROMVars(FALSE);    /* Must happen after pins are configure due to I2C access */
+#endif
 
 	setUpAudioSampling(true);
 
-	EICRA  |= (1 << ISC01);         /* Configure INT0 falling edge for RTC 1-second interrupts */
-	EIMSK |= (1 << INT0);           /* Enable INT0 interrupts */
+	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
+	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
 	/**
 	 * TIMER2 is for periodic interrupts to drive Morse code generation */
@@ -270,52 +288,55 @@ void setUpAudioSampling(BOOL enableSampling);
 
 	/* Sync button pin change interrupt */
 	PCMSK2 = 0x00;
-	PCMSK2 = (1 << PCINT19);    /* Enable PCINT19 */
+	PCMSK2 = (1 << PCINT20);    /* Enable PCINT20 */
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 
-	rv3028_1s_sqw();            /* Only needs to run once on a new board to program RTC */
+#if !INIT_EEPROM_ONLY
+		uint8_t result = rv3028_1s_sqw();
+#else
+		rv3028_1s_sqw();
+#endif  /* !INIT_EEPROM_ONLY */
 
-	sei();                      /* Enable interrupts */
+	sei();                                                                                  /* Enable interrupts */
 
-	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
-	lb_send_string((char*)SW_REVISION, FALSE);
+	linkbus_init(BAUD);                                                                     /* Start the Link Bus serial comms */
 
+	g_current_epoch = rv3028_get_epoch(NULL, NULL);
 
-	lb_send_string((char*)"\n\nStored Data:\n", TRUE);
-	sprintf(g_tempStr, "  ID: %s\n", g_messages_text[STATION_ID]);
-	lb_send_string(g_tempStr, TRUE);
-/*	sprintf(g_tempStr, "  CAL: %u\n", g_clock_calibration);
- *	lb_send_string(g_tempStr, TRUE);
- *	sprintf(g_tempStr, "  LED: %s\n", g_enable_LEDs ? "ON" : "OFF");
- *	lb_send_string(g_tempStr, TRUE);
- *	sprintf(g_tempStr, "  STA: %s\n", g_enable_start_timer ? "ON" : "OFF");
- *	lb_send_string(g_tempStr, TRUE);
- *	sprintf(g_tempStr, "  TXE: %s\n", g_enable_transmitter ? "ON" : "OFF");
- *	lb_send_string(g_tempStr, TRUE);
- *	dtostrf((double)threshold, 4, 0, s);
- *	sprintf(g_tempStr, "Thresh=%s\n\n", s);
- *	lb_send_string(g_tempStr, TRUE); */
+#if !INIT_EEPROM_ONLY
+		lb_send_Help();
 
-	lb_send_NewPrompt();
+		if(result & (1 << RTC_STATUS_I2C_ERROR))
+		{
+			sprintf(g_tempStr, "RTC I2C Error\n");
+		}
+		else if(result & (1 << RTC_STATUS_CLOCK_CORRUPT))   /* Power off occurred with no backup power */
+		{
+			sprintf(g_tempStr, "RTC Corrupt\n");
+		}
+		else if(result & (1 << RTC_STATUS_EVF_OCCURRED))
+		{
+			sprintf(g_tempStr, "External Event\n");
+		}
+		else if(result & (1 << RTC_STATUS_BACKUP_SWITCHOVER_OCCURRED))
+		{
+			sprintf(g_tempStr, "RTC Backup Power OK\n");
+		}
+
+		if(strlen(g_tempStr))
+		{
+			lb_send_string(g_tempStr, TRUE);
+		}
+
+		sprintf(g_tempStr, "  ID: %s\n", g_messages_text[STATION_ID]);
+		lb_send_string(g_tempStr, TRUE);
+		reportClockConfigErrors();
+		lb_send_NewPrompt();
+
+#endif  /* #if INIT_EEPROM_ONLY */
+
 	setupForFox(NULL);
-
-	/*  Serial.print("SAMPLING_RATE = ");
-	 *  Serial.println(_SAMPLING_FREQUENCY);
-	 *  Serial.print(" N = ");
-	 *  Serial.println(_N);
-	 *  Serial.print("FREQ = ");
-	 *  Serial.println(_TARGET_FREQUENCY);
-	 *  Serial.print("k = ");
-	 *  Serial.print(k);
-	 *  Serial.print(" coeff = ");
-	 *  Serial.println(g_coeff); */
-
-	time_t now = rv3028_get_epoch(NULL, NULL);
-	if(now < g_event_finish_epoch)  /* event has not finished */
-	{
-		g_use_rtc_to_start = TRUE;
-	}
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -353,7 +374,9 @@ ISR(PCINT2_vect)
 	{
 		if(g_sync_pin_stable)
 		{
-/*			setupForFox(NULL); */
+			startEventNow();
+			g_sync_pin_stable = FALSE;
+			digitalWrite(PIN_LED2, OFF);    /*  LED */
 		}
 	}
 
@@ -630,23 +653,21 @@ ISR( TIMER2_COMPB_vect )
 			if(g_sync_pin_timer > TIMER2_SECONDS_1)
 			{
 				g_sync_pin_stable = TRUE;
-				digitalWrite(PIN_LED2, HIGH);
+				digitalWrite(PIN_LED2, ON);
 			}
 		}
 	}
 
-	if(g_dtmf_detected)
+	if((g_dtmf_detected) || g_config_error)
 	{
 		if(blink_counter < -BLINK_FAST)
 		{
 			blink_count_direction = 1;
-			digitalWrite(PIN_LED1, OFF);
 		}
 
 		if(blink_counter > BLINK_FAST)
 		{
 			blink_count_direction = -1;
-			digitalWrite(PIN_LED1, ON);
 		}
 	}
 	else
@@ -664,6 +685,33 @@ ISR( TIMER2_COMPB_vect )
 	else
 	{
 		g_blinky_time = FALSE;
+	}
+
+	if(!g_LEDs_Timed_Out && !g_sync_pin_stable) /* flash LEDs */
+	{
+		if(g_dtmf_detected)
+		{
+			if(g_blinky_time)
+			{
+				digitalWrite(PIN_LED1, OFF);
+			}
+			else
+			{
+				digitalWrite(PIN_LED1, ON);
+			}
+		}
+
+		if(g_config_error)
+		{
+			if(g_blinky_time)
+			{
+				digitalWrite(PIN_LED2, OFF);
+			}
+			else
+			{
+				digitalWrite(PIN_LED2, ON);
+			}
+		}
 	}
 
 	if(g_enable_start_timer)
@@ -812,66 +860,94 @@ ISR( INT0_vect )
 
 	g_current_epoch++;
 
-	if(g_seconds_since_sync == 0)   /* sync just occurred */
-	{
-		id_countdown = g_id_interval;
-		g_fox_counter = 1;
-		g_lastSeconds = 0;
-		g_current_epoch = rv3028_get_epoch(NULL, NULL); /* resync to RTC periodically */
-	}
-
-	g_seconds_since_sync++; /* Total elapsed time counter */
-	g_fox_seconds_into_interval++;
-
-	if(id_countdown)
-	{
-		id_countdown--;
-	}
-
 	if(g_temperature_check_countdown)
 	{
 		g_temperature_check_countdown--;
-
-		g_current_epoch = rv3028_get_epoch(NULL, NULL); /* resync to RTC periodically */
+		/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
+		 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
 	}
 
-	if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
+	if(g_transmissions_disabled)
 	{
-		g_fox_counter++;
-
-		if(g_fox_counter > g_number_of_foxes)
+		if(g_use_rtc_to_start)
 		{
-			g_fox_counter = 1;
-
-			if(g_sync_enabled)
+			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))
 			{
-				PCMSK2 &= ~(1 << PCINT19);  /* Disable PCINT19 */
-				PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
-				pinMode(PIN_SYNC, INPUT);
-				pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
-				g_sync_enabled = FALSE;
+				setupForFox(NULL);
+				g_transmissions_disabled = FALSE;
 			}
-
-			g_LEDs_Timed_Out = TRUE;
-			digitalWrite(PIN_LED2, OFF);
 		}
-		g_fox_transition = TRUE;
-		g_fox_seconds_into_interval = 0;
-
-		if(!id_countdown)
-		{
-			id_countdown = g_id_interval;
-			g_time_to_ID = TRUE;
-		}
-	}
-
-	if(g_enable_start_timer && ((g_seconds_since_sync + 11) % g_startclock_interval <= 10))
-	{
-		g_lastSeconds = (uint8_t)((g_seconds_since_sync + 11) % g_startclock_interval);
 	}
 	else
 	{
-		g_lastSeconds = 0;
+		if(g_use_rtc_to_start)
+		{
+			if(g_current_epoch >= g_event_finish_epoch)
+			{
+				g_use_rtc_to_start = FALSE;
+				g_transmissions_disabled = TRUE;
+				g_on_the_air = FALSE;
+			}
+		}
+
+		if(!g_transmissions_disabled)
+		{
+			if(g_seconds_since_sync == 0)   /* sync just occurred */
+			{
+				id_countdown = g_id_interval;
+				g_fox_counter = 1;
+				g_lastSeconds = 0;
+				/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
+				 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
+			}
+
+			g_seconds_since_sync++; /* Total elapsed time counter */
+			g_fox_seconds_into_interval++;
+
+			if(id_countdown)
+			{
+				id_countdown--;
+			}
+
+			if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
+			{
+				g_fox_counter++;
+
+				if(g_fox_counter > g_number_of_foxes)
+				{
+					g_fox_counter = 1;
+
+					if(g_sync_enabled)
+					{
+						PCMSK2 &= ~(1 << PCINT20);  /* Disable PCINT20 */
+						PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
+						pinMode(PIN_SYNC, INPUT);
+						pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
+						g_sync_enabled = FALSE;
+					}
+
+					g_LEDs_Timed_Out = TRUE;
+					digitalWrite(PIN_LED2, OFF);
+				}
+				g_fox_transition = TRUE;
+				g_fox_seconds_into_interval = 0;
+
+				if(!id_countdown)
+				{
+					id_countdown = g_id_interval;
+					g_time_to_ID = TRUE;
+				}
+			}
+
+			if(g_enable_start_timer && ((g_seconds_since_sync + 11) % g_startclock_interval <= 10))
+			{
+				g_lastSeconds = (uint8_t)((g_seconds_since_sync + 11) % g_startclock_interval);
+			}
+			else
+			{
+				g_lastSeconds = 0;
+			}
+		}
 	}
 }   /* end of Timer1 ISR */
 
@@ -913,25 +989,10 @@ void loop()
 	handleLinkBusMsgs();
 
 #if !INIT_EEPROM_ONLY
-		if(g_transmissions_disabled)
+		if(!g_on_the_air || proceed)
 		{
-			if(g_use_rtc_to_start)
-			{
-				if(g_current_epoch < g_event_start_epoch)   /* event has not started yet */
-				{
-
-				}
-				else /* event has started already */
-				{
-					/* TODO: need to adjust settings to put the transmitter into the state as if it had started at the correct time */
-
-					g_transmissions_disabled = FALSE;
-				}
-			}
-		}
-		else
-		{
-			if(!g_on_the_air || proceed)
+			/* At the appropriate time set the pattern to be sent and start transmissions */
+			if(!g_transmissions_disabled)
 			{
 				proceed = FALSE;
 
@@ -949,7 +1010,6 @@ void loop()
 					strcpy(g_messages_text[PATTERN_TEXT],g_morsePatterns[g_fox]);
 				}
 
-				/* At the appropriate time set the pattern to be sent and start transmissions */
 				if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO) || (g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
 				{
 					BOOL repeat = TRUE;
@@ -973,48 +1033,48 @@ void loop()
 					g_fox_tone_offset = g_fox_counter;
 				}
 			}
-			else
+		}
+		else
+		{
+			if(!id_set && (g_fox_seconds_into_interval == time_for_id)) /* Send the call sign at the right time */
 			{
-				if(!id_set && (g_fox_seconds_into_interval == time_for_id)) /* Send the call sign at the right time */
+				g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
+				BOOL repeat = FALSE;
+				makeMorse(g_messages_text[STATION_ID],&repeat,NULL);
+				id_set = TRUE;
+				g_callsign_sent = FALSE;
+			}
+			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_DEMO))
+			{
+				if(g_fox_transition)
 				{
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
-					BOOL repeat = FALSE;
-					makeMorse(g_messages_text[STATION_ID],&repeat,NULL);
-					id_set = TRUE;
-					g_callsign_sent = FALSE;
+					g_fox_transition = FALSE;
+					g_on_the_air = FALSE;
+					proceed = TRUE;
 				}
-				else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_DEMO))
-				{
-					if(g_fox_transition)
-					{
-						g_fox_transition = FALSE;
-						g_on_the_air = FALSE;
-						proceed = TRUE;
-					}
-				}
+			}
 
-				if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO))
+			if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO))
+			{
+				if((g_callsign_sent) && g_fox_transition)   /* Ensure we've begun the next minute before proceeding */
 				{
-					if((g_callsign_sent) && g_fox_transition)   /* Ensure we've begun the next minute before proceeding */
-					{
-						proceed = TRUE;
-					}
+					proceed = TRUE;
 				}
-				else if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))   /* Proceed as soon as the callsign has been sent */
+			}
+			else if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))   /* Proceed as soon as the callsign has been sent */
+			{
+				if(g_callsign_sent)
 				{
-					if(g_callsign_sent)
-					{
-						proceed = TRUE;
-					}
+					proceed = TRUE;
 				}
-				else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5) && g_callsign_sent)
-				{
-					g_on_the_air = FALSE;
-				}
-				else if((g_fox != g_fox_counter) && g_callsign_sent)    /* Turn off transmissions during minutes when this fox should be silent */
-				{
-					g_on_the_air = FALSE;
-				}
+			}
+			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5) && g_callsign_sent)
+			{
+				g_on_the_air = FALSE;
+			}
+			else if((g_fox != g_fox_counter) && g_callsign_sent)    /* Turn off transmissions during minutes when this fox should be silent */
+			{
+				g_on_the_air = FALSE;
 			}
 		}
 
@@ -1029,7 +1089,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                                                    /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1,y = -1;
 
@@ -1091,7 +1151,6 @@ void loop()
 						{
 							x = i;
 						}
-/*					break; */
 					}
 
 #ifdef DEBUG_DTMF
@@ -1155,7 +1214,6 @@ void loop()
 			else    /* Quiet detected */
 			{
 				unsigned long delta = g_tick_count - g_last;
-/*			lb_send_string((char*)".", FALSE); */
 
 				/* Quieting must be detected at least 3 times in less than 5 seconds before another key can be accepted */
 				if(quietCount++ > 2)
@@ -1178,46 +1236,38 @@ void loop()
 			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 		}
 
-		if(g_event_finish_epoch <= g_event_start_epoch)
+		BOOL hold_config_err = g_config_error;
+		if(!(g_config_error = clockConfigurationError()) && hold_config_err)
 		{
-			g_config_error = TRUE;
-		}
-		else if(g_transmissions_disabled && (g_current_epoch > g_event_finish_epoch))   /* The scheduled event is over */
-		{
-			g_config_error = TRUE;
-		}
-		else
-		{
-			g_config_error = FALSE;
-		}
-
-		if(!g_LEDs_Timed_Out)   /* flash LED */
-		{
-			if(g_dtmf_detected)
-			{
-				if(g_blinky_time)
-				{
-					digitalWrite(PIN_LED2,OFF);
-				}
-				else
-				{
-					digitalWrite(PIN_LED2,ON);
-				}
-			}
-
-			if(g_config_error)
-			{
-				if(g_blinky_time)
-				{
-					digitalWrite(PIN_LED1,OFF);
-				}
-				else
-				{
-					digitalWrite(PIN_LED1,ON);
-				}
-			}
+			digitalWrite(PIN_LED2,OFF); /* ensure LED is off */
 		}
 #endif  /* !INIT_EEPROM_ONLY */
+}
+
+
+BOOL clockConfigurationError(void)
+{
+	if(!g_transmissions_disabled)
+	{
+		return( FALSE); /* Event is running, so clocks don't matter */
+
+	}
+	if(!g_event_finish_epoch || !g_event_finish_epoch || (g_current_epoch < MINIMUM_EPOCH))
+	{
+		return(TRUE);
+	}
+
+	if(g_event_finish_epoch <= g_event_start_epoch) /* Event configured to finish before it started */
+	{
+		return(TRUE);
+	}
+
+	if(g_transmissions_disabled && (g_current_epoch > g_event_finish_epoch))    /* The scheduled event is over */
+	{
+		return(TRUE);
+	}
+
+	return(FALSE);
 }
 
 
@@ -1250,8 +1300,9 @@ void playStartingTone(uint8_t toneFreq)
 }
 
 
-/* The compiler does not seem to optimize large switch statements correctly */
-void __attribute__((optimize("O0"))) handleLinkBusMsgs()
+/* The compiler does not seem to optimize large switch statements correctly
+ * void __attribute__((optimize("O0"))) handleLinkBusMsgs() */
+void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
 	BOOL send_ack = TRUE;
@@ -1404,6 +1455,7 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 					{
 						g_enable_LEDs = FALSE;
 						digitalWrite(PIN_LED1,OFF); /*  LED Off */
+						digitalWrite(PIN_LED2,OFF);
 					}
 					else
 					{
@@ -1444,27 +1496,38 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 			{
 				if(lb_buff->fields[FIELD1][0])
 				{
-					if(lb_buff->fields[FIELD1][0] == '0')       /* Stop the event. Resync will occur on next start */
+					if(lb_buff->fields[FIELD1][0] == '0')       /* Stop the event. Re-sync will occur on next start */
 					{
 						g_transmissions_disabled = TRUE;
 					}
-					else if(lb_buff->fields[FIELD1][0] == '1')  /* Start the event, resyncing to a start time of now - same as a button press */
+					else if(lb_buff->fields[FIELD1][0] == '1')  /* Start the event, re-syncing to a start time of now - same as a button press */
 					{
-						g_transmissions_disabled = FALSE;
+						startEventNow();
 					}
 					else if(lb_buff->fields[FIELD1][0] == '2')  /* Start the event at the programmed start time */
 					{
-						if(!g_config_error)
+						g_transmissions_disabled = TRUE;
+
+						if(!clockConfigurationError())
 						{
 							g_use_rtc_to_start = TRUE;
+							reportTimeTill(g_current_epoch,g_event_start_epoch,"Starts in: ","In progress\n");
+							reportTimeTill(g_event_start_epoch,g_event_finish_epoch,"Lasts: ",NULL);
+							if(g_event_start_epoch < g_current_epoch)
+							{
+								reportTimeTill(g_current_epoch,g_event_finish_epoch,"Time Remaining: ",NULL);
+							}
+						}
+						else
+						{
+							reportClockConfigErrors();
 						}
 					}
 				}
 
-				sprintf(g_tempStr,"STA:%s\n",g_enable_start_timer ? "ON" : "OFF");
-				lb_send_string(g_tempStr,FALSE);
-				setupForFox(NULL);
-				lb_send_string((char*)"Synchronized\n",FALSE);
+/*				sprintf(g_tempStr,"STA:%s\n",g_enable_start_timer ? "ON" : "OFF");
+ *				lb_send_string(g_tempStr,FALSE);
+ *				setupForFox(NULL); */
 			}
 			break;
 
@@ -1536,8 +1599,7 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 			case MESSAGE_VERSION:
 			{
-				sprintf(g_tempStr,"SW Ver:%s\n",SW_REVISION);
-				lb_send_string(g_tempStr,FALSE);
+				sendEEPROMString(&ee_textVersion[0]);
 			}
 			break;
 
@@ -1547,46 +1609,121 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 
 				if(lb_buff->fields[FIELD1][0] == 'T')   /* Current time format "YYMMDDhhmmss" */
 				{
-					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+					strncpy(g_tempStr,lb_buff->fields[FIELD2],12);
+					g_tempStr[12] = '\0';               /* truncate to no more than 12 characters */
+					int len = strlen(g_tempStr);
 
-					if(strlen(g_tempStr) == 12)
+					if(len > 0)
 					{
-						rv3028_set_date_time(g_tempStr);    /* String format "YYMMDDhhmmss" */
+						if((len == 12) && (only_digits(g_tempStr)))
+						{
+							time_t t = rv3028_get_epoch(NULL,g_tempStr);    /* String format "YYMMDDhhmmss" */
+
+							if(t > MINIMUM_EPOCH)
+							{
+								rv3028_set_date_time(g_tempStr);            /* String format "YYMMDDhhmmss" */
+								g_current_epoch = rv3028_get_epoch(NULL,NULL);
+								sprintf(g_tempStr,"Time:%lu\n",g_current_epoch);
+							}
+							else
+							{
+								sprintf(g_tempStr,"Err: Time in past!\n");
+							}
+						}
+						else
+						{
+							sprintf(g_tempStr,"Err: Invalid time!\n");
+						}
+					}
+					else
+					{
+						reportTimeTill(g_current_epoch,g_event_start_epoch,"Starts in: ",NULL);
+						sprintf(g_tempStr,"UNIX Time:%lu\n",g_current_epoch);
 					}
 
-					g_current_epoch = rv3028_get_epoch(NULL,NULL);
-					sprintf(g_tempStr,"CLK:%lu\n",g_current_epoch);
 					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'S')  /* Event start time */
 				{
 					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+					int len = strlen(g_tempStr);
 
-					if(strlen(g_tempStr) == 12)
+					if(len > 0)
 					{
-						g_event_start_epoch = rv3028_get_epoch(NULL,g_tempStr); /* String format "YYMMDDhhmmss" */
+						if((len == 12) && (only_digits(g_tempStr)))
+						{
+							time_t s;
+							s = rv3028_get_epoch(NULL,g_tempStr);   /* String format "YYMMDDhhmmss" */
 
-						eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
+							if(s > g_current_epoch)
+							{
+								g_event_start_epoch = s;
+								eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
+								g_event_finish_epoch = MAX(g_event_finish_epoch,(g_event_start_epoch + SECONDS_24H));
+								eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
+								sprintf(g_tempStr,"UNIX Start:%lu\n",g_event_start_epoch);
+							}
+							else
+							{
+								sprintf(g_tempStr,"Err: Start in past!\n");
+							}
+						}
+						else
+						{
+							sprintf(g_tempStr,"Err: Invalid time!\n");
+						}
+					}
+					else
+					{
+						sprintf(g_tempStr,"Start:%lu\n",g_event_start_epoch);
 					}
 
-					sprintf(g_tempStr,"Start:%lu\n",g_event_start_epoch);
 					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
 				{
 					strcpy(g_tempStr,lb_buff->fields[FIELD2]);
+					int len = strlen(g_tempStr);
 
-					if(strlen(g_tempStr) == 12)
+					if(len > 0)
 					{
-						g_event_finish_epoch = rv3028_get_epoch(NULL,g_tempStr);    /* String format "YYMMDDhhmmss" */
+						if((len == 12) && (only_digits(g_tempStr)))
+						{
+							time_t f;
+							f = rv3028_get_epoch(NULL,g_tempStr);   /* String format "YYMMDDhhmmss" */
 
-						eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
+							if(f > g_current_epoch)
+							{
+								if(f > g_event_start_epoch)
+								{
+									g_event_finish_epoch = f;
+									eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
+									reportTimeTill(g_event_start_epoch,g_event_finish_epoch,"Lasts: ",NULL);
+									sprintf(g_tempStr,"UNIX Finish:%lu\n",g_event_finish_epoch);
+								}
+								else
+								{
+									sprintf(g_tempStr,"Err: Finish before start!\n");
+								}
+							}
+							else
+							{
+								sprintf(g_tempStr,"Err: Finish in past!\n");
+							}
+						}
+						else
+						{
+							sprintf(g_tempStr,"Err: Invalid time!\n");
+						}
+					}
+					else
+					{
+						sprintf(g_tempStr,"Finish:%lu\n",g_event_finish_epoch);
 					}
 
-					sprintf(g_tempStr,"Finish:%lu\n",g_event_finish_epoch);
 					doprint = true;
 				}
-				else if(lb_buff->fields[FIELD1][0] == 'C')
+				else if(lb_buff->fields[FIELD1][0] == 'C')  /* Test only - Set RTC offset value */
 				{
 					if(lb_buff->fields[FIELD2][0])
 					{
@@ -1602,10 +1739,26 @@ void __attribute__((optimize("O0"))) handleLinkBusMsgs()
 					sprintf(g_tempStr,"C=%d\n",a);
 					doprint = true;
 				}
-				else if(lb_buff->fields[FIELD1][0] == 'X')
+				else if(lb_buff->fields[FIELD1][0] == 'X')  /* Test only - Send 32 kHz square wave out of RTC */
 				{
-					EIMSK &= ~(1 << INT0);  /* Disable INT0 interrupts */
+					EIMSK &= ~(1 << INT0);                  /* Disable INT0 interrupts */
 					rv3028_32kHz_sqw();
+				}
+				else
+				{
+					if(clockConfigurationError())
+					{
+						reportClockConfigErrors();
+					}
+					else
+					{
+						reportTimeTill(g_current_epoch,g_event_start_epoch,"Starts in: ","In progress\n");
+						reportTimeTill(g_event_start_epoch,g_event_finish_epoch,"Lasts: ",NULL);
+						if(g_event_start_epoch < g_current_epoch)
+						{
+							reportTimeTill(g_current_epoch,g_event_finish_epoch,"Time Remaining: ",NULL);
+						}
+					}
 				}
 
 				if(doprint)
@@ -1905,7 +2058,7 @@ void initializeEEPROMVars(BOOL resetAll)
 	if(!resetAll && (initialization_flag == EEPROM_INITIALIZED_FLAG))   /* EEPROM is up to date */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
-		g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
+		g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),NO_CODE_START_TONES_5M);
 /*		g_clock_calibration = eeprom_read_word(&ee_clock_calibration); */
 		g_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_temp_calibration);
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
@@ -2007,16 +2160,6 @@ void initializeEEPROMVars(BOOL resetAll)
 			g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
 		}
 
-		if(resetAll || (eeprom_read_dword(&ee_event_finish_epoch) == 0xFFFFFFFF))
-		{
-			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
-			eeprom_update_dword(&ee_event_finish_epoch,g_event_start_epoch);
-		}
-		else
-		{
-			g_event_start_epoch = eeprom_read_dword(&ee_event_finish_epoch);
-		}
-
 		if(resetAll || (eeprom_read_dword(&ee_event_start_epoch) == 0xFFFFFFFF))
 		{
 			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
@@ -2025,6 +2168,16 @@ void initializeEEPROMVars(BOOL resetAll)
 		else
 		{
 			g_event_start_epoch = eeprom_read_dword(&ee_event_start_epoch);
+		}
+
+		if(resetAll || (eeprom_read_dword(&ee_event_finish_epoch) == 0xFFFFFFFF))
+		{
+			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
+			eeprom_update_dword(&ee_event_finish_epoch,g_event_start_epoch);
+		}
+		else
+		{
+			g_event_start_epoch = eeprom_read_dword(&ee_event_finish_epoch);
 		}
 
 		if(resetAll || (eeprom_read_byte((uint8_t*)(&ee_stationID_text[0])) == 0xFF))
@@ -2062,30 +2215,16 @@ void initializeEEPROMVars(BOOL resetAll)
 		eeprom_write_byte(&ee_interface_eeprom_initialization_flag,EEPROM_INITIALIZED_FLAG);
 	}
 
+	if(g_event_finish_epoch <= g_event_start_epoch)
+	{
+		g_event_finish_epoch = g_event_start_epoch + SECONDS_24H;
+	}
+
 	return;
 }
 
 void setupForFox(Fox_t* fox)
 {
-	cli();
-	g_seconds_since_sync = 0;   /* Total elapsed time counter */
-	g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
-	g_code_throttle    = 0;     /* Adjusts Morse code speed */
-	g_callsign_sent = FALSE;
-
-	g_on_air_interval = 0;
-	g_fox_seconds_into_interval = 0;
-	g_number_of_foxes = 0;
-	g_fox_transition = FALSE;
-	g_fox_id_offset = 0;
-	g_id_interval = 0;
-	g_time_to_ID = FALSE;
-	g_audio_tone_state = OFF;
-	sei();
-
-	g_LEDs_Timed_Out = !g_enable_LEDs;
-	digitalWrite(PIN_LED2,OFF); /*  LED Off - in case it was on in the middle of a transmission */
-
 	if(fox)
 	{
 		if(*fox != INVALID_FOX)
@@ -2151,6 +2290,63 @@ void setupForFox(Fox_t* fox)
 		}
 		break;
 	}
+
+	if(g_use_rtc_to_start)
+	{
+		if(g_event_start_epoch < g_current_epoch)   /* timed event in progress */
+		{
+			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;               /* Total elapsed time counter: synced at event start time */
+			g_on_the_air       = FALSE;             /* Controls transmitter Morse activity */
+			g_code_throttle    = 0;                 /* Adjusts Morse code speed */
+			g_callsign_sent = FALSE;
+
+			g_fox_counter = 1 + (g_seconds_since_sync % g_on_air_interval);
+//			g_on_air_interval = 0;
+			g_fox_seconds_into_interval = 0;
+//			g_number_of_foxes = 0;
+			g_fox_transition = FALSE;
+			g_fox_id_offset = 0;
+//			g_id_interval = 0;
+			g_time_to_ID = FALSE;
+			g_audio_tone_state = OFF;
+		}
+		else                            /* event starts in the future */
+		{
+			g_seconds_since_sync = 0;   /* Total elapsed time counter */
+			g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
+			g_code_throttle    = 0;     /* Adjusts Morse code speed */
+			g_callsign_sent = FALSE;
+
+			g_fox_counter = 1;
+//			g_on_air_interval = 0;
+			g_fox_seconds_into_interval = 0;
+//			g_number_of_foxes = 0;
+			g_fox_transition = FALSE;
+			g_fox_id_offset = 0;
+//			g_id_interval = 0;
+			g_time_to_ID = FALSE;
+			g_audio_tone_state = OFF;
+		}
+	}
+	else                            /* manual start */
+	{
+		g_seconds_since_sync = 0;   /* Total elapsed time counter */
+		g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
+		g_code_throttle    = 0;     /* Adjusts Morse code speed */
+		g_callsign_sent = FALSE;
+
+//		g_on_air_interval = 0;
+		g_fox_seconds_into_interval = 0;
+//		g_number_of_foxes = 0;
+		g_fox_transition = FALSE;
+		g_fox_id_offset = 0;
+//		g_id_interval = 0;
+		g_time_to_ID = FALSE;
+		g_audio_tone_state = OFF;
+	}
+
+	g_LEDs_Timed_Out = !g_enable_LEDs;
+	digitalWrite(PIN_LED2,OFF); /*  LED Off - in case it was on in the middle of a transmission */
 }
 
 void permCallsign(char* call)
@@ -2258,3 +2454,128 @@ void setUpAudioSampling(BOOL enableSampling)
 		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 	}
 }
+
+BOOL only_digits(char *s)
+{
+	while(*s)
+	{
+		if(isdigit(*s++) == 0)
+		{
+			return( FALSE);
+		}
+	}
+
+	return( TRUE);
+}
+
+void startEventNow(void)
+{
+	setupForFox(NULL);
+	g_transmissions_disabled = FALSE;
+	lb_send_string((char*)"Synchronized\n> ",FALSE);
+}
+
+void reportClockConfigErrors(void)
+{
+	if(g_current_epoch < MINIMUM_EPOCH) /* Current time is invalid */
+	{
+		sendEEPROMString(&ee_textSetTime[0]);
+	}
+
+	if(g_event_start_epoch < g_current_epoch)   /* Event has already started */
+	{
+		sendEEPROMString(&ee_textSetStart[0]);
+	}
+
+	if(g_event_finish_epoch < g_current_epoch)  /* Event has already finished */
+	{
+		sendEEPROMString(&ee_textSetFinish[0]);
+	}
+}
+
+BOOL reportTimeTill(time_t from,time_t until,const char* prefix,const char* failMsg)
+{
+	BOOL failure = FALSE;
+
+	if(from >= until)   /* Negative time */
+	{
+		failure = TRUE;
+		if(failMsg)
+		{
+			lb_send_string((char*)failMsg,TRUE);
+		}
+	}
+	else
+	{
+		if(prefix)
+		{
+			lb_send_string((char*)prefix,TRUE);
+		}
+		time_t dif = until - from;
+		uint16_t years = dif / YEAR;
+		time_t hold = dif - (years * YEAR);
+		uint16_t days = hold / DAY;
+		hold -= (days * DAY);
+		uint16_t hours = hold / HOUR;
+		hold -= (hours * HOUR);
+		uint16_t minutes = hold / MINUTE;
+		uint16_t seconds = hold - (minutes * MINUTE);
+
+		g_tempStr[0] = '\0';
+
+		if(years)
+		{
+			sprintf(g_tempStr,"%d yrs ",years);
+			lb_send_string(g_tempStr,TRUE);
+		}
+
+		if(days)
+		{
+			sprintf(g_tempStr,"%d days ",days);
+			lb_send_string(g_tempStr,TRUE);
+		}
+
+		if(hours)
+		{
+			sprintf(g_tempStr,"%d hrs ",hours);
+			lb_send_string(g_tempStr,TRUE);
+		}
+
+		if(minutes)
+		{
+			sprintf(g_tempStr,"%d min ",minutes);
+			lb_send_string(g_tempStr,TRUE);
+		}
+
+		sprintf(g_tempStr,"%d sec",seconds);
+		lb_send_string(g_tempStr,TRUE);
+
+		lb_send_NewLine();
+		g_tempStr[0] = '\0';
+	}
+
+	return( failure);
+}
+
+/**
+ *   Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"
+ *
+ *  #define THIRTY_YEARS 946080000
+ *  char* convertEpochToTimeString(unsigned long epoch)
+ *  {
+ *  struct tm  ts;
+ *
+ *  if (epoch < MINIMUM_EPOCH)
+ *  {
+ *       g_tempStr[0] = '\0';
+ *   return g_tempStr;
+ *  }
+ *
+ *  time_t e = (time_t)epoch - THIRTY_YEARS;
+ *  // Format time, "ddd yyyy-mm-ddThh:mm:ss"
+ *  ts = *localtime(&e);
+ *  strftime(g_tempStr, sizeof(g_tempStr), "%Y-%m-%dT%H:%M:%SZ", &ts);
+ *
+ *  return g_tempStr;
+ *  }
+ */

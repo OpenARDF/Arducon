@@ -76,13 +76,9 @@
 
 /******************************************************
  * Set the text that gets displayed to the user */
-#define SW_REVISION "0.4"
+#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.6 ***"
 
 /*#define TRANQUILIZE_WATCHDOG */
-
-#define PRODUCT_NAME_SHORT "Arducon"
-#define PRODUCT_NAME_LONG "Arducon Fox Controller"
-
 /*#define DEBUG_DTMF */
 
 #define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
@@ -111,6 +107,22 @@
 
 #ifndef PI
 #define PI 3.141592653589793
+#endif
+
+#ifndef MINUTE
+#define MINUTE 60UL
+#endif
+
+#ifndef HOUR
+#define HOUR 3600UL
+#endif
+
+#ifndef DAY
+#define DAY 86400UL
+#endif
+
+#ifndef YEAR
+#define YEAR 31536000UL
 #endif
 
 /*
@@ -234,7 +246,7 @@ typedef enum
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG 0xB9    /* Never set to 0xFF */
+#define EEPROM_INITIALIZED_FLAG 0xBA    /* Never set to 0xFF */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -253,10 +265,13 @@ typedef enum
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
-#define EEPROM_ENABLE_STARTTIMER_DEFAULT 1
+#define EEPROM_ENABLE_STARTTIMER_DEFAULT 0
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
 #define EEPROM_START_EPOCH_DEFAULT 0
 #define EEPROM_FINISH_EPOCH_DEFAULT 0
+
+#define MINIMUM_EPOCH 1609459200 /* 1 Jan 2021 00:00:00 */
+#define SECONDS_24H 86400
 
 #ifndef BOOL
 	typedef uint8_t BOOL;
