@@ -2154,7 +2154,7 @@ U 1 1 5FD2090F
 P 2150 8200
 F 0 "D103" H 2150 8121 50  0000 R CNN
 F 1 "ESD9B5.0ST5G" V 2105 8121 50  0001 R CNN
-F 2 "Diodes_SMD:SOD-923" H 2150 8200 50  0001 C CNN
+F 2 "Resistors_SMD:R_0603" H 2150 8200 50  0001 C CNN
 F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2150 8200 50  0001 C CNN
 F 4 "ESD9B5.0ST5GOSCT-ND" H 2150 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2150 8200 50  0001 C CNN "Link"
@@ -2232,7 +2232,7 @@ U 1 1 5FDA0FE1
 P 2400 8200
 F 0 "D104" H 2400 8121 50  0000 R CNN
 F 1 "ESD9B5.0ST5G" V 2355 8121 50  0001 R CNN
-F 2 "Diodes_SMD:SOD-923" H 2400 8200 50  0001 C CNN
+F 2 "Resistors_SMD:R_0603" H 2400 8200 50  0001 C CNN
 F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2400 8200 50  0001 C CNN
 F 4 "ESD9B5.0ST5GOSCT-ND" H 2400 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2400 8200 50  0001 C CNN "Link"
@@ -2245,7 +2245,7 @@ U 1 1 5FDA2503
 P 2650 8200
 F 0 "D105" H 2650 8121 50  0000 R CNN
 F 1 "ESD9B5.0ST5G" V 2605 8121 50  0001 R CNN
-F 2 "Diodes_SMD:SOD-923" H 2650 8200 50  0001 C CNN
+F 2 "Resistors_SMD:R_0603" H 2650 8200 50  0001 C CNN
 F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2650 8200 50  0001 C CNN
 F 4 "ESD9B5.0ST5GOSCT-ND" H 2650 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2650 8200 50  0001 C CNN "Link"
@@ -2258,7 +2258,7 @@ U 1 1 5FDA39FE
 P 2900 8200
 F 0 "D106" H 2900 8121 50  0000 R CNN
 F 1 "ESD9B5.0ST5G" V 2855 8121 50  0001 R CNN
-F 2 "Diodes_SMD:SOD-923" H 2900 8200 50  0001 C CNN
+F 2 "Resistors_SMD:R_0603" H 2900 8200 50  0001 C CNN
 F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 2900 8200 50  0001 C CNN
 F 4 "ESD9B5.0ST5GOSCT-ND" H 2900 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 2900 8200 50  0001 C CNN "Link"
@@ -2271,7 +2271,7 @@ U 1 1 5FDA4F56
 P 3150 8200
 F 0 "D107" H 3150 8121 50  0000 R CNN
 F 1 "ESD9B5.0ST5G" V 3105 8121 50  0001 R CNN
-F 2 "Diodes_SMD:SOD-923" H 3150 8200 50  0001 C CNN
+F 2 "Resistors_SMD:R_0603" H 3150 8200 50  0001 C CNN
 F 3 "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF" H 3150 8200 50  0001 C CNN
 F 4 "ESD9B5.0ST5GOSCT-ND" H 3150 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND\">Link</a>" H 3150 8200 50  0001 C CNN "Link"
