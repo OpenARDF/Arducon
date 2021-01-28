@@ -448,10 +448,22 @@
 		{
 			uint8_t status = FALSE;
 			uint8_t temp = 0, mask;
-
+			
+#if INIT_EEPROM_ONLY
+/* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM
+by reading all EEPROM into the RAM mirror now */
+			temp = 0x00;
+			status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+			waitForEEPROMReady();
+			temp = 0x12;    /* Refresh RAM from EEPROM */
+			status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+			waitForEEPROMReady();
+			
+			if(1)
+#else
 			if(g_allow_rv3028_eeprom_changes)
+#endif
 			{
-
 				if(waitForEEPROMReady())
 				{
 					return( 1);

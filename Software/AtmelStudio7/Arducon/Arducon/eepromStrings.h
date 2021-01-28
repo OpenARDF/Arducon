@@ -1,10 +1,4 @@
 /*
- * eepromStrings.cpp
- *
- * Created: 1/21/2021 9:11:05 PM
- *  Author: charl
- */
-/*
  *  MIT License
  *
  *  Copyright (c) 2021 DigitalConfections
@@ -42,6 +36,11 @@
 #define TEXT_SET_TIME ("CLK T YYMMDDhhmmss <- Set current time\n")
 #define TEXT_SET_START ("CLK S YYMMDDhhmmss <- Set start time\n")
 #define TEXT_SET_FINISH ("CLK F YYMMDDhhmmss <- Set finish time\n")
+#define TEXT_SET_ID ("ID [\"callsign\"] <- Set callsign\n")
+#define TEXT_ERR_FINISH_BEFORE_START ("Err: Finish before start!\n")
+#define TEXT_ERR_FINISH_IN_PAST ("Err: Finish in past!\n")
+#define TEXT_ERR_START_IN_PAST ("Err: Start in past!\n")
+#define TEXT_ERR_INVALID_TIME ("Err: Invalid time!")
 
 void sendEEPROMString(char ee_addr[]);
 void saveEEPROM(void);

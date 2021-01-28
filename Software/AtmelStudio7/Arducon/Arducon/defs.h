@@ -32,6 +32,9 @@
 #define COMPILE_FOR_ATMELSTUDIO7 TRUE
 #define INIT_EEPROM_ONLY FALSE
 
+/* Set Firmware Version Here */
+#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.6 ***"
+
 /*******************************************************/
 
 #ifndef FALSE
@@ -75,8 +78,7 @@
 /* #define F_CPU 16000000UL / * gets declared in makefile * / */
 
 /******************************************************
- * Set the text that gets displayed to the user */
-#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.6 ***"
+ * Set Hardware Settings */
 
 /*#define TRANQUILIZE_WATCHDOG */
 /*#define DEBUG_DTMF */
@@ -260,7 +262,6 @@ typedef enum
 #define EEPROM_ON_AIR_TIME_DEFAULT 60
 #define EEPROM_OFF_AIR_TIME_DEFAULT 240
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
-//#define EEPROM_CLOCK_CALIBRATION_DEFAULT 15629
 #define EEPROM_TEMP_CALIBRATION_DEFAULT -110
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0

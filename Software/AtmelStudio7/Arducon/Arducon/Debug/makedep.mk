@@ -4,11 +4,17 @@
 
 ardooweeno.cpp
 
+eepromStrings.cpp
+
 Goertzel.cpp
+
+i2c.cpp
 
 linkbus.cpp
 
 main.cpp
 
 morse.cpp
+
+rv3028.cpp
 

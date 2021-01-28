@@ -35,6 +35,11 @@ char EEMEM ee_textHelp[sizeof(HELP_TEXT)];
 char EEMEM ee_textSetTime[sizeof(TEXT_SET_TIME)];
 char EEMEM ee_textSetStart[sizeof(TEXT_SET_START)];
 char EEMEM ee_textSetFinish[sizeof(TEXT_SET_FINISH)];
+char EEMEM ee_textSetID[sizeof(TEXT_SET_ID)];
+char EEMEM ee_textErrFinishB4Start[sizeof(TEXT_ERR_FINISH_BEFORE_START)];
+char EEMEM ee_textErrFinishInPast[sizeof(TEXT_ERR_FINISH_IN_PAST)];
+char EEMEM ee_textErrStartInPast[sizeof(TEXT_ERR_START_IN_PAST)];
+char EEMEM ee_textErrInvalidTime[sizeof(TEXT_ERR_INVALID_TIME)];
 
 
 void sendEEPROMString(char ee_addr[])
@@ -84,6 +89,16 @@ void sendEEPROMString(char ee_addr[])
 
 		eeprom_update_byte((uint8_t*)&ee_textHelp[i], 0);
 		lb_send_value(i + 1, (char*)"Size of HELP_TEXT");
+		
+/* Set ID String */
+		tempText = (char*)&TEXT_SET_ID[0];
+		for(i=0; i < strlen(TEXT_SET_ID); i++)
+		{
+			eeprom_update_byte((uint8_t*)&ee_textSetID[i], (uint8_t)tempText[i]);
+		}
+		
+		eeprom_update_byte((uint8_t*)&ee_textSetID[i], 0);
+		lb_send_value(i+1, (char*)"Size of TEXT_SET_ID");
 
 /* Set Time String */
 
@@ -118,6 +133,48 @@ void sendEEPROMString(char ee_addr[])
 		eeprom_update_byte((uint8_t*)&ee_textSetFinish[i], 0);
 
 		lb_send_value(i + 1, (char*)"Size of TEXT_SET_FINISH");
+
+		
+/* Set Err Finish in Past String */
+		tempText = (char*)&TEXT_ERR_FINISH_IN_PAST[0];
+		for(i=0; i < strlen(TEXT_ERR_FINISH_IN_PAST); i++)
+		{
+			eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], (uint8_t)tempText[i]);
+		}
+
+		eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], 0);
+		lb_send_value(i+1, (char*)"Size of TEXT_ERR_FINISH_IN_PAST");
+
+		
+/* Set Err Start in Past String */
+		tempText = (char*)&TEXT_ERR_START_IN_PAST[0];
+		for(i=0; i < strlen(TEXT_ERR_START_IN_PAST); i++)
+		{
+			eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], (uint8_t)tempText[i]);
+		}
+
+		eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], 0);
+		lb_send_value(i+1, (char*)"Size of TEXT_ERR_START_IN_PAST");
+
+/* Set Err Finish Before Start String */
+tempText = (char*)&TEXT_ERR_FINISH_BEFORE_START[0];
+for(i=0; i < strlen(TEXT_ERR_FINISH_BEFORE_START); i++)
+{
+	eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], (uint8_t)tempText[i]);
+}
+
+eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], 0);
+lb_send_value(i+1, (char*)"Size of TEXT_ERR_FINISH_BEFORE_START");
+
+/* Set Err Invalid Time String */
+tempText = (char*)&TEXT_ERR_INVALID_TIME[0];
+for(i=0; i < strlen(TEXT_ERR_INVALID_TIME); i++)
+{
+	eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], (uint8_t)tempText[i]);
+}
+
+eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], 0);
+lb_send_value(i+1, (char*)"Size of TEXT_ERR_INVALID_TIME");
 
 /* Done */
 
