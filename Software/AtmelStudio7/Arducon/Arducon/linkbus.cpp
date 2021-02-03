@@ -389,7 +389,6 @@ void lb_send_Help(void)
 
 	lb_send_NewLine();
 	sendEEPROMString(&ee_textVersion[0]);
-	lb_send_NewLine();
 	sendEEPROMString(&ee_textHelp[0]);
 	lb_send_NewLine();
 	lb_send_NewLine();

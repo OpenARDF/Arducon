@@ -1,4 +1,3 @@
-
 /*
  *  MIT License
  *
@@ -26,14 +25,6 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-/******************************************************
- *  Set for the IDE being used: Arduino or Atmel Studio 7
- */
-#define COMPILE_FOR_ATMELSTUDIO7 FALSE
-#define INIT_EEPROM_ONLY FALSE
-
-/*******************************************************/
-
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -41,6 +32,14 @@
 #ifndef TRUE
 #define TRUE !FALSE
 #endif
+
+/******************************************************
+ *  Set for the IDE being used: Arduino or Atmel Studio 7
+ */
+#define COMPILE_FOR_ATMELSTUDIO7 FALSE
+#define INIT_EEPROM_ONLY TRUE
+
+/*******************************************************/
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		#include <avr/io.h>
@@ -75,8 +74,7 @@
 /* #define F_CPU 16000000UL / * gets declared in makefile * / */
 
 /******************************************************
- * Set the text that gets displayed to the user */
-#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.5 ***"
+ * Set Hardware Settings */
 
 /*#define TRANQUILIZE_WATCHDOG */
 /*#define DEBUG_DTMF */
@@ -107,6 +105,22 @@
 
 #ifndef PI
 #define PI 3.141592653589793
+#endif
+
+#ifndef MINUTE
+#define MINUTE 60UL
+#endif
+
+#ifndef HOUR
+#define HOUR 3600UL
+#endif
+
+#ifndef DAY
+#define DAY 86400UL
+#endif
+
+#ifndef YEAR
+#define YEAR 31536000UL
 #endif
 
 /*
@@ -244,7 +258,6 @@ typedef enum
 #define EEPROM_ON_AIR_TIME_DEFAULT 60
 #define EEPROM_OFF_AIR_TIME_DEFAULT 240
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
-//#define EEPROM_CLOCK_CALIBRATION_DEFAULT 15629
 #define EEPROM_TEMP_CALIBRATION_DEFAULT -110
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0

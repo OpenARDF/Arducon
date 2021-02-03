@@ -24,10 +24,13 @@
 
 #include "defs.h"
 #include "linkbus.h"
-#include "Goertzel.h"
 #include "morse.h"
 #include "rv3028.h"
 #include "eepromStrings.h"
+
+#if !INIT_EEPROM_ONLY
+#include "Goertzel.h"
+#endif // INIT_EEPROM_ONLY
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/io.h>
@@ -50,6 +53,7 @@ extern char EEMEM ee_textErrFinishB4Start[];
 extern char EEMEM ee_textErrFinishInPast[];
 extern char EEMEM ee_textErrStartInPast[];
 extern char EEMEM ee_textErrInvalidTime[];
+extern char EEMEM ee_textErrTimeInPast[];
 
 
 #define MAX_PATTERN_TEXT_LENGTH 20
@@ -68,7 +72,11 @@ volatile int g_active           = 0;        /* Disable active. set and clear in 
 
 volatile int g_on_the_air       = 0;        /* Controls transmitter Morse activity */
 volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
+
+#if !INIT_EEPROM_ONLY
 const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
+#endif // !INIT_EEPROM_ONLY
+
 volatile BOOL g_callsign_sent = FALSE;
 
 volatile BOOL g_blinky_time = FALSE;
@@ -152,6 +160,8 @@ static volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 extern BOOL g_allow_rv3028_eeprom_changes;
 
 #define _N 201
+
+#if !INIT_EEPROM_ONLY
 const int N = _N;
 const float threshold = 500000. * (_N / 100);
 const float sampling_freq = SAMPLE_RATE;
@@ -161,24 +171,26 @@ const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. 
 const char key[16] = { '1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D' };
 const int numKeys = sizeof(key) / sizeof(key[0]);
 const char keyMorse[39] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-							'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
+#endif // !INIT_EEPROM_ONLY
+
 
 char g_lastKey = '\0';
 unsigned long g_last = 0;
 unsigned long g_tick_count = 0;
 
+#if !INIT_EEPROM_ONLY
 Goertzel g_goertzel(N, sampling_freq);
+#endif // INIT_EEPROM_ONLY
 
-static char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
-char s[12];
+char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
 static volatile uint8_t g_LEDs_Timed_Out = FALSE;
 /*
  * Local function prototypes
  */
 void handleLinkBusMsgs(void);
-void processKey(char key);
 void initializeEEPROMVars(BOOL resetAll);
 void permCallsign(char* call);
 void permFox(Fox_t fox);
@@ -188,13 +200,17 @@ void setupForFox(Fox_t* fox);
 void setUpTemp(void);
 uint16_t readADC();
 float getTemp(void);
-void setUpAudioSampling(BOOL enableSampling);
 BOOL only_digits(char *s);
 BOOL clockConfigurationError(void);
 void startEventNow(void);
-void reportClockConfigErrors(void);
+void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
+
+#if !INIT_EEPROM_ONLY
+void processKey(char key);
+void setUpAudioSampling(BOOL enableSampling);
+#endif // !INIT_EEPROM_ONLY
 
 #if COMPILE_FOR_ATMELSTUDIO7
 	void loop(void);
@@ -203,8 +219,7 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	/* set active pins */
-	pinMode(PIN_LED1, OUTPUT);                                                                                                                                                                                              /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);          /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -245,9 +260,8 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 		initializeEEPROMVars(TRUE);     /* Must happen after pins are configure due to I2C access */
 #else
 		initializeEEPROMVars(FALSE);    /* Must happen after pins are configure due to I2C access */
+		setUpAudioSampling(true);
 #endif
-
-	setUpAudioSampling(true);
 
 	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
 	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
@@ -283,16 +297,15 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	PCMSK2 = (1 << PCINT20);    /* Enable PCINT20 */
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
+	sei();                                                                                  /* Enable interrupts */
+
+	linkbus_init(BAUD);                                                                     /* Start the Link Bus serial comms */
 
 #if !INIT_EEPROM_ONLY
 		uint8_t result = rv3028_1s_sqw();
 #else
 		rv3028_1s_sqw();
 #endif  /* !INIT_EEPROM_ONLY */
-
-	sei();                                                                                  /* Enable interrupts */
-
-	linkbus_init(BAUD);                                                                     /* Start the Link Bus serial comms */
 
 	g_current_epoch = rv3028_get_epoch(NULL, NULL);
 
@@ -321,14 +334,13 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 			lb_send_string(g_tempStr, TRUE);
 		}
 
-		sprintf(g_tempStr, "  ID: %s\n", g_messages_text[STATION_ID]);
-		lb_send_string(g_tempStr, TRUE);
-		reportClockConfigErrors();
+		reportConfigErrors();
 		lb_send_NewPrompt();
 
 #endif  /* #if INIT_EEPROM_ONLY */
 
 	setupForFox(NULL);
+	g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -343,12 +355,14 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
  ************************************************************************/
 ISR(ADC_vect)
 {
+#if !INIT_EEPROM_ONLY
 	digitalWrite(PIN_MOSI, ON);
 	if(g_goertzel.DataPoint(ADCH))
 	{
 		ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 	}
 	digitalWrite(PIN_MOSI, OFF);
+#endif // INIT_EEPROM_ONLY
 }
 
 
@@ -1081,7 +1095,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;  /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1,y = -1;
 
@@ -1227,13 +1241,13 @@ void loop()
 			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
 			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 		}
+#endif  /* !INIT_EEPROM_ONLY */
 
 		BOOL hold_config_err = g_config_error;
 		if(!(g_config_error = clockConfigurationError()) && hold_config_err)
 		{
 			digitalWrite(PIN_LED2,OFF); /* ensure LED is off */
 		}
-#endif  /* !INIT_EEPROM_ONLY */
 }
 
 
@@ -1242,8 +1256,8 @@ BOOL clockConfigurationError(void)
 	if(!g_transmissions_disabled)
 	{
 		return( FALSE); /* Event is running, so clocks don't matter */
-
 	}
+	
 	if(!g_event_finish_epoch || !g_event_finish_epoch || (g_current_epoch < MINIMUM_EPOCH))
 	{
 		return(TRUE);
@@ -1512,7 +1526,7 @@ void handleLinkBusMsgs()
 						}
 						else
 						{
-							reportClockConfigErrors();
+							reportConfigErrors();
 						}
 					}
 				}
@@ -1584,7 +1598,7 @@ void handleLinkBusMsgs()
 						}
 					}
 				}
-				sprintf(g_tempStr,"ID:  %d wpm\n",g_id_codespeed);
+				sprintf(g_tempStr,"ID: %d wpm\n",g_id_codespeed);
 				lb_send_string(g_tempStr,FALSE);
 			}
 			break;
@@ -1619,7 +1633,7 @@ void handleLinkBusMsgs()
 							}
 							else
 							{
-								sprintf(g_tempStr,"Err: Time in past!\n");
+								sendEEPROMString(&ee_textErrTimeInPast[0]);
 							}
 						}
 						else
@@ -1653,7 +1667,8 @@ void handleLinkBusMsgs()
 								eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
 								g_event_finish_epoch = MAX(g_event_finish_epoch,(g_event_start_epoch + SECONDS_24H));
 								eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
-								sprintf(g_tempStr,"UNIX Start:%lu\n",g_event_start_epoch);
+								sprintf(g_tempStr,"Start:%lu\n",g_event_start_epoch);
+								g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
 							}
 							else
 							{
@@ -1691,7 +1706,8 @@ void handleLinkBusMsgs()
 									g_event_finish_epoch = f;
 									eeprom_update_dword(&ee_event_finish_epoch,g_event_finish_epoch);
 									reportTimeTill(g_event_start_epoch,g_event_finish_epoch,"Lasts: ",NULL);
-									sprintf(g_tempStr,"UNIX Finish:%lu\n",g_event_finish_epoch);
+									sprintf(g_tempStr,"Finish:%lu\n",g_event_finish_epoch);
+									g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
 								}
 								else
 								{
@@ -1740,7 +1756,7 @@ void handleLinkBusMsgs()
 				{
 					if(clockConfigurationError())
 					{
-						reportClockConfigErrors();
+						reportConfigErrors();
 					}
 					else
 					{
@@ -1799,6 +1815,7 @@ void handleLinkBusMsgs()
 	}
 }
 
+#if !INIT_EEPROM_ONLY
 
 /*
  *  Command set:
@@ -2037,6 +2054,8 @@ void processKey(char key)
 	}
 }
 
+#endif // #if !INIT_EEPROM_ONLY
+
 /*
  * Set non-volatile variables to their values stored in EEPROM
  */
@@ -2184,8 +2203,8 @@ void initializeEEPROMVars(BOOL resetAll)
 			}
 		}
 
-		/* Each correction pulse = 1 tick corresponds to 1 / (16384 × 64) = 0.9537 ppm.
-		 * ppm frequency change = -0.035 * (T-T0)^2 (±10%)
+		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
+		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
 		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
 		for(i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
@@ -2454,10 +2473,10 @@ void startEventNow(void)
 {
 	setupForFox(NULL);
 	g_transmissions_disabled = FALSE;
-	lb_send_string((char*)"Synchronized\n> ",FALSE);
+	lb_send_string((char*)"Sync OK\n> ",FALSE);
 }
 
-void reportClockConfigErrors(void)
+void reportConfigErrors(void)
 {
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -2469,14 +2488,18 @@ void reportClockConfigErrors(void)
 		sendEEPROMString(&ee_textSetTime[0]);
 	}
 
-	if(g_event_start_epoch < g_current_epoch)   /* Event has already started */
-	{
-		sendEEPROMString(&ee_textSetStart[0]);
-	}
-
 	if(g_event_finish_epoch < g_current_epoch)  /* Event has already finished */
-	{
+	{	
+		if(g_event_start_epoch < g_current_epoch)   /* Event has already started */
+		{
+			sendEEPROMString(&ee_textSetStart[0]);
+		}
+
 		sendEEPROMString(&ee_textSetFinish[0]);
+	}
+	else if(g_event_start_epoch < g_current_epoch)   /* Event has already started */
+	{
+		lb_send_string((char *)"Event running...\n", TRUE);
 	}
 }
 

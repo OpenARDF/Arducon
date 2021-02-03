@@ -24,6 +24,8 @@
 
 #include "Goertzel.h"
 
+#if !INIT_EEPROM_ONLY
+
 float _SAMPLING_FREQUENCY;
 float _TARGET_FREQUENCY;
 int _N;
@@ -113,3 +115,4 @@ float Goertzel::Magnitude2()
 	ResetGoertzel();
 	return( magnitude2);
 }
+#endif // !INIT_EEPROM_ONLY

@@ -32,16 +32,6 @@
 #include <avr/eeprom.h>
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
-#define HELP_TEXT ("\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version" )
-#define TEXT_SET_TIME ("CLK T YYMMDDhhmmss <- Set current time\n")
-#define TEXT_SET_START ("CLK S YYMMDDhhmmss <- Set start time\n")
-#define TEXT_SET_FINISH ("CLK F YYMMDDhhmmss <- Set finish time\n")
-#define TEXT_SET_ID ("ID [\"callsign\"] <- Set callsign\n")
-#define TEXT_ERR_FINISH_BEFORE_START ("Err: Finish before start!\n")
-#define TEXT_ERR_FINISH_IN_PAST ("Err: Finish in past!\n")
-#define TEXT_ERR_START_IN_PAST ("Err: Start in past!\n")
-#define TEXT_ERR_INVALID_TIME ("Err: Invalid time!")
-
 void sendEEPROMString(char ee_addr[]);
 void saveEEPROM(void);
 

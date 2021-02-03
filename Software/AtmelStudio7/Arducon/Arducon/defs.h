@@ -1,4 +1,3 @@
-
 /*
  *  MIT License
  *
@@ -26,17 +25,6 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-/******************************************************
- *  Set for the IDE being used: Arduino or Atmel Studio 7
- */
-#define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define INIT_EEPROM_ONLY FALSE
-
-/* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG "*** Arducon Fox Controller Ver. 0.6 ***"
-
-/*******************************************************/
-
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -44,6 +32,14 @@
 #ifndef TRUE
 #define TRUE !FALSE
 #endif
+
+/******************************************************
+ *  Set for the IDE being used: Arduino or Atmel Studio 7
+ */
+#define COMPILE_FOR_ATMELSTUDIO7 TRUE
+#define INIT_EEPROM_ONLY FALSE
+
+/*******************************************************/
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		#include <avr/io.h>
