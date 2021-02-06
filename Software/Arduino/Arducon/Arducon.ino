@@ -265,11 +265,14 @@ void setUpAudioSampling(BOOL enableSampling);
 		setUpAudioSampling(true);
 #endif
 
+	/********************************************************************/
+	/* INT0 is for external 1-second intertrupts                        */
 	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
 	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
-	/**
-	 * TIMER2 is for periodic interrupts to drive Morse code generation */
+
+	/********************************************************************/
+	/* TIMER2 is for periodic interrupts to drive Morse code generation */
 	/* Reset control registers */
 	TCCR2A = 0;
 	TCCR2B = 0;
@@ -283,7 +286,24 @@ void setUpAudioSampling(BOOL enableSampling);
 	/* Reset Timer/Counter2 Interrupt Mask Register */
 	TIMSK2 = 0;
 	TIMSK2 |= (1 << OCIE2B);    /* Output Compare Match B Interrupt Enable */
+	
+	/********************************************************************/
+	/* Timer 1 is used for controlling the attenuator for AM generation */
+		/* set timer1 interrupt at 16 kHz */
 
+	TCCR1A = 0; /* set entire TCCR1A register to 0 */
+	TCCR1B = 0; /* same for TCCR1B */
+	TCNT1 = 0;  /* initialize counter value to 0 */
+	OCR1A = 500; /* For ~800 Hz tone output */
+/* turn on CTC mode */
+	TCCR1B |= (1 << WGM12);
+/* Set CS10 bit for no prescaling */
+	TCCR1B |= (1 << CS10);
+/* enable timer compare interrupt */
+//	TIMSK1 |= (1 << OCIE1A);
+
+
+	/********************************************************************/
 	/* Timer 0 is for audio Start tone generation and control
 	 * Note: Do not use millis() or DELAY() after TIMER0 has been reconfigured here! */
 	TCCR0A = 0x00;
@@ -294,6 +314,7 @@ void setUpAudioSampling(BOOL enableSampling);
 	TIMSK0 = 0x00;
 	TIMSK0 |= (1 << OCIE0A);
 
+	/********************************************************************/
 	/* Sync button pin change interrupt */
 	PCMSK2 = 0x00;
 	PCMSK2 = (1 << PCINT20);    /* Enable PCINT20 */
@@ -957,10 +978,10 @@ ISR( INT0_vect )
 			}
 		}
 	}
-}   /* end of Timer1 ISR */
+}   /* end of INT0 ISR */
 
 /* This interrupt generates an audio tone on the audio out pin. */
-SIGNAL(TIMER0_COMPA_vect)
+ISR(TIMER0_COMPA_vect)
 {
 	static BOOL toggle = 0;
 
@@ -981,6 +1002,33 @@ SIGNAL(TIMER0_COMPA_vect)
 	{
 		digitalWrite(PIN_CW_TONE_LOGIC,OFF);
 	}
+}
+
+/***********************************************************************
+ * Timer/Counter1 Compare Match A ISR
+ *
+ * Handles AM modulation tasks
+ ************************************************************************/
+ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
+{
+	static uint8_t direction = UP;
+	static uint8_t count = 0;
+	uint8_t controlPins;
+	
+	if(direction == UP)
+	{
+		count++;
+		if(count >= 0x0f) direction = DOWN;
+	}
+	else
+	{
+		count--;
+		if(count == 0x00) direction = UP;
+	}
+	
+	controlPins = PORTC & 0xF0;
+	controlPins |= count;
+	PORTC = controlPins;
 }
 
 /*

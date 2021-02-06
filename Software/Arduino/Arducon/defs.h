@@ -59,6 +59,14 @@
 #define LOW  0x0
 #endif
 
+#ifndef UP
+#define UP 1
+#endif
+
+#ifndef DOWN
+#define DOWN 0
+#endif
+
 #ifndef INPUT
 #define INPUT 0x0
 #endif
