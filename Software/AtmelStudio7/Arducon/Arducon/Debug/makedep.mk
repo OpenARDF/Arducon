@@ -6,6 +6,8 @@ ardooweeno.cpp
 
 eepromStrings.cpp
 
+F1975.cpp
+
 Goertzel.cpp
 
 i2c.cpp

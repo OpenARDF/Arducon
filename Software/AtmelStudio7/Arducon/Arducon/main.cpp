@@ -30,6 +30,7 @@
 
 #if !INIT_EEPROM_ONLY
 #include "Goertzel.h"
+#include "f1975.h"
 #endif // INIT_EEPROM_ONLY
 
 #if COMPILE_FOR_ATMELSTUDIO7
@@ -246,20 +247,21 @@ void setUpAudioSampling(BOOL enableSampling);
 
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_D0, OUTPUT);    /* Also RXD */
-	pinMode(PIN_D1, OUTPUT);    /* Also TXD */
+	pinMode(PIN_D0, OUTPUT);
+	pinMode(PIN_D1, OUTPUT);
 	pinMode(PIN_D2, OUTPUT);
 	pinMode(PIN_D3, OUTPUT);
-	pinMode(PIN_D5, OUTPUT);
+	pinMode(PIN_D4, OUTPUT);    /* Also RXD */
+	pinMode(PIN_D5, OUTPUT);    /* Also TXD */
 
 	/* Set unused pins as inputs pulled high */
 	pinMode(A4, INPUT_PULLUP);
 	pinMode(A5, INPUT_PULLUP);
 
 #if INIT_EEPROM_ONLY
-		initializeEEPROMVars(TRUE);     /* Must happen after pins are configure due to I2C access */
+		initializeEEPROMVars(TRUE);     /* Must happen after pins are configured due to I2C access */
 #else
-		initializeEEPROMVars(FALSE);    /* Must happen after pins are configure due to I2C access */
+		initializeEEPROMVars(FALSE);    /* Must happen after pins are configured due to I2C access */
 		setUpAudioSampling(true);
 #endif
 
@@ -1185,12 +1187,20 @@ void loop()
 							g_dtmf_detected = TRUE;
 							quietCount = 0;
 							g_lastKey = newKey;
-							sprintf(g_tempStr,"\"%c\"\n",g_lastKey);
-							lb_send_string(g_tempStr,TRUE);
+							
+#ifdef DEBUG_DTMF
+							if(lb_enabled())
+							{
+								sprintf(g_tempStr,"\"%c\"\n",g_lastKey);
+								lb_send_string(g_tempStr,TRUE);								
+							}
+#endif // DEBUG_DTMF
 
 							processKey(newKey);
 
 #ifdef DEBUG_DTMF
+							if(lb_enabled())
+							{
 								lb_send_string((char*)"Mag X/Y=",TRUE);
 								dtostrf((double)largestX,4,0,s);
 								sprintf(g_tempStr,"%s / ",s);
@@ -1210,6 +1220,7 @@ void loop()
 									sprintf(g_tempStr,"%s\n",s);
 									lb_send_string(g_tempStr,TRUE);
 								}
+							}
 #endif  /* DEBUG_DTMF */
 						}
 					}
@@ -1839,14 +1850,15 @@ void processKey(char key)
 	static int stringLength;
 	static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 
+	if(key == '*')
+	{
+		state = STATE_SENTENCE_START;
+	}
+
 	switch(state)
 	{
 		case STATE_SHUTDOWN:
 		{
-			if(key == '*')
-			{
-				state = STATE_SENTENCE_START;
-			}
 		}
 		break;
 
@@ -1863,6 +1875,12 @@ void processKey(char key)
 			else if(key == 'A')
 			{
 				state = STATE_A;
+			}
+			else if(key != '*')
+			{
+				value = key - '0';
+				setupPorts();
+				state = STATE_TEST_ATTENUATOR;
 			}
 		}
 		break;
@@ -1934,6 +1952,10 @@ void processKey(char key)
 			else if(key == '7') /* *C7YYMMDDhhmmss# Set RTC to this time and date */
 			{
 				state = STATE_RECEIVING_SET_CLOCK;
+			}
+			else
+			{
+				state = STATE_SHUTDOWN;
 			}
 		}
 		break;
@@ -2037,8 +2059,9 @@ void processKey(char key)
 				if(stringLength == 12)
 				{
 					rv3028_set_date_time(receivedString);   /* String format "YYMMDDhhmmss" */
-					state = STATE_SHUTDOWN;
 				}
+
+				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))
 			{
@@ -2048,6 +2071,21 @@ void processKey(char key)
 					stringLength++;
 					receivedString[stringLength] = '\0';
 				}
+			}
+		}
+		break;
+		
+		case STATE_TEST_ATTENUATOR:
+		{
+			if(key == '#')
+			{
+				setAtten(value);
+				state = STATE_SHUTDOWN;
+			}
+			else if((key >= '0') && (key <= '9'))
+			{
+				value *= 10;
+				value += key - '0';
 			}
 		}
 		break;

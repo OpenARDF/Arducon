@@ -339,6 +339,11 @@ void lb_echo_char(uint8_t c)
 BOOL lb_send_string(char* str, BOOL wait)
 {
 	BOOL err = FALSE;
+	
+	if(g_bus_disabled)
+	{
+		return TRUE;
+	}
 
 	if(str == NULL)
 	{
@@ -392,4 +397,9 @@ void lb_send_Help(void)
 	sendEEPROMString(&ee_textHelp[0]);
 	lb_send_NewLine();
 	lb_send_NewLine();
+}
+
+BOOL lb_enabled(void)
+{
+	return !g_bus_disabled;
 }
