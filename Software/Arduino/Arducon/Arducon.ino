@@ -2127,7 +2127,21 @@ void processKey(char key)
 		{
 			if(key == '#')
 			{
-				setAtten(value);
+				if(value == 0)
+				{
+					setAtten(0);
+					TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
+				}
+				else if(value > 315)
+				{
+					TIMSK1 &= ~(1 << OCIE1A); /* stop timer 1 interrupts */
+					setAtten(315);
+				}
+				else
+				{
+					setAtten(value);
+				}
+
 				state = STATE_SHUTDOWN;
 			}
 			else if((key >= '0') && (key <= '9'))

@@ -17,7 +17,7 @@
 
 void setAtten(tenthDB_t att)
 {	
-
+	uint8_t pattern;
 	att = MIN(att+2, MAX_ATTEN_TENTHS_DB); /* round up */
 	att -= (att % 5); /* set to nearest multiple of 5 */
 	att /= 5;
@@ -25,11 +25,11 @@ void setAtten(tenthDB_t att)
 	lower4 = dB_low(att);
 	upper2 = dB_high(att);
 	
-	PORTC  &= 0xF0;
-	PORTC |= lower4;
+	pattern = PORTC & 0xF0;
+	PORTC = pattern | lower4;
 	
-	PORTD &= 0xFC;
-	PORTD |= upper2;
+	pattern = PORTD & 0xFC;
+	PORTD = pattern | upper2;
 }
 
 void setupPorts(void)
