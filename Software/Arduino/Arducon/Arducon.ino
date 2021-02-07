@@ -147,6 +147,9 @@ static uint8_t EEMEM ee_enable_start_timer;
 static uint8_t EEMEM ee_enable_transmitter;
 static time_t EEMEM ee_event_start_epoch;
 static time_t EEMEM ee_event_finish_epoch;
+#define SIZE_OF_DATA_MODULATION 32
+static uint8_t EEMEM ee_dataModulation[SIZE_OF_DATA_MODULATION];
+
 
 static char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
 static volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
@@ -174,8 +177,6 @@ const int numKeys = sizeof(key) / sizeof(key[0]);
 const char keyMorse[39] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
 'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
-//extern uint8_t EEMEM ee_dataModulation[];
-uint8_t dataModulation[32] = {28, 27, 26, 24, 22, 19, 17, 14, 11, 9, 6, 4, 2, 1, 0, 0, 0, 1, 2, 4, 6, 9, 11, 14, 17, 19, 22, 24, 26, 27, 28, 28};
 #endif // !INIT_EEPROM_ONLY
 
 
@@ -1017,8 +1018,9 @@ ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 {
 #if !INIT_EEPROM_ONLY
 	static uint8_t index = 0;
-	uint8_t controlPins = dataModulation[index++];
-	if(index > 31) index = 0;
+	uint8_t controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
+	
+	if(index > SIZE_OF_DATA_MODULATION) index = 0;
 	
 	uint8_t pattern = PORTC & 0xF0;
 	PORTC = pattern | dB_low(controlPins);
@@ -1028,9 +1030,9 @@ ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 #endif // INIT_EEPROM_ONLY
 }
 
-/*
+/***********************************************************************
  *  Here is the main loop
- * */
+ ************************************************************************/
 void loop()
 {
 #if !INIT_EEPROM_ONLY
@@ -2184,6 +2186,7 @@ void initializeEEPROMVars(BOOL resetAll)
 			}
 		}
 	}
+#if INIT_EEPROM_ONLY
 	else    /* EEPROM is missing some updates */
 	{
 		if(resetAll || (eeprom_read_byte(&ee_id_codespeed) == 0xFF))
@@ -2308,9 +2311,16 @@ void initializeEEPROMVars(BOOL resetAll)
 			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
 			eeprom_update_byte((uint8_t*)&ee_temperature_table[i],val);
 		}
+		
+		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
+		{
+			float val = 16. * (1. + sinf(i * 0.196));
+			eeprom_update_byte((uint8_t*)&ee_dataModulation[i],(uint8_t)val);
+		}		
 
 		eeprom_update_byte(&ee_interface_eeprom_initialization_flag,EEPROM_INITIALIZED_FLAG);
 	}
+#endif // INIT_EEPROM_ONLY
 
 /* Perform sanity checks */
 	if(g_event_finish_epoch <= g_event_start_epoch)

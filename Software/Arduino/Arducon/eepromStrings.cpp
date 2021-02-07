@@ -32,7 +32,7 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 /* Set Firmware Version Here */
-const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.10 ***\n";
+const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.11 ***\n";
 const char HELP_TEXT[] PROGMEM = "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version";
 const char TEXT_SET_TIME[] PROGMEM = "CLK T YYMMDDhhmmss <- Set current time\n";
 const char TEXT_SET_START[] PROGMEM = "CLK S YYMMDDhhmmss <- Set start time\n";
@@ -43,7 +43,6 @@ const char TEXT_ERR_FINISH_IN_PAST[] PROGMEM = "Err: Finish in past!\n";
 const char TEXT_ERR_START_IN_PAST[] PROGMEM = "Err: Start in past!\n";
 const char TEXT_ERR_INVALID_TIME[] PROGMEM = "Err: Invalid time!\n";
 const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = "Err: Time in past!\n";
-const char DATA_MODULATION[] PROGMEM = {28, 27, 26, 24, 22, 19, 17, 14, 11, 9, 6, 4, 2, 1, 0, 0, 0, 1, 2, 4, 6, 9, 11, 14, 17, 19, 22, 24, 26, 27, 28, 28};
 
 char EEMEM ee_textVersion[sizeof(PRODUCT_NAME_LONG)];
 char EEMEM ee_textHelp[sizeof(HELP_TEXT)];
@@ -56,7 +55,6 @@ char EEMEM ee_textErrFinishInPast[sizeof(TEXT_ERR_FINISH_IN_PAST)];
 char EEMEM ee_textErrStartInPast[sizeof(TEXT_ERR_START_IN_PAST)];
 char EEMEM ee_textErrInvalidTime[sizeof(TEXT_ERR_INVALID_TIME)];
 char EEMEM ee_textErrTimeInPast[sizeof(TEXT_ERR_TIME_IN_PAST)];
-uint8_t EEMEM ee_dataModulation[sizeof(DATA_MODULATION)];
 
 void sendEEPROMString(char ee_addr[])
 {
@@ -72,14 +70,6 @@ void sendEEPROMString(char ee_addr[])
 		{
 			;
 		}
-	}
-}
-
-void readData(uint8_t* arr, uint8_t bytes, uint8_t ee_addr[])
-{
-	for(int i=0; i<bytes; i++)
-	{
-		arr[i] = eeprom_read_byte(&ee_addr[i]);
 	}
 }
 
@@ -179,15 +169,6 @@ void readData(uint8_t* arr, uint8_t bytes, uint8_t ee_addr[])
 	}
 
 	eeprom_update_byte((uint8_t*)&ee_textErrTimeInPast[i], 0);
-
-/* Set modulation table */
-	for(i=0; i < strlen_P(DATA_MODULATION); i++)
-	{
-		uint8_t byteval = pgm_read_byte(DATA_MODULATION + i);
-		eeprom_update_byte((uint8_t*)&ee_dataModulation[i], byteval);
-	}
-
-	eeprom_update_byte((uint8_t*)&ee_dataModulation[i], 0);
 
 /* Done */
 
