@@ -86,6 +86,8 @@ volatile time_t g_current_epoch = 0;
 volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 
+volatile BOOL g_sendAMmodulation = FALSE;
+
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
 volatile int g_fox_seconds_into_interval = 0;
@@ -147,6 +149,9 @@ static uint8_t EEMEM ee_enable_start_timer;
 static uint8_t EEMEM ee_enable_transmitter;
 static time_t EEMEM ee_event_start_epoch;
 static time_t EEMEM ee_event_finish_epoch;
+#define SIZE_OF_DATA_MODULATION 32
+static uint8_t EEMEM ee_dataModulation[SIZE_OF_DATA_MODULATION];
+
 
 static char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
 static volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
@@ -235,9 +240,6 @@ void setUpAudioSampling(BOOL enableSampling);
 	pinMode(PIN_PTT_LOGIC, OUTPUT);
 	digitalWrite(PIN_PTT_LOGIC, OFF);
 
-	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);
-	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
-
 	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
 	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
 
@@ -294,7 +296,7 @@ void setUpAudioSampling(BOOL enableSampling);
 	TCCR1A = 0; /* set entire TCCR1A register to 0 */
 	TCCR1B = 0; /* same for TCCR1B */
 	TCNT1 = 0;  /* initialize counter value to 0 */
-	OCR1A = 500; /* For ~800 Hz tone output */
+	OCR1A = 500; /* For ~1000 Hz tone output */
 /* turn on CTC mode */
 	TCCR1B |= (1 << WGM12);
 /* Set CS10 bit for no prescaling */
@@ -359,6 +361,7 @@ void setUpAudioSampling(BOOL enableSampling);
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
+		TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
 
 #endif  /* #if INIT_EEPROM_ONLY */
 
@@ -829,7 +832,9 @@ ISR( TIMER2_COMPB_vect )
 
 					if(g_enable_transmitter)
 					{
-						digitalWrite(PIN_CW_KEY_LOGIC, HIGH);   /* TX key line */
+						digitalWrite(PIN_CW_KEY_LOGIC, ON);   /* TX key line */
+						digitalWrite(PIN_PTT_LOGIC, ON); /* Key the microphone / energize transmitter */
+						g_sendAMmodulation = TRUE;
 					}
 				}
 
@@ -849,6 +854,8 @@ ISR( TIMER2_COMPB_vect )
 			if(g_enable_transmitter)
 			{
 				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
+				digitalWrite(PIN_PTT_LOGIC, key); /* Key the microphone / energize transmitter */
+				g_sendAMmodulation = key;
 			}
 
 			codeInc = g_code_throttle;
@@ -870,6 +877,8 @@ ISR( TIMER2_COMPB_vect )
 			}
 
 			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+			digitalWrite(PIN_PTT_LOGIC, OFF); /* Unkey the microphone / de-energize transmitter */
+			g_sendAMmodulation = FALSE;
 		}
 
 		if(playMorse)
@@ -980,7 +989,9 @@ ISR( INT0_vect )
 	}
 }   /* end of INT0 ISR */
 
-/* This interrupt generates an audio tone on the audio out pin. */
+/************************************************************************/
+/* Timer0 interrupt generates an audio tone on the audio out pin.	    */
+/************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
 	static BOOL toggle = 0;
@@ -1011,29 +1022,38 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 {
-	static uint8_t direction = UP;
-	static uint8_t count = 0;
-	uint8_t controlPins;
+#if !INIT_EEPROM_ONLY
+	static uint8_t index = 0;
+	uint8_t port;
+	static uint8_t controlPins;
 	
-	if(direction == UP)
+	if(g_sendAMmodulation || index)
 	{
-		count++;
-		if(count >= 0x0f) direction = DOWN;
-	}
-	else
-	{
-		count--;
-		if(count == 0x00) direction = UP;
-	}
+		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
+		if(index > SIZE_OF_DATA_MODULATION) index = 0;
 	
-	controlPins = PORTC & 0xF0;
-	controlPins |= count;
-	PORTC = controlPins;
+		port = PORTC & 0xF0;
+		PORTC = port | dB_low(controlPins);
+	
+		port = PORTD & 0xFC;
+		PORTD = port | dB_high(controlPins);
+	}
+	else if(controlPins != MAX_ATTEN_SETTING)
+	{
+		controlPins = MAX_ATTEN_SETTING;
+		
+		port = PORTC & 0xF0;
+		PORTC = port | dB_low(controlPins);
+		
+		port = PORTD & 0xFC;
+		PORTD = port | dB_high(controlPins);
+	}
+#endif // INIT_EEPROM_ONLY
 }
 
-/*
+/***********************************************************************
  *  Here is the main loop
- * */
+ ************************************************************************/
 void loop()
 {
 #if !INIT_EEPROM_ONLY
@@ -2187,6 +2207,7 @@ void initializeEEPROMVars(BOOL resetAll)
 			}
 		}
 	}
+#if INIT_EEPROM_ONLY
 	else    /* EEPROM is missing some updates */
 	{
 		if(resetAll || (eeprom_read_byte(&ee_id_codespeed) == 0xFF))
@@ -2311,9 +2332,16 @@ void initializeEEPROMVars(BOOL resetAll)
 			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
 			eeprom_update_byte((uint8_t*)&ee_temperature_table[i],val);
 		}
+		
+		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
+		{
+			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION/4)) * 0.196)); /* Set maximum attenuation at index 0 */
+			eeprom_update_byte((uint8_t*)&ee_dataModulation[i],(uint8_t)val);
+		}		
 
 		eeprom_update_byte(&ee_interface_eeprom_initialization_flag,EEPROM_INITIALIZED_FLAG);
 	}
+#endif // INIT_EEPROM_ONLY
 
 /* Perform sanity checks */
 	if(g_event_finish_epoch <= g_event_start_epoch)

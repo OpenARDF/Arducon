@@ -32,7 +32,7 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 /* Set Firmware Version Here */
-const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.9 ***\n";
+const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.12 ***\n";
 const char HELP_TEXT[] PROGMEM = "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version";
 const char TEXT_SET_TIME[] PROGMEM = "CLK T YYMMDDhhmmss <- Set current time\n";
 const char TEXT_SET_START[] PROGMEM = "CLK S YYMMDDhhmmss <- Set start time\n";
@@ -43,9 +43,6 @@ const char TEXT_ERR_FINISH_IN_PAST[] PROGMEM = "Err: Finish in past!\n";
 const char TEXT_ERR_START_IN_PAST[] PROGMEM = "Err: Start in past!\n";
 const char TEXT_ERR_INVALID_TIME[] PROGMEM = "Err: Invalid time!\n";
 const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = "Err: Time in past!\n";
-
-char myChar;
-const char *const string_table[] PROGMEM = {HELP_TEXT, TEXT_SET_TIME, TEXT_SET_START, TEXT_SET_FINISH, TEXT_SET_ID, TEXT_ERR_FINISH_BEFORE_START, TEXT_ERR_FINISH_IN_PAST, TEXT_ERR_START_IN_PAST, TEXT_ERR_INVALID_TIME, TEXT_ERR_TIME_IN_PAST};
 
 char EEMEM ee_textVersion[sizeof(PRODUCT_NAME_LONG)];
 char EEMEM ee_textHelp[sizeof(HELP_TEXT)];
