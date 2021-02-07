@@ -174,6 +174,8 @@ const int numKeys = sizeof(key) / sizeof(key[0]);
 const char keyMorse[39] = { ' ','A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
 'V','W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
+//extern uint8_t EEMEM ee_dataModulation[];
+uint8_t dataModulation[32] = {28, 27, 26, 24, 22, 19, 17, 14, 11, 9, 6, 4, 2, 1, 0, 0, 0, 1, 2, 4, 6, 9, 11, 14, 17, 19, 22, 24, 26, 27, 28, 28};
 #endif // !INIT_EEPROM_ONLY
 
 
@@ -294,7 +296,7 @@ void setUpAudioSampling(BOOL enableSampling);
 	TCCR1A = 0; /* set entire TCCR1A register to 0 */
 	TCCR1B = 0; /* same for TCCR1B */
 	TCNT1 = 0;  /* initialize counter value to 0 */
-	OCR1A = 500; /* For ~800 Hz tone output */
+	OCR1A = 500; /* For ~1000 Hz tone output */
 /* turn on CTC mode */
 	TCCR1B |= (1 << WGM12);
 /* Set CS10 bit for no prescaling */
@@ -980,7 +982,9 @@ ISR( INT0_vect )
 	}
 }   /* end of INT0 ISR */
 
-/* This interrupt generates an audio tone on the audio out pin. */
+/************************************************************************/
+/* Timer0 interrupt generates an audio tone on the audio out pin.	    */
+/************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
 	static BOOL toggle = 0;
@@ -1011,24 +1015,17 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 {
-	static uint8_t direction = UP;
-	static uint8_t count = 0;
-	uint8_t controlPins;
+#if !INIT_EEPROM_ONLY
+	static uint8_t index = 0;
+	uint8_t controlPins = dataModulation[index++];
+	if(index > 31) index = 0;
 	
-	if(direction == UP)
-	{
-		count++;
-		if(count >= 0x0f) direction = DOWN;
-	}
-	else
-	{
-		count--;
-		if(count == 0x00) direction = UP;
-	}
-	
-	controlPins = PORTC & 0xF0;
-	controlPins |= count;
-	PORTC = controlPins;
+	uint8_t pattern = PORTC & 0xF0;
+	PORTC = pattern | dB_low(controlPins);
+		
+	pattern = PORTD & 0xFC;
+	PORTD = pattern | dB_high(controlPins);
+#endif // INIT_EEPROM_ONLY
 }
 
 /*
