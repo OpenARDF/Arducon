@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2020 DigitalConfections
+ *  Copyright (c) 2021 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -87,6 +87,7 @@ volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
+volatile BOOL g_sendAMmodulationConstantly = FALSE;
 
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
@@ -268,7 +269,7 @@ void setUpAudioSampling(BOOL enableSampling);
 #endif
 
 	/********************************************************************/
-	/* INT0 is for external 1-second intertrupts                        */
+	/* INT0 is for external 1-second interrupts                         */
 	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
 	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
@@ -404,6 +405,8 @@ ISR(PCINT2_vect)
 
 	if(pinVal)  /* Sync is high */
 	{
+		g_LEDs_Timed_Out = FALSE; /* Restart LEDs */
+		
 		if(g_sync_pin_stable)
 		{
 			startEventNow();
@@ -955,14 +958,14 @@ ISR( INT0_vect )
 				{
 					g_fox_counter = 1;
 
-					if(g_sync_enabled)
-					{
-						PCMSK2 &= ~(1 << PCINT20);  /* Disable PCINT20 */
-						PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
-						pinMode(PIN_SYNC, INPUT);
-						pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
-						g_sync_enabled = FALSE;
-					}
+//					if(g_sync_enabled)
+//					{
+//						PCMSK2 &= ~(1 << PCINT20);  /* Disable PCINT20 */
+//						PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
+//						pinMode(PIN_SYNC, INPUT);
+//						pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
+//						g_sync_enabled = FALSE;
+//					}
 
 					g_LEDs_Timed_Out = TRUE;
 					digitalWrite(PIN_LED2, OFF);
@@ -1027,7 +1030,7 @@ ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 	uint8_t port;
 	static uint8_t controlPins;
 	
-	if(g_sendAMmodulation || index)
+	if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 	{
 		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
 		if(index > SIZE_OF_DATA_MODULATION) index = 0;
@@ -2150,11 +2153,13 @@ void processKey(char key)
 				if(value == 0)
 				{
 					setAtten(0);
-					TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
+					// TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
+					g_sendAMmodulationConstantly = TRUE;
 				}
 				else if(value > 315)
 				{
-					TIMSK1 &= ~(1 << OCIE1A); /* stop timer 1 interrupts */
+					g_sendAMmodulationConstantly = FALSE;
+					// TIMSK1 &= ~(1 << OCIE1A); /* stop timer 1 interrupts */
 					setAtten(315);
 				}
 				else
