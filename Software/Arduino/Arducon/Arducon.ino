@@ -2428,7 +2428,7 @@ void dumpEEPROMVars(void)
 		
 	for(int i = 0; i < SIZE_OF_DATA_MODULATION; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 	{
-		lb_echo_char((char)eeprom_read_byte(&ee_dataModulation[i]));
+		lb_send_value((char)eeprom_read_byte(&ee_dataModulation[i]), (char*)"M");
 	}		
 	
 	lb_send_NewLine();
