@@ -2414,6 +2414,7 @@ void dumpEEPROMVars(void)
 	}
 	
 	sprintf(g_tempStr, "ID=\"%s\"\n", g_messages_text[STATION_ID]);
+	lb_send_string(g_tempStr, TRUE);
 
 	/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		* ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
