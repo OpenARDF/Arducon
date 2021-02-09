@@ -33,7 +33,7 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 void sendEEPROMString(char ee_addr[]);
-void saveEEPROM(void);
+void saveEEPROMStrings(void);
 
 
 #endif // EEPROMSTRINGS_H_

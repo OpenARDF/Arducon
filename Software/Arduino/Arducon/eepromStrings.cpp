@@ -32,7 +32,7 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 /* Set Firmware Version Here */
-const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.13 ***\n";
+const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.14 ***\n";
 const char HELP_TEXT[] PROGMEM = "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version";
 const char TEXT_SET_TIME[] PROGMEM = "CLK T YYMMDDhhmmss <- Set current time\n";
 const char TEXT_SET_START[] PROGMEM = "CLK S YYMMDDhhmmss <- Set start time\n";
@@ -75,103 +75,115 @@ void sendEEPROMString(char ee_addr[])
 
 
 #if INIT_EEPROM_ONLY
-	void saveEEPROM(void)
+	void saveEEPROMStrings(void)
 	{
 		uint16_t i;
 
-/* Software Version String */
-	for (i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++) {
-	uint8_t byteval = pgm_read_byte(PRODUCT_NAME_LONG + i);
-	eeprom_update_byte((uint8_t*)&ee_textVersion[i], byteval);
-	}
+	/* Software Version String */
+		for (i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++) {
+		uint8_t byteval = pgm_read_byte(PRODUCT_NAME_LONG + i);
+		eeprom_update_byte((uint8_t*)&ee_textVersion[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textVersion[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textVersion[i], 0);
 
-/* Help String */
-	for (i = 0; i < strlen_P(HELP_TEXT); i++) {
-	uint8_t byteval = pgm_read_byte(HELP_TEXT + i);
-	eeprom_update_byte((uint8_t*)&ee_textHelp[i], byteval);
-	}
+	/* Help String */
+		for (i = 0; i < strlen_P(HELP_TEXT); i++) {
+		uint8_t byteval = pgm_read_byte(HELP_TEXT + i);
+		eeprom_update_byte((uint8_t*)&ee_textHelp[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textHelp[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textHelp[i], 0);
 		
-/* Set ID String */
-	for (i = 0; i < strlen_P(TEXT_SET_ID); i++) {
-	uint8_t byteval = pgm_read_byte(TEXT_SET_ID + i);
-	eeprom_update_byte((uint8_t*)&ee_textSetID[i], byteval);
-	}
+	/* Set ID String */
+		for (i = 0; i < strlen_P(TEXT_SET_ID); i++) {
+		uint8_t byteval = pgm_read_byte(TEXT_SET_ID + i);
+		eeprom_update_byte((uint8_t*)&ee_textSetID[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textSetID[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textSetID[i], 0);
 
-/* Set Time String */
-	for (i = 0; i < strlen_P(TEXT_SET_TIME); i++) {
-	uint8_t byteval = pgm_read_byte(TEXT_SET_TIME + i);
-	eeprom_update_byte((uint8_t*)&ee_textSetTime[i], byteval);
-	}
+	/* Set Time String */
+		for (i = 0; i < strlen_P(TEXT_SET_TIME); i++) {
+		uint8_t byteval = pgm_read_byte(TEXT_SET_TIME + i);
+		eeprom_update_byte((uint8_t*)&ee_textSetTime[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textSetTime[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textSetTime[i], 0);
 
-/* Set Start String */
-	for (i = 0; i < strlen_P(TEXT_SET_START); i++) {
-	uint8_t byteval = pgm_read_byte(TEXT_SET_START + i);
-	eeprom_update_byte((uint8_t*)&ee_textSetStart[i], byteval);
-	}
+	/* Set Start String */
+		for (i = 0; i < strlen_P(TEXT_SET_START); i++) {
+		uint8_t byteval = pgm_read_byte(TEXT_SET_START + i);
+		eeprom_update_byte((uint8_t*)&ee_textSetStart[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textSetStart[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textSetStart[i], 0);
 
-/* Set Finish String */
-	for (i = 0; i < strlen_P(TEXT_SET_FINISH); i++) {
-	uint8_t byteval = pgm_read_byte(TEXT_SET_FINISH + i);
-	eeprom_update_byte((uint8_t*)&ee_textSetFinish[i], byteval);
-	}
+	/* Set Finish String */
+		for (i = 0; i < strlen_P(TEXT_SET_FINISH); i++) {
+		uint8_t byteval = pgm_read_byte(TEXT_SET_FINISH + i);
+		eeprom_update_byte((uint8_t*)&ee_textSetFinish[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textSetFinish[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textSetFinish[i], 0);
 		
-/* Set Err Finish in Past String */
-	for (i = 0; i < strlen_P(TEXT_ERR_FINISH_IN_PAST); i++) {
-	uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_IN_PAST + i);
-	eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], byteval);
-	}
+	/* Set Err Finish in Past String */
+		for (i = 0; i < strlen_P(TEXT_ERR_FINISH_IN_PAST); i++) {
+		uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_IN_PAST + i);
+		eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textErrFinishInPast[i], 0);
 		
-/* Set Err Start in Past String */
-	for (i = 0; i < strlen_P(TEXT_ERR_START_IN_PAST); i++) {
-		uint8_t byteval = pgm_read_byte(TEXT_ERR_START_IN_PAST + i);
-		eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], byteval);
-	}
+	/* Set Err Start in Past String */
+		for (i = 0; i < strlen_P(TEXT_ERR_START_IN_PAST); i++) {
+			uint8_t byteval = pgm_read_byte(TEXT_ERR_START_IN_PAST + i);
+			eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textErrStartInPast[i], 0);
 
-/* Set Err Finish Before Start String */
-	for(i=0; i < strlen_P(TEXT_ERR_FINISH_BEFORE_START); i++)
-	{
-		uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_BEFORE_START + i);
-		eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], byteval);
-	}
+	/* Set Err Finish Before Start String */
+		for(i=0; i < strlen_P(TEXT_ERR_FINISH_BEFORE_START); i++)
+		{
+			uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_BEFORE_START + i);
+			eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textErrFinishB4Start[i], 0);
 
-/* Set Err Invalid Time String */
-	for(i=0; i < strlen_P(TEXT_ERR_INVALID_TIME); i++)
-	{
-		uint8_t byteval = pgm_read_byte(TEXT_ERR_INVALID_TIME + i);
-		eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], byteval);
-	}
+	/* Set Err Invalid Time String */
+		for(i=0; i < strlen_P(TEXT_ERR_INVALID_TIME); i++)
+		{
+			uint8_t byteval = pgm_read_byte(TEXT_ERR_INVALID_TIME + i);
+			eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textErrInvalidTime[i], 0);
 
-/* Set Err Time In Past String */
-	for(i=0; i < strlen_P(TEXT_ERR_TIME_IN_PAST); i++)
-	{
-		uint8_t byteval = pgm_read_byte(TEXT_ERR_TIME_IN_PAST + i);
-		eeprom_update_byte((uint8_t*)&ee_textErrTimeInPast[i], byteval);
-	}
+	/* Set Err Time In Past String */
+		for(i=0; i < strlen_P(TEXT_ERR_TIME_IN_PAST); i++)
+		{
+			uint8_t byteval = pgm_read_byte(TEXT_ERR_TIME_IN_PAST + i);
+			eeprom_update_byte((uint8_t*)&ee_textErrTimeInPast[i], byteval);
+		}
 
-	eeprom_update_byte((uint8_t*)&ee_textErrTimeInPast[i], 0);
+		eeprom_update_byte((uint8_t*)&ee_textErrTimeInPast[i], 0);
 
-/* Done */
+	/* Done */
 
 		lb_send_string((char*)"EEPROM PROGRAMMING FINISHED\n", TRUE);
+		
+		sendEEPROMString(&ee_textVersion[0]);
+		sendEEPROMString(&ee_textHelp[0]);
+		sendEEPROMString(&ee_textSetID[0]);
+		sendEEPROMString(&ee_textSetTime[0]);
+		sendEEPROMString(&ee_textSetStart[0]);
+		sendEEPROMString(&ee_textSetFinish[0]);
+		sendEEPROMString(&ee_textErrFinishInPast[0]);
+		sendEEPROMString(&ee_textErrStartInPast[0]);
+		sendEEPROMString(&ee_textErrFinishB4Start[0]);
+		sendEEPROMString(&ee_textErrInvalidTime[0]);
+		sendEEPROMString(&ee_textErrTimeInPast[0]);
 	}
 #endif  /* INIT_EEPROM_ONLY */

@@ -236,10 +236,6 @@ void linkbus_init(uint32_t baud)
  * Set frame format: 8data, 2stop bit */
 	UCSR0C = (1 << USBS0) | (3 << UCSZ00);
 	g_bus_disabled = FALSE;
-
-#if INIT_EEPROM_ONLY
-		saveEEPROM();
-#endif  /* INIT_EEPROM_ONLY */
 }
 
 void linkbus_disable(void)
