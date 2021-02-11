@@ -120,13 +120,6 @@ void sendEEPROMString(char ee_addr[])
 	void initEEPROMStrings(void)
 	{
 		uint16_t i;
-		
-#if !COMPILE_FOR_ATMELSTUDIO7		
-    /* Erase full EEPROM */
-		for (i = 0 ; i < EEPROM.length() ; i++) {
-			EEPROM.write(i, 0xFF);
-		}
-#endif // !COMPILE_FOR_ATMELSTUDIO7
 
 	/* Software Version String */
 		for (i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++) {
@@ -272,6 +265,13 @@ BOOL readNonVolatile(void)
 void initializeEEPROMVars(void)
 {
 	uint16_t i;
+				
+#if !COMPILE_FOR_ATMELSTUDIO7
+	/* Erase full EEPROM */
+	for (i = 0 ; i < EEPROM.length() ; i++) {
+		EEPROM.write(i, 0xFF);
+	}
+#endif // !COMPILE_FOR_ATMELSTUDIO7
 
 	g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 	eeprom_write_byte(&ee_id_codespeed,g_id_codespeed);
