@@ -33,7 +33,9 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 void sendEEPROMString(char ee_addr[]);
-void saveEEPROM(void);
-
+void initEEPROMStrings(void);
+void dumpEEPROMVars(void);
+void initializeEEPROMVars(void);
+BOOL readNonVolatile(void);
 
 #endif // EEPROMSTRINGS_H_

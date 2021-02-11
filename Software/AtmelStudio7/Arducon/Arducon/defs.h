@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2020 DigitalConfections
+ *  Copyright (c) 2021 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -80,6 +80,13 @@
 #endif
 
 /* #define F_CPU 16000000UL / * gets declared in makefile * / */
+
+#define MAX_PATTERN_TEXT_LENGTH 20
+#define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 20)
+#define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
+#define SIZE_OF_TEMPERATURE_TABLE 60
+#define SIZE_OF_DATA_MODULATION 32
+
 
 /******************************************************
  * Set Hardware Settings */

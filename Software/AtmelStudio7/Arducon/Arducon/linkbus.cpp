@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2020 DigitalConfections
+ *  Copyright (c) 2021 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -236,10 +236,6 @@ void linkbus_init(uint32_t baud)
  * Set frame format: 8data, 2stop bit */
 	UCSR0C = (1 << USBS0) | (3 << UCSZ00);
 	g_bus_disabled = FALSE;
-
-#if INIT_EEPROM_ONLY
-		saveEEPROM();
-#endif  /* INIT_EEPROM_ONLY */
 }
 
 void linkbus_disable(void)
@@ -378,8 +374,17 @@ BOOL lb_send_string(char* str, BOOL wait)
 
 void lb_send_value(uint16_t value, char* label)
 {
+	BOOL err;
+
 	sprintf(g_tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
-	linkbus_send_text(g_tempMsgBuff);
+	while((err = linkbus_send_text(g_tempMsgBuff)))
+	{
+		;
+	}
+	while(!err && linkbusTxInProgress())
+	{
+		;
+	}
 }
 
 /***********************************************************************

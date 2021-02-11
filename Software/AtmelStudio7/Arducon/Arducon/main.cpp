@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2020 DigitalConfections
+ *  Copyright (c) 2021 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -56,11 +56,6 @@ extern char EEMEM ee_textErrStartInPast[];
 extern char EEMEM ee_textErrInvalidTime[];
 extern char EEMEM ee_textErrTimeInPast[];
 
-
-#define MAX_PATTERN_TEXT_LENGTH 20
-#define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 20)
-#define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
-
 /*#define SAMPLE_RATE 9630 */
 #define SAMPLE_RATE 19260
 /*#define SAMPLE_RATE 38520
@@ -87,6 +82,7 @@ volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
+volatile BOOL g_sendAMmodulationConstantly = FALSE;
 
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
@@ -136,33 +132,31 @@ volatile BOOL g_use_rtc_to_start = FALSE;
  * Whenever possible limit globals' scope to this file using "static"
  * Use "volatile" for globals shared between ISRs and foreground loop
  ************************************************************************/
-static uint8_t EEMEM ee_interface_eeprom_initialization_flag = EEPROM_UNINITIALIZED;
-static char EEMEM ee_stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
-#define SIZE_OF_TEMPERATURE_TABLE 60
-static uint16_t EEMEM ee_temperature_table[SIZE_OF_TEMPERATURE_TABLE];
-static uint8_t EEMEM ee_id_codespeed;
-static uint8_t EEMEM ee_fox_setting;
-static uint8_t EEMEM ee_enable_LEDs;
-static int16_t EEMEM ee_atmega_temp_calibration;
-static int16_t EEMEM ee_rv3028_offset;
-static uint8_t EEMEM ee_enable_start_timer;
-static uint8_t EEMEM ee_enable_transmitter;
-static time_t EEMEM ee_event_start_epoch;
-static time_t EEMEM ee_event_finish_epoch;
-#define SIZE_OF_DATA_MODULATION 32
-static uint8_t EEMEM ee_dataModulation[SIZE_OF_DATA_MODULATION];
+extern uint8_t EEMEM ee_interface_eeprom_initialization_flag;
+extern char EEMEM ee_stationID_text[];
+extern uint16_t EEMEM ee_temperature_table[];
+extern uint8_t EEMEM ee_id_codespeed;
+extern uint8_t EEMEM ee_fox_setting;
+extern uint8_t EEMEM ee_enable_LEDs;
+extern int16_t EEMEM ee_atmega_temp_calibration;
+extern int16_t EEMEM ee_rv3028_offset;
+extern uint8_t EEMEM ee_enable_start_timer;
+extern uint8_t EEMEM ee_enable_transmitter;
+extern time_t EEMEM ee_event_start_epoch;
+extern time_t EEMEM ee_event_finish_epoch;
+extern uint8_t EEMEM ee_dataModulation[];
 
+char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
+volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
+volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
+volatile uint16_t g_time_needed_for_ID = 0;
+volatile int16_t g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
+volatile uint8_t g_enable_LEDs;
+volatile uint8_t g_enable_start_timer;
+volatile uint8_t g_enable_transmitter;
+volatile uint8_t g_temperature_check_countdown = 60;
+volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
-static char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
-static volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-static volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
-static volatile uint16_t g_time_needed_for_ID = 0;
-static volatile int16_t g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
-static volatile uint8_t g_enable_LEDs;
-static volatile uint8_t g_enable_start_timer;
-static volatile uint8_t g_enable_transmitter;
-static volatile uint8_t g_temperature_check_countdown = 60;
-static volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 extern BOOL g_allow_rv3028_eeprom_changes;
 
 #define _N 201
@@ -197,7 +191,6 @@ static volatile uint8_t g_LEDs_Timed_Out = FALSE;
  * Local function prototypes
  */
 void handleLinkBusMsgs(void);
-void initializeEEPROMVars(BOOL resetAll);
 void permCallsign(char* call);
 void permFox(Fox_t fox);
 void sendMorseTone(BOOL onOff);
@@ -261,14 +254,15 @@ void setUpAudioSampling(BOOL enableSampling);
 	pinMode(A5, INPUT_PULLUP);
 
 #if INIT_EEPROM_ONLY
-		initializeEEPROMVars(TRUE);     /* Must happen after pins are configured due to I2C access */
+		initializeEEPROMVars();     /* Must happen after pins are configured due to I2C access */
 #else
-		initializeEEPROMVars(FALSE);    /* Must happen after pins are configured due to I2C access */
+		i2c_init();
+		BOOL eepromErr = readNonVolatile();
 		setUpAudioSampling(true);
 #endif
 
 	/********************************************************************/
-	/* INT0 is for external 1-second intertrupts                        */
+	/* INT0 is for external 1-second interrupts                         */
 	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
 	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
@@ -326,10 +320,15 @@ void setUpAudioSampling(BOOL enableSampling);
 
 	linkbus_init(BAUD);                                                                     /* Start the Link Bus serial comms */
 
-#if !INIT_EEPROM_ONLY
-		uint8_t result = rv3028_1s_sqw();
-#else
+#if INIT_EEPROM_ONLY
+		dumpEEPROMVars();
 		rv3028_1s_sqw();
+#else
+		if(eepromErr)
+		{
+			lb_send_string((char *)"EEPROM Error!\n", TRUE);
+		}
+		uint8_t result = rv3028_1s_sqw();
 #endif  /* !INIT_EEPROM_ONLY */
 
 	g_current_epoch = rv3028_get_epoch(NULL, NULL);
@@ -404,6 +403,8 @@ ISR(PCINT2_vect)
 
 	if(pinVal)  /* Sync is high */
 	{
+		g_LEDs_Timed_Out = FALSE; /* Restart LEDs */
+		
 		if(g_sync_pin_stable)
 		{
 			startEventNow();
@@ -955,14 +956,14 @@ ISR( INT0_vect )
 				{
 					g_fox_counter = 1;
 
-					if(g_sync_enabled)
-					{
-						PCMSK2 &= ~(1 << PCINT20);  /* Disable PCINT20 */
-						PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
-						pinMode(PIN_SYNC, INPUT);
-						pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
-						g_sync_enabled = FALSE;
-					}
+//					if(g_sync_enabled)
+//					{
+//						PCMSK2 &= ~(1 << PCINT20);  /* Disable PCINT20 */
+//						PCICR &= ~(1 << PCIE2);     /* Disable pin change interrupt 2 */
+//						pinMode(PIN_SYNC, INPUT);
+//						pinMode(PIN_SYNC, OUTPUT);  /* Set sync pin as output low */
+//						g_sync_enabled = FALSE;
+//					}
 
 					g_LEDs_Timed_Out = TRUE;
 					digitalWrite(PIN_LED2, OFF);
@@ -1027,7 +1028,7 @@ ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 	uint8_t port;
 	static uint8_t controlPins;
 	
-	if(g_sendAMmodulation || index)
+	if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 	{
 		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
 		if(index > SIZE_OF_DATA_MODULATION) index = 0;
@@ -1618,7 +1619,7 @@ void handleLinkBusMsgs()
 
 			case MESSAGE_FACTORY_RESET:
 			{
-/*				initializeEEPROMVars(TRUE);
+/*				initializeEEPROMVars();
  *				softwareReset(); */
 			}
 			break;
@@ -2150,11 +2151,13 @@ void processKey(char key)
 				if(value == 0)
 				{
 					setAtten(0);
-					TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
+					// TIMSK1 |= (1 << OCIE1A); /* start timer 1 interrupts */
+					g_sendAMmodulationConstantly = TRUE;
 				}
 				else if(value > 315)
 				{
-					TIMSK1 &= ~(1 << OCIE1A); /* stop timer 1 interrupts */
+					g_sendAMmodulationConstantly = FALSE;
+					// TIMSK1 &= ~(1 << OCIE1A); /* stop timer 1 interrupts */
 					setAtten(315);
 				}
 				else
@@ -2176,181 +2179,6 @@ void processKey(char key)
 
 #endif // #if !INIT_EEPROM_ONLY
 
-/*
- * Set non-volatile variables to their values stored in EEPROM
- */
-void initializeEEPROMVars(BOOL resetAll)
-{
-	uint16_t i;
-	uint8_t initialization_flag = eeprom_read_byte(&ee_interface_eeprom_initialization_flag);
-
-	i2c_init();                                                         /* Needs to happen here */
-
-	if(!resetAll && (initialization_flag == EEPROM_INITIALIZED_FLAG))   /* EEPROM is up to date */
-	{
-		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
-		g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),NO_CODE_START_TONES_5M);
-		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_atmega_temp_calibration);
-		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
-		g_enable_LEDs = eeprom_read_byte(&ee_enable_LEDs);
-		g_enable_start_timer = eeprom_read_byte(&ee_enable_start_timer);
-		g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
-		g_event_start_epoch = eeprom_read_dword(&ee_event_start_epoch);
-		g_event_finish_epoch = eeprom_read_dword(&ee_event_finish_epoch);
-
-		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
-		{
-			g_messages_text[STATION_ID][i] = (char)eeprom_read_byte((uint8_t*)(&ee_stationID_text[i]));
-			if(!g_messages_text[STATION_ID][i])
-			{
-				break;
-			}
-		}
-	}
-#if INIT_EEPROM_ONLY
-	else    /* EEPROM is missing some updates */
-	{
-		if(resetAll || (eeprom_read_byte(&ee_id_codespeed) == 0xFF))
-		{
-			g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-			eeprom_update_byte(&ee_id_codespeed,g_id_codespeed);
-		}
-		else
-		{
-			g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM,eeprom_read_byte(&ee_id_codespeed),MAX_CODE_SPEED_WPM);
-		}
-
-		if(resetAll || (eeprom_read_byte(&ee_fox_setting) == 0xFF))
-		{
-			g_fox = EEPROM_FOX_SETTING_DEFAULT;
-			eeprom_update_byte(&ee_fox_setting,g_fox);
-		}
-		else
-		{
-			g_fox = CLAMP(BEACON,(Fox_t)eeprom_read_byte(&ee_fox_setting),INVALID_FOX);
-		}
-
-		if(resetAll || ((uint16_t)eeprom_read_word((uint16_t*)&ee_atmega_temp_calibration) == 0xFFFF))
-		{
-			g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
-			eeprom_update_word((uint16_t*)&ee_atmega_temp_calibration,(uint16_t)g_atmega_temp_calibration);
-		}
-		else
-		{
-			g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&ee_atmega_temp_calibration);
-		}
-
-		if((uint16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset) == 0xFFFF)
-		{
-			g_rv3028_offset = rv3028_get_offset_RAM();
-			eeprom_update_word((uint16_t*)&ee_rv3028_offset,(uint16_t)g_rv3028_offset);
-			g_allow_rv3028_eeprom_changes = TRUE;   /* Allow 1-sec interrupt to get permanently saved within the RTC EEPROM */
-		}
-		else
-		{
-			g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&ee_rv3028_offset);
-		}
-
-		if(resetAll || (eeprom_read_byte(&ee_enable_LEDs) == 0xFF))
-		{
-			g_enable_LEDs = EEPROM_ENABLE_LEDS_DEFAULT;
-			eeprom_update_byte(&ee_enable_LEDs,g_enable_LEDs);  /* Only gets set by a serial command */
-		}
-		else
-		{
-			g_enable_LEDs = eeprom_read_byte(&ee_enable_LEDs);
-		}
-
-		if(resetAll || (eeprom_read_byte(&ee_enable_start_timer) == 0xFF))
-		{
-			g_enable_start_timer = EEPROM_ENABLE_STARTTIMER_DEFAULT;
-			eeprom_update_byte(&ee_enable_start_timer,g_enable_start_timer);    /* Only gets set by a serial command */
-		}
-		else
-		{
-			g_enable_start_timer = eeprom_read_byte(&ee_enable_start_timer);
-		}
-
-		if(resetAll || (eeprom_read_byte(&ee_enable_transmitter) == 0xFF))
-		{
-			g_enable_transmitter = EEPROM_ENABLE_TRANSMITTER_DEFAULT;
-			eeprom_update_byte(&ee_enable_transmitter,g_enable_transmitter);    /* Only gets set by a serial command */
-		}
-		else
-		{
-			g_enable_transmitter = eeprom_read_byte(&ee_enable_transmitter);
-		}
-
-		if(resetAll || (eeprom_read_dword(&ee_event_start_epoch) == 0xFFFFFFFF))
-		{
-			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
-			eeprom_update_dword(&ee_event_start_epoch,g_event_start_epoch);
-		}
-		else
-		{
-			g_event_start_epoch = eeprom_read_dword(&ee_event_start_epoch);
-		}
-
-		if(resetAll || (eeprom_read_dword(&ee_event_finish_epoch) == 0xFFFFFFFF))
-		{
-			g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
-			eeprom_update_dword(&ee_event_finish_epoch,g_event_start_epoch);
-		}
-		else
-		{
-			g_event_start_epoch = eeprom_read_dword(&ee_event_finish_epoch);
-		}
-
-		if(resetAll || (eeprom_read_byte((uint8_t*)(&ee_stationID_text[0])) == 0xFF))
-		{
-//			uint16_t i;
-//			strncpy(g_messages_text[STATION_ID],EEPROM_STATION_ID_DEFAULT,MAX_PATTERN_TEXT_LENGTH);
-
-//			for(i = 0; i < strlen(g_messages_text[STATION_ID]); i++)    /* Only gets set by a serial command */
-//			{
-//				eeprom_update_byte((uint8_t*)&ee_stationID_text[i],(uint8_t)g_messages_text[STATION_ID][i]);
-//			}
-			eeprom_update_byte((uint8_t*)&ee_stationID_text[0],0);
-		}
-		else
-		{
-			for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
-			{
-				g_messages_text[STATION_ID][i] = (char)eeprom_read_byte((uint8_t*)(&ee_stationID_text[i]));
-				if(!g_messages_text[STATION_ID][i])
-				{
-					break;
-				}
-			}
-		}
-
-		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
-		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
-		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
-		for(i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
-		{
-			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
-			eeprom_update_byte((uint8_t*)&ee_temperature_table[i],val);
-		}
-		
-		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
-		{
-			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION/4)) * 0.196)); /* Set maximum attenuation at index 0 */
-			eeprom_update_byte((uint8_t*)&ee_dataModulation[i],(uint8_t)val);
-		}		
-
-		eeprom_update_byte(&ee_interface_eeprom_initialization_flag,EEPROM_INITIALIZED_FLAG);
-	}
-#endif // INIT_EEPROM_ONLY
-
-/* Perform sanity checks */
-	if(g_event_finish_epoch <= g_event_start_epoch)
-	{
-		g_event_finish_epoch = g_event_start_epoch + SECONDS_24H;
-	}
-
-	return;
-}
 
 void setupForFox(Fox_t* fox)
 {
