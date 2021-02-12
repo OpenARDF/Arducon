@@ -1,5 +1,5 @@
 /**********************************************************************************************
- * Copyright (c) 2017 Digital Confections LLC
+ * Copyright (c) 2021 Digital Confections LLC
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in the
@@ -93,8 +93,6 @@
    #define EE_COMMAND_WRITE_ALL_EEPROM    0x11
    #define EE_COMMAND_READ_ALL_EEPROM     0x12
 
-
-	volatile BOOL g_allow_rv3028_eeprom_changes = FALSE;
 #if INIT_EEPROM_ONLY
 	extern char g_tempStr[];
 #endif // INIT_EEPROM_ONLY
@@ -102,7 +100,7 @@
 	BOOL waitForEEPROMReady(void);
 	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val);
 	uint8_t readOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t* val);
-
+	void refreshRAMfromEEPROM(void);
 
 	uint8_t bcd2dec(uint8_t val)
 	{
@@ -405,12 +403,24 @@
 
 		return( fail);
 	}
+	
+	void refreshRAMfromEEPROM(void)
+	{
+		uint8_t status = FALSE;
+		uint8_t temp = 0;
+		status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+		waitForEEPROMReady();
+		temp = 0x12;    /* Refresh RAM from EEPROM */
+		status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
+		waitForEEPROMReady();
+	}
 
 	int16_t rv3028_get_offset_RAM()
 	{
 		uint8_t data[2];
 		int16_t result;
-
+		
+		refreshRAMfromEEPROM(); /* Ensure we never return an altered RAM value */
 		i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
 		result = data[0] << 1;
 		if(data[1] & 0x80)
@@ -451,77 +461,37 @@
 		uint8_t rv3028_1s_sqw(void)
 		{
 			uint8_t status = FALSE;
-			uint8_t temp = 0, mask;
+			uint8_t temp = 0;
 			
 #if INIT_EEPROM_ONLY
 /* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM
 by reading all EEPROM into the RAM mirror now */
-			temp = 0x00;
-			status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-			waitForEEPROMReady();
-			temp = 0x12;    /* Refresh RAM from EEPROM */
-			status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-			waitForEEPROMReady();
+			refreshRAMfromEEPROM();
 			
-			if(1)
-#else
-			if(g_allow_rv3028_eeprom_changes)
-#endif
+			if(waitForEEPROMReady())
 			{
-				if(waitForEEPROMReady())
-				{
-					return( 1);
-				}
-
-				temp = 0xC5;    /* Enable 1Hz Output */
-				mask = 0xFF;    /* 11111111 */
-				if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
-				{
-					return( 1);
-				}
-
-				temp = 0x04;    /* Enable direct switching mode */
-				mask = 0x06;    /* 00001100 */
-				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
-				{
-					return( 1);
-				}
-
-/*				temp = 0x01;
- *				mask = 0xFF;
- *				if(writeOneEEPROMByte(RTC_EEPROM_OFFSET, mask, temp))
- *				{
- *					return 1;
- *				} */
-
-/*				temp = 0x80; / * set offset lsb * /
- *				mask = 0x80; / * 10000000 * /
- *				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
- *				{
- *					return( 1);
- *				} */
-
-				g_allow_rv3028_eeprom_changes = FALSE;
+				return( 1);
 			}
-			else    /* Read values from EEPROM - happens automatically for POR but not debugger reset */
+
+			temp = 0xC5;    /* Enable 1Hz Output */
+			uint8_t mask = 0xFF;    /* 11111111 */
+			if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
 			{
-				temp = 0x00;
-				status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-				waitForEEPROMReady();
-				temp = 0x12;    /* Refresh RAM from EEPROM */
-				status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-				waitForEEPROMReady();
+				return( 1);
 			}
+
+			temp = 0x04;    /* Enable direct switching mode */
+			mask = 0x06;    /* 00001100 */
+			if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
+			{
+				return( 1);
+			}
+#endif // INIT_EEPROM_ONLY			
+			
+			refreshRAMfromEEPROM();
 
 /* Debug only */
 #if INIT_EEPROM_ONLY
-			temp = 0x00;
-			status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-			waitForEEPROMReady();
-			temp = 0x12;    /* Refresh RAM from EEPROM */
-			status |= i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
-			waitForEEPROMReady();
-
 			uint8_t temp_byte;
 			uint8_t hold_byte;
 			for(temp_byte = 0x30; temp_byte <= 0x37; temp_byte++) 
@@ -529,7 +499,6 @@ by reading all EEPROM into the RAM mirror now */
 				i2c_device_read(RV3028_I2C_SLAVE_ADDR, temp_byte, &hold_byte, 1);
 				sprintf(g_tempStr, "\n0x%02X = 0x%02X", temp_byte, hold_byte);
 				lb_send_string(g_tempStr, TRUE);
-//				readOneEEPROMByte(temp_byte, &hold_byte);
 			}
 			
 			lb_send_NewLine();

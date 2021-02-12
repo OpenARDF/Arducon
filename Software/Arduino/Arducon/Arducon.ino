@@ -157,8 +157,6 @@ volatile uint8_t g_enable_transmitter;
 volatile uint8_t g_temperature_check_countdown = 60;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
-extern BOOL g_allow_rv3028_eeprom_changes;
-
 #define _N 201
 
 #if !INIT_EEPROM_ONLY
@@ -254,7 +252,7 @@ void setUpAudioSampling(BOOL enableSampling);
 	pinMode(A5, INPUT_PULLUP);
 
 #if INIT_EEPROM_ONLY
-		initializeEEPROMVars();     /* Must happen after pins are configured due to I2C access */
+		BOOL eepromErr = initializeEEPROMVars();     /* Must happen after pins are configured due to I2C access */
 #else
 		i2c_init();
 		BOOL eepromErr = readNonVolatile();
@@ -321,14 +319,18 @@ void setUpAudioSampling(BOOL enableSampling);
 	linkbus_init(BAUD);                                                                     /* Start the Link Bus serial comms */
 
 #if INIT_EEPROM_ONLY
-		dumpEEPROMVars();
-		rv3028_1s_sqw();
+	if(eepromErr)
+	{
+		lb_send_string((char *)"EEPROM Erase Error!\n", TRUE);
+	}
+	dumpEEPROMVars();
+	rv3028_1s_sqw();
 #else
-		if(eepromErr)
-		{
-			lb_send_string((char *)"EEPROM Error!\n", TRUE);
-		}
-		uint8_t result = rv3028_1s_sqw();
+	if(eepromErr)
+	{
+		lb_send_string((char *)"EEPROM Error!\n", TRUE);
+	}
+	uint8_t result = rv3028_1s_sqw();
 #endif  /* !INIT_EEPROM_ONLY */
 
 	g_current_epoch = rv3028_get_epoch(NULL, NULL);

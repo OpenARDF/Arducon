@@ -35,7 +35,7 @@
 void sendEEPROMString(char ee_addr[]);
 void initEEPROMStrings(void);
 void dumpEEPROMVars(void);
-void initializeEEPROMVars(void);
+BOOL initializeEEPROMVars(void);
 BOOL readNonVolatile(void);
 
 #endif // EEPROMSTRINGS_H_
