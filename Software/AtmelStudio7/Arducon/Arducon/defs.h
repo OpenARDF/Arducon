@@ -260,7 +260,7 @@ typedef enum
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG 0xBA    /* Never set to 0xFF */
+#define EEPROM_INITIALIZED_FLAG 0x00BB    /* Never set to 0xFFFF */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"

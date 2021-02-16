@@ -35,7 +35,7 @@
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 
 /* Set Firmware Version Here */
-const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.16 ***\n";
+const char PRODUCT_NAME_LONG[] PROGMEM = "*** Arducon Fox Controller Ver. 0.17 ***\n";
 const char HELP_TEXT[] PROGMEM = "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version";
 const char TEXT_SET_TIME[] PROGMEM = "CLK T YYMMDDhhmmss <- Set current time\n";
 const char TEXT_SET_START[] PROGMEM = "CLK S YYMMDDhhmmss <- Set start time\n";
@@ -96,6 +96,8 @@ extern volatile Fox_t g_fox;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 
+extern uint8_t g_dataModulation[];
+
 extern char g_tempStr[];
 
 void sendEEPROMString(char ee_addr[])
@@ -140,6 +142,11 @@ BOOL readNonVolatile(void)
 			{
 				break;
 			}
+		}
+		
+		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
+		{
+			g_dataModulation[i] = (uint8_t)eeprom_read_byte((uint8_t*)&ee_dataModulation[i]);
 		}
 		
 		/* Perform sanity checks */

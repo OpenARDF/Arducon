@@ -83,6 +83,7 @@ volatile time_t g_event_finish_epoch = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile BOOL g_sendAMmodulationConstantly = FALSE;
+uint8_t g_dataModulation[SIZE_OF_DATA_MODULATION];
 
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
@@ -1032,8 +1033,9 @@ ISR(TIMER1_COMPA_vect)              /* timer1 interrupt */
 	
 	if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 	{
-		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
-		if(index > SIZE_OF_DATA_MODULATION) index = 0;
+//		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]);
+		controlPins = g_dataModulation[index++];
+		if(index >= SIZE_OF_DATA_MODULATION) index = 0;
 	
 		port = PORTC & 0xF0;
 		PORTC = port | dB_low(controlPins);
