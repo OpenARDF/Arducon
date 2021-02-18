@@ -161,6 +161,28 @@ void pinMode(uint8_t pin, uint8_t mode)
 		}
 		break;
 
+		case D8:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRB  |= (1 << PORTB0);
+			}
+			else
+			{
+				DDRB  &= ~(1 << PORTB0);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTB  |= (1 << PORTB0);
+				}
+				else
+				{
+					PORTB &= ~(1 << PORTB0);
+				}
+			}
+		}
+		break;
+
 		case D9:
 		{
 			if(mode == OUTPUT)
@@ -173,11 +195,33 @@ void pinMode(uint8_t pin, uint8_t mode)
 
 				if(mode == INPUT_PULLUP)
 				{
-					PORTD  |= (1 << PORTB1);
+					PORTB  |= (1 << PORTB1);
 				}
 				else
 				{
-					PORTD &= ~(1 << PORTB1);
+					PORTB &= ~(1 << PORTB1);
+				}
+			}
+		}
+		break;
+
+		case D10:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRB  |= (1 << PORTB2);
+			}
+			else
+			{
+				DDRB  &= ~(1 << PORTB2);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTB  |= (1 << PORTB2);
+				}
+				else
+				{
+					PORTB &= ~(1 << PORTB2);
 				}
 			}
 		}
@@ -380,9 +424,19 @@ BOOL digitalRead(uint8_t pin)
 		}
 		break;
 
+		case D8:
+		{
+			result = PINB & (1 << PORTB0);
+		}
+
 		case D9:
 		{
 			result = PINB & (1 << PORTB1);
+		}
+
+		case D10:
+		{
+			result = PINB & (1 << PORTB2);
 		}
 
 		case D13:
@@ -506,6 +560,19 @@ void digitalWrite(uint8_t pin, uint8_t value)
 		}
 		break;
 
+		case D8:
+		{
+			if(value)
+			{
+				PORTB  |= (1 << PORTB0);
+			}
+			else
+			{
+				PORTB  &= ~(1 << PORTB0);
+			}
+		}
+		break;
+
 		case D9:
 		{
 			if(value)
@@ -515,6 +582,19 @@ void digitalWrite(uint8_t pin, uint8_t value)
 			else
 			{
 				PORTB  &= ~(1 << PORTB1);
+			}
+		}
+		break;
+
+		case D10:
+		{
+			if(value)
+			{
+				PORTB  |= (1 << PORTB2);
+			}
+			else
+			{
+				PORTB  &= ~(1 << PORTB2);
 			}
 		}
 		break;

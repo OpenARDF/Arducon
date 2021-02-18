@@ -177,10 +177,10 @@
     <Compile Include="defs.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="eepromStrings.cpp">
+    <Compile Include="EepromManager.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="eepromStrings.h">
+    <Compile Include="EepromManager.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="F1975.cpp">

@@ -4,7 +4,7 @@
 
 ardooweeno.cpp
 
-eepromStrings.cpp
+EepromManager.cpp
 
 F1975.cpp
 

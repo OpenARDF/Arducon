@@ -1,7 +1,7 @@
 /*
  *  MIT License
  *
- *  Copyright (c) 2020 DigitalConfections
+ *  Copyright (c) 2021 DigitalConfections
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -176,10 +176,6 @@ LinkbusRxBuffer* nextFullRxBuffer(void);
 
 /**
  */
-void lb_send_Help(void);
-
-/**
- */
 void lb_send_NewPrompt(void);
 
 /**
@@ -198,7 +194,7 @@ BOOL lb_send_string(char* str, BOOL wait);
  */
 void lb_send_value(uint16_t value, char* label);
 
-/** 
+/**
  */
 BOOL lb_enabled(void);
 

@@ -176,10 +176,6 @@ LinkbusRxBuffer* nextFullRxBuffer(void);
 
 /**
  */
-void lb_send_Help(void);
-
-/**
- */
 void lb_send_NewPrompt(void);
 
 /**
@@ -198,7 +194,7 @@ BOOL lb_send_string(char* str, BOOL wait);
  */
 void lb_send_value(uint16_t value, char* label);
 
-/** 
+/**
  */
 BOOL lb_enabled(void);
 

@@ -25,9 +25,9 @@
  *
  */
 
-#include "linkbus.h"
 #include "defs.h"
-#include "eepromStrings.h"
+#include "linkbus.h"
+
 
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/eeprom.h>
@@ -43,9 +43,6 @@ static volatile BOOL g_bus_disabled = TRUE;
 static const char crlf[] = "\n";
 static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
-
-extern char EEMEM ee_textHelp[]; /* Size is printed when this program is compiled and run with INIT_EEPROM_ONLY = TRUE */
-extern char EEMEM ee_textVersion[];
 
 static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
 
@@ -335,7 +332,7 @@ void lb_echo_char(uint8_t c)
 BOOL lb_send_string(char* str, BOOL wait)
 {
 	BOOL err = FALSE;
-	
+
 	if(g_bus_disabled)
 	{
 		return TRUE;
@@ -387,22 +384,6 @@ void lb_send_value(uint16_t value, char* label)
 	}
 }
 
-/***********************************************************************
- * lb_send_Help(void)
- ************************************************************************/
-void lb_send_Help(void)
-{
-	if(g_bus_disabled)
-	{
-		return;
-	}
-
-	lb_send_NewLine();
-	sendEEPROMString(&ee_textVersion[0]);
-	sendEEPROMString(&ee_textHelp[0]);
-	lb_send_NewLine();
-	lb_send_NewLine();
-}
 
 BOOL lb_enabled(void)
 {
