@@ -37,7 +37,7 @@
  *  Set for the IDE being used: Arduino or Atmel Studio 7
  */
 #define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define INIT_EEPROM_ONLY FALSE
+#define INIT_EEPROM_ONLY TRUE
 
 /*******************************************************/
 
@@ -196,6 +196,13 @@
 
 typedef enum
 {
+	UNSTABLE,
+	STABLE_HIGH,
+	STABLE_LOW
+} ButtonStability_t;
+
+typedef enum
+{
 	BEACON = 0,
 	FOX_1,
 	FOX_2,
@@ -240,7 +247,7 @@ typedef enum
 	STATE_A,
 	STATE_PAUSE_TRANSMISSIONS,
 	STATE_START_TRANSMISSIONS,
-	STATE_RESTART_TRANSMISSIONS,
+	STATE_START_TRANSMISSIONS_WITH_RTC,
 	STATE_C,
 	STATE_RECEIVING_CALLSIGN,
 	STATE_RECEIVING_FOXFORMATANDID,

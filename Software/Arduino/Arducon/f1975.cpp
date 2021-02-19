@@ -48,7 +48,7 @@ void setAtten(tenthDB_t att)
 	PORTD = pattern | upper2;
 }
 
-void setupPorts(void)
+void setupPortsForF1975(void)
 {
 	linkbus_disable();
 	pinMode(PIN_D0, OUTPUT);
