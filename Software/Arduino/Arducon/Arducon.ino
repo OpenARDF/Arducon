@@ -676,7 +676,7 @@ ISR( TIMER2_COMPB_vect )
 
 			if(g_sync_pin_timer > TIMER2_5_8HZ)
 			{
-				g_sync_pin_stable = button==HIGH ? STABLE_HIGH:STABLE_LOW;
+				g_sync_pin_stable = button == HIGH ? STABLE_HIGH : STABLE_LOW;
 
 				if(button == LOW)
 				{
@@ -720,7 +720,7 @@ ISR( TIMER2_COMPB_vect )
 		g_blinky_time = FALSE;
 	}
 
-	if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW)) /* flash LEDs */
+	if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))  /* flash LEDs */
 	{
 		if(g_dtmf_detected)
 		{
@@ -803,67 +803,80 @@ ISR( TIMER2_COMPB_vect )
 	}
 
 	static BOOL key = OFF;
+	static uint16_t ptt_delay = 0;
 
 	if(!g_transmissions_disabled && g_on_the_air)
 	{
-		if(codeInc)
+		if(!digitalRead(PIN_PTT_LOGIC))
 		{
-			codeInc--;
-
-			if(!codeInc)
+			digitalWrite(PIN_PTT_LOGIC, ON);
+			ptt_delay = TIMER2_SECONDS_1;
+		}
+		else if(ptt_delay)
+		{
+			ptt_delay--;
+		}
+		else
+		{
+			if(codeInc)
 			{
-				key = makeMorse(NULL, &repeat, &finished);
+				codeInc--;
 
-				if(!repeat && finished) /* ID has completed, so resume pattern */
+				if(!codeInc)
 				{
-					key = OFF;
-					g_callsign_sent = TRUE;
+					key = makeMorse(NULL, &repeat, &finished);
+
+					if(!repeat && finished) /* ID has completed, so resume pattern */
+					{
+						key = OFF;
+						g_callsign_sent = TRUE;
+						if(playMorse)
+						{
+							sendMorseTone(OFF);
+						}
+					}
+
+					if(key)
+					{
+						if(!g_LEDs_Timed_Out)
+						{
+							digitalWrite(PIN_LED2, HIGH);   /*  LED */
+						}
+
+						if(g_enable_transmitter)
+						{
+							digitalWrite(PIN_CW_KEY_LOGIC, ON); /* TX key line */
+							digitalWrite(PIN_PTT_LOGIC, ON);    /* Key the microphone / energize transmitter */
+							g_sendAMmodulation = TRUE;
+						}
+					}
+
 					if(playMorse)
 					{
-						sendMorseTone(OFF);
+						sendMorseTone(key);
 					}
 				}
-
-				if(key)
+			}
+			else
+			{
+				if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))
 				{
-					if(!g_LEDs_Timed_Out)
-					{
-						digitalWrite(PIN_LED2, HIGH);   /*  LED */
-					}
-
-					if(g_enable_transmitter)
-					{
-						digitalWrite(PIN_CW_KEY_LOGIC, ON); /* TX key line */
-						digitalWrite(PIN_PTT_LOGIC, ON);    /* Key the microphone / energize transmitter */
-						g_sendAMmodulation = TRUE;
-					}
+					digitalWrite(PIN_LED2, key);    /*  LED */
 				}
+
+				if(g_enable_transmitter)
+				{
+					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
+/*				digitalWrite(PIN_PTT_LOGIC, key);       / * Key the microphone / energize transmitter * / */
+					g_sendAMmodulation = key;
+				}
+
+				codeInc = g_code_throttle;
 
 				if(playMorse)
 				{
 					sendMorseTone(key);
 				}
-			}
-		}
-		else
-		{
-			if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))
-			{
-				digitalWrite(PIN_LED2, key);    /*  LED */
-			}
-
-			if(g_enable_transmitter)
-			{
-				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
-//				digitalWrite(PIN_PTT_LOGIC, key);       /* Key the microphone / energize transmitter */
-				g_sendAMmodulation = key;
-			}
-
-			codeInc = g_code_throttle;
-
-			if(playMorse)
-			{
-				sendMorseTone(key);
 			}
 		}
 	}
@@ -874,17 +887,31 @@ ISR( TIMER2_COMPB_vect )
 			key = OFF;
 			if(!g_sync_pin_stable)
 			{
-				digitalWrite(PIN_LED2, OFF);        /*  LED Off */
+				digitalWrite(PIN_LED2, OFF);    /*  LED Off */
 			}
 		}
 
 		digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+
 		digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
 		g_sendAMmodulation = FALSE;
 
 		if(playMorse)
 		{
 			sendMorseTone(OFF);
+		}
+
+		if(digitalRead(PIN_PTT_LOGIC))
+		{
+			ptt_delay = 100;
+		}
+		else if(ptt_delay)
+		{
+			ptt_delay--;
+		}
+		else
+		{
+			digitalWrite(PIN_PTT_LOGIC, OFF);
 		}
 	}
 }   /* End of Timer 2 ISR */
@@ -1170,7 +1197,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                              /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                                                                                                  /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1931,8 +1958,8 @@ void handleLinkBusMsgs()
 				{
 					value = key - '0';
 #if !INIT_EEPROM_ONLY
-					setupPortsForF1975();
-#endif // !INIT_EEPROM_ONLY
+						setupPortsForF1975();
+#endif  /* !INIT_EEPROM_ONLY */
 					state = STATE_TEST_ATTENUATOR;
 				}
 			}
@@ -2414,7 +2441,7 @@ void startEventNow(void)
 	setupPortsForF1975();
 	g_transmissions_disabled = FALSE;
 	lb_send_string((char*)"Sync OK\n", FALSE);
-#endif // !INIT_EEPROM_ONLY
+#endif  /* !INIT_EEPROM_ONLY */
 }
 
 void stopEventNow(void)

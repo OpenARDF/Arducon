@@ -58,29 +58,32 @@ const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = TEXT_ERR_TIME_IN_PAST_TXT;
 
 const struct EE_prom EEMEM EepromManager::ee_vars =
 {
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0
+	/* .textVersion = */ "\0",
+	/* .textHelp = */ "\0",
+	/* .textSetTime = */ "\0",
+	/* .textSetStart = */ "\0",
+	/* .textSetFinish = */ "\0",
+	/* .textSetID = */ "\0",
+	/* .textErrFinishB4Start = */ "\0",
+	/* .textErrFinishInPast = */ "\0",
+	/* .textErrStartInPast = */ "\0",
+	/* .textErrInvalidTime = */ "\0",
+	/* .textErrTimeInPast = */ "\0",
+	/* .stationID_text = */ "\0",
+
+	/* .temperature_table = */ {0},
+	/* .dataModulation = */ {0},
+
+	/* .id_codespeed = */ 0,
+	/* .fox_setting = */ 0,
+	/* .enable_LEDs = */ 0,
+	/* .atmega_temp_calibration = */ 0,
+	/* .rv3028_offset = */ 0,
+	/* .enable_start_timer = */ 0,
+	/* .enable_transmitter = */ 0,
+	/* .event_start_epoch = */ 0,
+	/* .event_finish_epoch = */ 0,
+	/* .eeprom_initialization_flag = */ 0
 };
 
 extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 1];
@@ -430,8 +433,8 @@ BOOL EepromManager::readNonVols(void)
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
-//			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
-			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+//			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
