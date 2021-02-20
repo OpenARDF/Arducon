@@ -855,7 +855,7 @@ ISR( TIMER2_COMPB_vect )
 			if(g_enable_transmitter)
 			{
 				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
-				digitalWrite(PIN_PTT_LOGIC, key);       /* Key the microphone / energize transmitter */
+//				digitalWrite(PIN_PTT_LOGIC, key);       /* Key the microphone / energize transmitter */
 				g_sendAMmodulation = key;
 			}
 
@@ -876,11 +876,11 @@ ISR( TIMER2_COMPB_vect )
 			{
 				digitalWrite(PIN_LED2, OFF);        /*  LED Off */
 			}
-
-			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
-			digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
-			g_sendAMmodulation = FALSE;
 		}
+
+		digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+		digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
+		g_sendAMmodulation = FALSE;
 
 		if(playMorse)
 		{
@@ -2420,6 +2420,15 @@ void startEventNow(void)
 void stopEventNow(void)
 {
 	g_transmissions_disabled = TRUE;
+	if(!g_sync_pin_stable)
+	{
+		digitalWrite(PIN_LED2, OFF);        /*  LED Off */
+	}
+
+	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+	digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
+	g_sendAMmodulation = FALSE;
+
 	linkbus_init(BAUD);
 }
 

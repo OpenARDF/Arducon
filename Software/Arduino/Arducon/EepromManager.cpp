@@ -430,7 +430,8 @@ BOOL EepromManager::readNonVols(void)
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
-			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+//			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
