@@ -76,6 +76,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 
 	/* .id_codespeed = */ 0,
 	/* .fox_setting = */ 0,
+	/* .am_audio_frequency = */ 0,
 	/* .enable_LEDs = */ 0,
 	/* .atmega_temp_calibration = */ 0,
 	/* .rv3028_offset = */ 0,
@@ -98,6 +99,7 @@ extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
 extern volatile Fox_t g_fox;
+extern volatile uint8_t g_AM_audio_frequency;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 
@@ -150,6 +152,12 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Fox_setting:
 		{
 			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.fox_setting);
+		}
+		break;
+
+		case Am_audio_frequency:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.am_audio_frequency);
 		}
 		break;
 
@@ -226,6 +234,8 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 void EepromManager::sendEEPROMString(EE_var_t v)
 {
 	char* ee_addr = NULL;
+
+	if(!lb_enabled()) return;
 
 	switch(v)
 	{
@@ -330,6 +340,7 @@ BOOL EepromManager::readNonVols(void)
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), NO_CODE_START_TONES_5M);
+		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_enable_LEDs = eeprom_read_byte(&(EepromManager::ee_vars.enable_LEDs));
@@ -395,6 +406,9 @@ BOOL EepromManager::readNonVols(void)
 
 		g_fox = EEPROM_FOX_SETTING_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting), g_fox);
+
+		g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), g_AM_audio_frequency);
 
 		g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration), (uint16_t)g_atmega_temp_calibration);
@@ -571,6 +585,10 @@ BOOL EepromManager::readNonVols(void)
 
 		byt = eeprom_read_byte(&(EepromManager::ee_vars.fox_setting));
 		sprintf(g_tempStr, "FX=%d\n", byt);
+		lb_send_string(g_tempStr, TRUE);
+
+		byt = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
+		sprintf(g_tempStr, "AM=%d/n", byt);
 		lb_send_string(g_tempStr, TRUE);
 
 		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
