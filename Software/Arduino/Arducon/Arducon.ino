@@ -52,11 +52,11 @@ EepromManager ee_mgr;
  *#define SAMPLE_RATE 77040
  *#define SAMPLE_RATE 154080 */
 
-volatile int32_t g_seconds_since_sync = 0;  /* Total elapsed time counter */
+volatile int32_t g_seconds_since_sync = 0;  /* Total number of seconds since an active event was synchronized (started) */
 volatile Fox_t g_fox          = BEACON;     /* Sets Fox number not set by ISR. Set in startup and checked in main. */
 volatile int g_active           = 0;        /* Disable active. set and clear in ISR. Checked in main. */
 
-volatile int g_on_the_air       = 0;        /* Controls transmitter Morse activity */
+volatile BOOL g_on_the_air       = 0;       /* Used to indicate and control transmissions */
 volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
 #if !INIT_EEPROM_ONLY
@@ -82,11 +82,11 @@ volatile int g_fox_seconds_into_interval = 0;
 volatile int g_fox_counter = 1;
 volatile int g_number_of_foxes = 0;
 volatile BOOL g_fox_transition = FALSE;
-volatile int g_fox_id_offset = 0;
+volatile int g_fox_id_offset = 0; /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
 volatile int g_id_interval = 0;
 volatile BOOL g_time_to_ID = FALSE;
 volatile int g_startclock_interval = 60;
-volatile int g_fox_tone_offset = 1;
+volatile int g_fox_tone_offset = 1; /* Used to provide slightly different audio tones for different foxes for playback through the speaker */
 
 volatile BOOL g_audio_tone_state = FALSE;
 volatile uint8_t g_lastSeconds = 0x00;
@@ -2277,15 +2277,13 @@ void setupForFox(Fox_t* fox)
 			g_code_throttle    = 0;                                         /* Adjusts Morse code speed */
 			g_callsign_sent = FALSE;
 
-			g_fox_counter = 1 + (g_seconds_since_sync % g_on_air_interval);
-/*			g_on_air_interval = 0; */
-			g_fox_seconds_into_interval = 0;
-/*			g_number_of_foxes = 0; */
+			g_fox_seconds_into_interval = g_seconds_since_sync % g_startclock_interval;
+			g_fox_counter = CLAMP(1, 1 + (g_fox_seconds_into_interval / g_on_air_interval), g_number_of_foxes);
 			g_fox_transition = FALSE;
-			g_fox_id_offset = 0;
-/*			g_id_interval = 0; */
 			g_time_to_ID = FALSE;
 			g_audio_tone_state = OFF;
+			g_fox_tone_offset = g_fox_counter;
+			g_lastSeconds = (uint8_t)((g_seconds_since_sync + 11) % g_startclock_interval);
 		}
 		else                            /* event starts in the future */
 		{
@@ -2295,12 +2293,8 @@ void setupForFox(Fox_t* fox)
 			g_callsign_sent = FALSE;
 
 			g_fox_counter = 1;
-/*			g_on_air_interval = 0; */
 			g_fox_seconds_into_interval = 0;
-/*			g_number_of_foxes = 0; */
 			g_fox_transition = FALSE;
-			g_fox_id_offset = 0;
-/*			g_id_interval = 0; */
 			g_time_to_ID = FALSE;
 			g_audio_tone_state = OFF;
 		}
