@@ -34,7 +34,7 @@
 #include <time.h>
 
 /* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.19 ***\n"
+#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.22 ***\n"
 #define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version"
 #define TEXT_SET_TIME_TXT "CLK T YYMMDDhhmmss <- Set current time\n"
 #define TEXT_SET_START_TXT "CLK S YYMMDDhhmmss <- Set start time\n"
@@ -66,6 +66,7 @@ struct EE_prom
 
 	uint8_t id_codespeed;
 	uint8_t fox_setting;
+	uint8_t am_audio_frequency;
 	uint8_t enable_LEDs;
 	int16_t atmega_temp_calibration;
 	int16_t rv3028_offset;
@@ -97,6 +98,7 @@ typedef enum
 
 	Id_codespeed,
 	Fox_setting,
+	Am_audio_frequency,
 	Enable_LEDs,
 	Atmega_temp_calibration,
 	Rv3028_offset,
