@@ -722,19 +722,6 @@ Text Label 1800 3000 0    39   ~ 0
 RADIO_V+
 Text Label 1800 2800 0    39   ~ 0
 GROUND
-$Comp
-L Arducon-rescue:PN2222A Q101
-U 1 1 5F9CFFCD
-P 2900 3400
-F 0 "Q101" H 3100 3475 50  0000 L CNN
-F 1 "MMBT2222" H 3100 3400 50  0000 L CNN
-F 2 "TO_SOT_Packages_SMD:SOT-23" H 3100 3325 50  0001 L CIN
-F 3 "" H 2900 3400 50  0001 L CNN
-F 4 "MMBT2222ATPMSCT-ND" H 2900 3400 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 2900 3400 50  0001 C CNN "Link"
-	1    2900 3400
-	-1   0    0    -1  
-$EndComp
 Wire Wire Line
 	1800 3100 2600 3100
 $Comp
@@ -2393,19 +2380,6 @@ Wire Notes Line
 Wire Notes Line
 	12150 6000 12150 850 
 $Comp
-L Device:R R111
-U 1 1 600A7372
-P 7350 2600
-F 0 "R111" H 7450 2750 50  0000 C CNN
-F 1 "1k" V 7250 2600 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 7280 2600 50  0001 C CNN
-F 3 "" H 7350 2600 50  0001 C CNN
-F 4 "311-1.00KCRCT-ND" H 7350 2600 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-1.00KCRCT-ND\">Link</a>" H 7350 2600 60  0001 C CNN "Link"
-	1    7350 2600
-	1    0    0    -1  
-$EndComp
-$Comp
 L Device:C_Small C104
 U 1 1 60097870
 P 7450 2850
@@ -2430,6 +2404,32 @@ F 4 "490-5523-1-ND" H 7900 3850 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 7900 3850 60  0001 C CNN "Link"
 	1    7900 3850
 	-1   0    0    1   
+$EndComp
+$Comp
+L Diode:MSS1P4-M3_89A D108
+U 1 1 60344B01
+P 7350 2600
+F 0 "D108" H 7350 2700 50  0000 C CNN
+F 1 "MSS1P4-M3_89A" H 7550 2450 50  0000 C CNN
+F 2 "Diodes_SMD:DO-219AD" H 7350 2425 50  0001 C CNN
+F 3 "" H 7350 2600 50  0001 C CNN
+F 4 "MSS1P4-M3/89AGICT-ND" H 7350 2600 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 7350 2600 50  0001 C CNN "Link"
+	1    7350 2600
+	0    1    -1   0   
+$EndComp
+$Comp
+L Transistor_BJT:PN2222A Q101
+U 1 1 603D3C3C
+P 2900 3400
+F 0 "Q101" H 3091 3446 50  0000 L CNN
+F 1 "PN2222A" H 3091 3355 50  0000 L CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23" H 3100 3325 50  0001 L CIN
+F 3 "" H 2900 3400 50  0001 L CNN
+F 4 "MMBT2222ATPMSCT-ND" H 2900 3400 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 2900 3400 50  0001 C CNN "Link"
+	1    2900 3400
+	-1   0    0    -1  
 $EndComp
 Wire Bus Line
 	6300 4600 6300 7300
