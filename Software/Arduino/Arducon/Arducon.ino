@@ -70,6 +70,7 @@ volatile BOOL g_blinky_time = FALSE;
 volatile time_t g_current_epoch = 0;
 volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
+volatile int8_t g_utc_offset = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile uint8_t g_AM_audio_frequency;
@@ -175,7 +176,7 @@ void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-time_t validateTimeString(char* str, time_t* epicVar);
+time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 #if !INIT_EEPROM_ONLY
 	void processKey(char key);
@@ -309,7 +310,8 @@ time_t validateTimeString(char* str, time_t* epicVar);
 		uint8_t result = rv3028_1s_sqw();
 #endif  /* !INIT_EEPROM_ONLY */
 
-	g_current_epoch = rv3028_get_epoch(NULL, NULL);
+	//g_current_epoch = rv3028_get_epoch(NULL, NULL);
+	g_current_epoch = rv3028_get_epoch();
 
 #if !INIT_EEPROM_ONLY
 		ee_mgr.send_Help();
@@ -1723,12 +1725,12 @@ void handleLinkBusMsgs()
 					strncpy(g_tempStr, lb_buff->fields[FIELD2], 12);
 					g_tempStr[12] = '\0';               /* truncate to no more than 12 characters */
 
-					time_t t = validateTimeString(g_tempStr, (time_t*)&g_current_epoch);
+					time_t t = validateTimeString(g_tempStr, (time_t*)&g_current_epoch, -g_utc_offset);
 
 					if(t)
 					{
-						rv3028_set_date_time(g_tempStr);    /* String format "YYMMDDhhmmss" */
-						g_current_epoch = rv3028_get_epoch(NULL, NULL);
+						rv3028_set_epoch(t);
+						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
 					}
 					else
@@ -1742,7 +1744,7 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'S')  /* Event start time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch);
+					time_t s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
 					if(s)
 					{
@@ -1763,7 +1765,7 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch);
+					time_t f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
 					if(f)
 					{
@@ -1779,6 +1781,21 @@ void handleLinkBusMsgs()
 					}
 
 					doprint = true;
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'O')
+				{
+					if(lb_buff->fields[FIELD2][0])
+					{
+						int8_t offset = (uint16_t)atoi(lb_buff->fields[FIELD2]);
+
+						offset = CLAMP(-24, offset, 24);
+
+						g_utc_offset = offset;
+						ee_mgr.updateEEPROMVar(Utc_offset, (void*)&g_utc_offset);
+					}
+
+					sprintf(g_tempStr, "Offset:%d\n", g_utc_offset);
+					doprint = TRUE;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'C')  /* Test only - Set RTC offset value */
 				{
@@ -1870,10 +1887,10 @@ void handleLinkBusMsgs()
  *  Command set:
  *  *C1 c...c # - Set callsign ID to c...c
  *  *C2 n...n # - Set fox ID and format (0 = beacon, 1 = MOE Classic, ... )
+ *  *C3 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
  *  *C4 tttttttt # - Set start date/time = tttttttt
  *  *C5 tttttttt # - Set finish date/time = tttttttt
- *  *C6# - Start competition immediately, synchronize now, ignore RTC start time
- *  *C7 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
+ *  *C6 [A|B]n...n # - Set UTC offset hours A=ahead(+) B=behind(-)
  *  *C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
  *  *C9 n # - Set AM modulation frequency n=1 => 1000Hz, n=2 => 900Hz, ... n=6 =>  500Hz
  *  *An # - n=0: stop transmissions, n=1: re-sync and start transmissions, n=3: re-start transmissions from stop
@@ -1983,6 +2000,10 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_RECEIVING_FOXFORMATANDID;
 				}
+				else if(key == '3') /* *C7YYMMDDhhmmss# Set RTC to this time and date */
+				{
+					state = STATE_RECEIVING_SET_CLOCK;
+				}
 				else if(key == '4')
 				{
 					state = STATE_RECEIVING_START_TIME;
@@ -1991,9 +2012,10 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_RECEIVING_FINISH_TIME;
 				}
-				else if(key == '7') /* *C7YYMMDDhhmmss# Set RTC to this time and date */
+				else if(key == '6')
 				{
-					state = STATE_RECEIVING_SET_CLOCK;
+					state = STATE_RECEIVING_UTC_OFFSET;
+					digits = 1;
 				}
 				else if(key == '9')
 				{
@@ -2058,7 +2080,34 @@ void handleLinkBusMsgs()
 				}
 				else if((key >= '0') && (key <= '9'))
 				{
+					value *= 10;
 					value += key - '0';
+				}
+			}
+			break;
+
+			case STATE_RECEIVING_SET_CLOCK:
+			{
+				if(key == '#')
+				{
+					time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch, -g_utc_offset);
+
+					if(t)
+					{
+						rv3028_set_epoch(t);
+						g_current_epoch = t;
+					}
+
+					state = STATE_SHUTDOWN;
+				}
+				else if((key >= '0') && (key <= '9'))
+				{
+					if(stringLength < MAX_DTMF_ARG_LENGTH)
+					{
+						receivedString[stringLength] = key;
+						stringLength++;
+						receivedString[stringLength] = '\0';
+					}
 				}
 			}
 			break;
@@ -2067,7 +2116,7 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					time_t s = validateTimeString(receivedString, (time_t*)&g_event_start_epoch);
+					time_t s = validateTimeString(receivedString, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
 					if(s)
 					{
@@ -2096,14 +2145,12 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					time_t f = validateTimeString(receivedString, (time_t*)&g_event_finish_epoch);
+					time_t f = validateTimeString(receivedString, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
 					if(f)
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-/*						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
- *						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch); */
 						g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
 					}
 
@@ -2121,28 +2168,26 @@ void handleLinkBusMsgs()
 			}
 			break;
 
-			case STATE_RECEIVING_SET_CLOCK:
+			case STATE_RECEIVING_UTC_OFFSET:
 			{
 				if(key == '#')
 				{
-					time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch);
-
-					if(t)
+					if((value >= 0) && (value < 24))
 					{
-						rv3028_set_date_time(receivedString);   /* String format "YYMMDDhhmmss" */
-						g_current_epoch = rv3028_get_epoch(NULL, NULL);
+						int8_t hold = value * digits;
+						ee_mgr.updateEEPROMVar(Utc_offset, (void*)&hold);
+						g_utc_offset = hold;
 					}
-
 					state = STATE_SHUTDOWN;
 				}
 				else if((key >= '0') && (key <= '9'))
 				{
-					if(stringLength < MAX_DTMF_ARG_LENGTH)
-					{
-						receivedString[stringLength] = key;
-						stringLength++;
-						receivedString[stringLength] = '\0';
-					}
+					value *= 10;
+					value += key - '0';
+				}
+				else if(key == 'B')
+				{
+					digits = -1;
 				}
 			}
 			break;
@@ -2557,7 +2602,7 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	return( failure);
 }
 
-time_t validateTimeString(char* str, time_t* epicVar)
+time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours)
 {
 	time_t valid = 0;
 	int len = strlen(str);
@@ -2578,6 +2623,8 @@ time_t validateTimeString(char* str, time_t* epicVar)
 	if((len == 12) && (only_digits(str)))
 	{
 		time_t ep = rv3028_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
+
+		ep += (HOUR * offsetHours);
 
 		if(ep > minimumEpoch)
 		{
