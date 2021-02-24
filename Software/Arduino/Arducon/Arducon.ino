@@ -160,7 +160,7 @@ unsigned long g_tick_count = 0;
 
 char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
-static volatile uint8_t g_LEDs_Timed_Out = FALSE;
+//static volatile uint8_t g_LEDs_Timed_Out = FALSE;
 /*
  * Local function prototypes
  */
@@ -349,7 +349,6 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 #endif  /* #if INIT_EEPROM_ONLY */
 
 	setupForFox(NULL);
-	g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -387,7 +386,7 @@ ISR(PCINT2_vect)
 
 	if(pinVal)                      /* Sync is high = button released */
 	{
-		g_LEDs_Timed_Out = FALSE;   /* Restart LEDs */
+//		g_LEDs_Timed_Out = FALSE;   /* Restart LEDs */
 
 		if(g_transmissions_disabled)
 		{
@@ -787,10 +786,10 @@ ISR( TIMER2_COMPB_vect )
 
 					if(key)
 					{
-						if(!g_LEDs_Timed_Out)
-						{
+//						if(!g_LEDs_Timed_Out)
+//						{
 							digitalWrite(PIN_LED2, HIGH);   /*  LED */
-						}
+//						}
 
 						if(g_enable_transmitter)
 						{
@@ -808,7 +807,8 @@ ISR( TIMER2_COMPB_vect )
 			}
 			else
 			{
-				if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))
+//				if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))
+				if(g_sync_pin_stable != STABLE_LOW)
 				{
 					digitalWrite(PIN_LED2, key);    /*  LED */
 				}
@@ -853,7 +853,7 @@ ISR( TIMER2_COMPB_vect )
 			if(key)
 			{
 				key = OFF;
-				if(!g_sync_pin_stable)
+				if(g_sync_pin_stable != STABLE_LOW)
 				{
 					digitalWrite(PIN_LED2, OFF);    /*  LED Off */
 				}
@@ -906,10 +906,9 @@ ISR( INT0_vect )
 	{
 		if(g_use_rtc_to_start)
 		{
-			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))
+			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch)) /* Event should be running */
 			{
 				g_LED_enunciating = FALSE;
-				setupForFox(NULL);
 				g_transmissions_disabled = FALSE;
 			}
 		}
@@ -918,7 +917,7 @@ ISR( INT0_vect )
 	{
 		if(g_use_rtc_to_start)
 		{
-			if(g_current_epoch >= g_event_finish_epoch)
+			if(g_current_epoch >= g_event_finish_epoch) /* Event has ended */
 			{
 				g_use_rtc_to_start = FALSE;
 				g_transmissions_disabled = TRUE;
@@ -952,7 +951,7 @@ ISR( INT0_vect )
 				if(g_fox_counter > g_number_of_foxes)
 				{
 					g_fox_counter = 1;
-					g_LEDs_Timed_Out = TRUE;
+//					g_LEDs_Timed_Out = TRUE;
 					digitalWrite(PIN_LED2, OFF);
 				}
 				g_fox_transition = TRUE;
@@ -1329,6 +1328,7 @@ void loop()
 	{
 		ConfigurationState_t hold_config_err = g_config_error;
 		g_config_error = clockConfigurationCheck();
+
 		if(g_config_error != hold_config_err)
 		{
 			if(g_config_error == CONFIGURATION_ERROR)
@@ -1372,9 +1372,14 @@ ConfigurationState_t clockConfigurationCheck(void)
 		return(CONFIGURATION_ERROR);
 	}
 
-	if(g_transmissions_disabled && (g_current_epoch > g_event_finish_epoch))    /* The scheduled event is over */
+	if(g_current_epoch > g_event_finish_epoch)   /* The scheduled event is over */
 	{
 		return(CONFIGURATION_ERROR);
+	}
+
+	if(g_current_epoch > g_event_start_epoch)
+	{
+		return(SCHEDULED_EVENT_DID_NOT_START);
 	}
 
 	return(WAITING_FOR_START);
@@ -1588,7 +1593,7 @@ void handleLinkBusMsgs()
 					}
 
 					ee_mgr.updateEEPROMVar(Enable_LEDs, (void*)&g_enable_LEDs);
-					g_LEDs_Timed_Out = !g_enable_LEDs;
+//					g_LEDs_Timed_Out = !g_enable_LEDs;
 				}
 
 				sprintf(g_tempStr, "LED:%s\n", g_enable_LEDs ? "ON" : "OFF");
@@ -1762,7 +1767,7 @@ void handleLinkBusMsgs()
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
-						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
+						setupForFox(NULL);
 					}
 					else
 					{
@@ -1782,7 +1787,7 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
+						setupForFox(NULL);
 					}
 					else
 					{
@@ -2175,7 +2180,7 @@ void handleLinkBusMsgs()
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
-						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
+						setupForFox(NULL);
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2202,7 +2207,7 @@ void handleLinkBusMsgs()
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
+						setupForFox(NULL);
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2357,6 +2362,14 @@ void setupForFox(Fox_t* fox)
 		break;
 
 		case SPRINT_S1:
+		case SPRINT_S2:
+		case SPRINT_S3:
+		case SPRINT_S4:
+		case SPRINT_S5:
+		case SPRINT_F1:
+		case SPRINT_F2:
+		case SPRINT_F3:
+		case SPRINT_F4:
 		case SPRINT_F5:
 		case SPRINT_DEMO:
 		{
@@ -2382,7 +2395,9 @@ void setupForFox(Fox_t* fox)
 		break;
 	}
 
-	if(g_use_rtc_to_start)
+	ConfigurationState_t state = clockConfigurationCheck();
+
+	if((g_use_rtc_to_start = ((state == SCHEDULED_EVENT_DID_NOT_START) || (state = WAITING_FOR_START))))
 	{
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
@@ -2419,18 +2434,14 @@ void setupForFox(Fox_t* fox)
 		g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
 		g_code_throttle    = 0;     /* Adjusts Morse code speed */
 		g_callsign_sent = FALSE;
-
-/*		g_on_air_interval = 0; */
 		g_fox_seconds_into_interval = 0;
-/*		g_number_of_foxes = 0; */
 		g_fox_transition = FALSE;
 		g_fox_id_offset = 0;
-/*		g_id_interval = 0; */
 		g_time_to_ID = FALSE;
 		g_audio_tone_state = OFF;
 	}
 
-	g_LEDs_Timed_Out = !g_enable_LEDs;
+//	g_LEDs_Timed_Out = !g_enable_LEDs;
 	digitalWrite(PIN_LED2, OFF);    /*  LED Off - in case it was on in the middle of a transmission */
 }
 
@@ -2563,11 +2574,11 @@ void stopEventNow(void)
 
 void startEventUsingRTC(void)
 {
-	g_transmissions_disabled = TRUE;
+	setupForFox(NULL);
+	ConfigurationState_t state = clockConfigurationCheck();
 
-	if(clockConfigurationCheck() == WAITING_FOR_START)
+	if((state == WAITING_FOR_START) || (state == EVENT_IN_PROGRESS))
 	{
-		g_use_rtc_to_start = TRUE;
 		reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");
 		reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 		if(g_event_start_epoch < g_current_epoch)
@@ -2577,6 +2588,7 @@ void startEventUsingRTC(void)
 	}
 	else
 	{
+		g_transmissions_disabled = TRUE;
 		reportConfigErrors();
 	}
 }
