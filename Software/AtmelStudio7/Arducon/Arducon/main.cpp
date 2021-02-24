@@ -66,6 +66,7 @@ volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 volatile BOOL g_callsign_sent = FALSE;
 
 volatile BOOL g_blinky_time = FALSE;
+volatile BOOL g_LED_enunciating = FALSE;
 
 volatile time_t g_current_epoch = 0;
 volatile time_t g_event_start_epoch = 0;
@@ -98,7 +99,7 @@ volatile BOOL g_sync_enabled = TRUE;
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 int8_t g_temperature = 0;
-volatile BOOL g_config_error = FALSE;
+volatile ConfigurationState_t g_config_error = JUST_STARTED_UP;
 volatile BOOL g_use_rtc_to_start = FALSE;
 
 volatile BOOL g_DTMF_unlocked = TRUE;
@@ -172,7 +173,7 @@ void setUpTemp(void);
 uint16_t readADC();
 float getTemp(void);
 BOOL only_digits(char *s);
-BOOL clockConfigurationError(void);
+ConfigurationState_t clockConfigurationCheck(void);
 void stopEventNow(void);
 void startEventNow(void);
 void startEventUsingRTC(void);
@@ -193,7 +194,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	pinMode(PIN_LED1, OUTPUT);                                                                  /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                                                                                                      /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -348,7 +349,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 #endif  /* #if INIT_EEPROM_ONLY */
 
 	setupForFox(NULL);
-	g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
+	g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -660,8 +661,6 @@ ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
 	static uint16_t codeInc = 0;
-	static int blink_counter = 100;
-	static int blink_count_direction = -1;
 	static uint8_t hold_last10sec = 0;
 	static int starting_blip = 0;
 	static int starting_boop = 0;
@@ -694,62 +693,6 @@ ISR( TIMER2_COMPB_vect )
 		{
 			holdButtonState = button;
 			g_sync_pin_timer = 0;
-		}
-	}
-
-	if((g_dtmf_detected) || g_config_error)
-	{
-		if(blink_counter < -BLINK_FAST)
-		{
-			blink_count_direction = 1;
-		}
-
-		if(blink_counter > BLINK_FAST)
-		{
-			blink_count_direction = -1;
-		}
-	}
-	else
-	{
-		blink_counter = BLINK_FAST;
-		blink_count_direction = 1;
-	}
-
-	blink_counter += blink_count_direction;
-
-	if(blink_counter < 0)
-	{
-		g_blinky_time = TRUE;
-	}
-	else
-	{
-		g_blinky_time = FALSE;
-	}
-
-	if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))  /* flash LEDs */
-	{
-		if(g_dtmf_detected)
-		{
-			if(g_blinky_time)
-			{
-				digitalWrite(PIN_LED1, OFF);
-			}
-			else
-			{
-				digitalWrite(PIN_LED1, ON);
-			}
-		}
-
-		if(g_config_error)
-		{
-			if(g_blinky_time)
-			{
-				digitalWrite(PIN_LED2, OFF);
-			}
-			else
-			{
-				digitalWrite(PIN_LED2, ON);
-			}
 		}
 	}
 
@@ -873,7 +816,6 @@ ISR( TIMER2_COMPB_vect )
 				if(g_enable_transmitter)
 				{
 					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
-/*				digitalWrite(PIN_PTT_LOGIC, key);       / * Key the microphone / energize transmitter * / */
 					g_sendAMmodulation = key;
 				}
 
@@ -888,36 +830,57 @@ ISR( TIMER2_COMPB_vect )
 	}
 	else
 	{
-		if(key)
+		if(g_LED_enunciating)
 		{
-			key = OFF;
-			if(!g_sync_pin_stable)
+			if(codeInc)
 			{
-				digitalWrite(PIN_LED2, OFF);    /*  LED Off */
+				codeInc--;
+
+				if(!codeInc)
+				{
+					key = makeMorse(NULL, &repeat, &finished);
+					digitalWrite(PIN_LED2, key);    /*  LED */
+					codeInc = g_code_throttle;
+				}
 			}
-		}
-
-		digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
-
-		digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
-		g_sendAMmodulation = FALSE;
-
-		if(playMorse)
-		{
-			sendMorseTone(OFF);
-		}
-
-		if(digitalRead(PIN_PTT_LOGIC))
-		{
-			ptt_delay = 100;
-		}
-		else if(ptt_delay)
-		{
-			ptt_delay--;
+			else
+			{
+				codeInc = g_code_throttle;
+			}
 		}
 		else
 		{
-			digitalWrite(PIN_PTT_LOGIC, OFF);
+			if(key)
+			{
+				key = OFF;
+				if(!g_sync_pin_stable)
+				{
+					digitalWrite(PIN_LED2, OFF);    /*  LED Off */
+				}
+			}
+
+			digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+
+			digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
+			g_sendAMmodulation = FALSE;
+
+			if(playMorse)
+			{
+				sendMorseTone(OFF);
+			}
+
+			if(digitalRead(PIN_PTT_LOGIC))
+			{
+				ptt_delay = 100;
+			}
+			else if(ptt_delay)
+			{
+				ptt_delay--;
+			}
+			else
+			{
+				digitalWrite(PIN_PTT_LOGIC, OFF);
+			}
 		}
 	}
 }   /* End of Timer 2 ISR */
@@ -945,6 +908,7 @@ ISR( INT0_vect )
 		{
 			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))
 			{
+				g_LED_enunciating = FALSE;
 				setupForFox(NULL);
 				g_transmissions_disabled = FALSE;
 			}
@@ -988,16 +952,6 @@ ISR( INT0_vect )
 				if(g_fox_counter > g_number_of_foxes)
 				{
 					g_fox_counter = 1;
-
-/*					if(g_sync_enabled)
- *					{
- *						PCMSK2 &= ~(1 << PCINT20);  / * Disable PCINT20 * /
- *						PCICR &= ~(1 << PCIE2);     / * Disable pin change interrupt 2 * /
- *						pinMode(PIN_SYNC, INPUT);
- *						pinMode(PIN_SYNC, OUTPUT);  / * Set sync pin as output low * /
- *						g_sync_enabled = FALSE;
- *					} */
-
 					g_LEDs_Timed_Out = TRUE;
 					digitalWrite(PIN_LED2, OFF);
 				}
@@ -1203,7 +1157,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                                                                                                                                                                              /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                                                                                                                                                                                                                                                                                                                              /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1342,7 +1296,10 @@ void loop()
 				if(quietCount++ > 2)
 				{
 					g_dtmf_detected = FALSE;
-					digitalWrite(PIN_LED1, OFF);
+					if(g_transmissions_disabled && !g_LED_enunciating)
+					{
+						digitalWrite(PIN_LED1, OFF);
+					}
 
 					if(delta < 1500)
 					{
@@ -1360,37 +1317,67 @@ void loop()
 		}
 #endif  /* !INIT_EEPROM_ONLY */
 
-	BOOL hold_config_err = g_config_error;
-	if(!(g_config_error = clockConfigurationError()) && hold_config_err)
+	if(g_dtmf_detected)
 	{
-		digitalWrite(PIN_LED2, OFF);    /* ensure LED is off */
+		BOOL repeat = FALSE;
+		makeMorse(DTMF_DETECTED_BLINK_PATTERN, &repeat, NULL);
+		g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+		g_LED_enunciating = TRUE;
+		g_config_error = JUST_STARTED_UP;
+	}
+	else
+	{
+		ConfigurationState_t hold_config_err = g_config_error;
+		g_config_error = clockConfigurationCheck();
+		if(g_config_error != hold_config_err)
+		{
+			if(g_config_error == CONFIGURATION_ERROR)
+			{
+				BOOL repeat = TRUE;
+				makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+				g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+				g_LED_enunciating = TRUE;
+			}
+			else if(g_config_error == WAITING_FOR_START)
+			{
+				BOOL repeat = TRUE;
+				makeMorse(WAITING_BLINK_PATTERN, &repeat, NULL);
+				g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
+				g_LED_enunciating = TRUE;
+			}
+			else
+			{
+				g_LED_enunciating = FALSE;
+				digitalWrite(PIN_LED2, OFF);    /* ensure LED is off */
+			}
+		}
 	}
 }
 
 
-BOOL clockConfigurationError(void)
+ConfigurationState_t clockConfigurationCheck(void)
 {
 	if(!g_transmissions_disabled)
 	{
-		return( FALSE); /* Event is running, so clocks don't matter */
+		return(EVENT_IN_PROGRESS);  /* Event is running, so clocks don't matter */
 	}
 
 	if(!g_event_finish_epoch || !g_event_finish_epoch || (g_current_epoch < MINIMUM_EPOCH))
 	{
-		return(TRUE);
+		return(CONFIGURATION_ERROR);
 	}
 
 	if(g_event_finish_epoch <= g_event_start_epoch) /* Event configured to finish before it started */
 	{
-		return(TRUE);
+		return(CONFIGURATION_ERROR);
 	}
 
 	if(g_transmissions_disabled && (g_current_epoch > g_event_finish_epoch))    /* The scheduled event is over */
 	{
-		return(TRUE);
+		return(CONFIGURATION_ERROR);
 	}
 
-	return(FALSE);
+	return(WAITING_FOR_START);
 }
 
 
@@ -1775,7 +1762,7 @@ void handleLinkBusMsgs()
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
-						g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
+						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 					}
 					else
 					{
@@ -1795,7 +1782,7 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
+						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 					}
 					else
 					{
@@ -1837,7 +1824,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
-					if(clockConfigurationError())
+					if(clockConfigurationCheck() == CONFIGURATION_ERROR)
 					{
 						reportConfigErrors();
 					}
@@ -2188,9 +2175,7 @@ void handleLinkBusMsgs()
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
-						/*						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
-						 *						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch); */
-						g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
+						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2217,7 +2202,7 @@ void handleLinkBusMsgs()
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						g_use_rtc_to_start = !clockConfigurationError() && g_transmissions_disabled;
+						g_use_rtc_to_start = (clockConfigurationCheck() == WAITING_FOR_START);
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2556,6 +2541,7 @@ void startEventNow(void)
 		setupForFox(NULL);
 		setupPortsForF1975();
 		g_transmissions_disabled = FALSE;
+		g_LED_enunciating = FALSE;
 		lb_send_string((char*)"Sync OK\n", FALSE);
 #endif  /* !INIT_EEPROM_ONLY */
 }
@@ -2579,7 +2565,7 @@ void startEventUsingRTC(void)
 {
 	g_transmissions_disabled = TRUE;
 
-	if(!clockConfigurationError())
+	if(clockConfigurationCheck() == WAITING_FOR_START)
 	{
 		g_use_rtc_to_start = TRUE;
 		reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");

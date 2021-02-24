@@ -180,7 +180,8 @@
 #define PIN_SYNC D4             /* Arduino Pro Mini pin# 7 = PD4 */
 #define PIN_UNUSED_1 D5         /* Arduino Pro Mini pin# 8 = PD5 */
 #define PIN_PWDN D6             /* Arduino Pro Mini pin# 9 = PD6 */
-#define PIN_LED2 D7             /* Arduino Pro Mini pin# 10 = PD7 */
+//#define PIN_LED2 D7             /* Arduino Pro Mini pin# 10 = PD7 */
+#define PIN_LED2 D13             /* Arduino Pro Mini pin# 10 = PD7 */
 #define PIN_PTT_LOGIC D8        /* Arduino Pro Mini pin# 11 = PB0 */
 #define PIN_CW_TONE_LOGIC D9    /* Arduino Pro Mini pin# 12 = PB1 */
 #define PIN_CW_KEY_LOGIC D10    /* Arduino Pro Mini pin# 13 = PB2 */
@@ -303,6 +304,18 @@ typedef enum
 
 #define MINIMUM_EPOCH ((time_t)1609459200) /* 1 Jan 2021 00:00:00 */
 #define SECONDS_24H 86400
+
+typedef enum
+{
+	JUST_STARTED_UP,
+	WAITING_FOR_START,
+	CONFIGURATION_ERROR,
+	EVENT_IN_PROGRESS
+} ConfigurationState_t;
+
+#define ERROR_BLINK_PATTERN ((char*)"A")
+#define WAITING_BLINK_PATTERN ((char*)"E        ")
+#define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL
 	typedef uint8_t BOOL;
