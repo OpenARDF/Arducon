@@ -31,6 +31,7 @@
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/pgmspace.h>
 #include <stdio.h>
+#include <string.h>
 #else
 /*#include <EEPROM.h> */
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
@@ -58,29 +59,35 @@ const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = TEXT_ERR_TIME_IN_PAST_TXT;
 
 const struct EE_prom EEMEM EepromManager::ee_vars =
 {
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	"\0",
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0
+	/* .textVersion = */ "\0",
+	/* .textHelp = */ "\0",
+	/* .textSetTime = */ "\0",
+	/* .textSetStart = */ "\0",
+	/* .textSetFinish = */ "\0",
+	/* .textSetID = */ "\0",
+	/* .textErrFinishB4Start = */ "\0",
+	/* .textErrFinishInPast = */ "\0",
+	/* .textErrStartInPast = */ "\0",
+	/* .textErrInvalidTime = */ "\0",
+	/* .textErrTimeInPast = */ "\0",
+	/* .stationID_text = */ "\0",
+
+	/* .temperature_table = */ { 0 },
+	/* .dataModulation = */ { 0 },
+	/* .unlockCode = */ EEPROM_DTMF_UNLOCK_CODE_DEFAULT,
+
+	/* .id_codespeed = */ 0,
+	/* .fox_setting = */ 0,
+	/* .am_audio_frequency = */ 0,
+	/* .enable_LEDs = */ 0,
+	/* .atmega_temp_calibration = */ 0,
+	/* .rv3028_offset = */ 0,
+	/* .enable_start_timer = */ 0,
+	/* .enable_transmitter = */ 0,
+	/* .event_start_epoch = */ 0,
+	/* .event_finish_epoch = */ 0,
+	/* .utc_offset = */ 0,
+	/* .eeprom_initialization_flag = */ 0
 };
 
 extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 1];
@@ -95,10 +102,13 @@ extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
 extern volatile Fox_t g_fox;
+extern volatile uint8_t g_AM_audio_frequency;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
+extern volatile int8_t g_utc_offset;
 
 extern uint8_t g_dataModulation[];
+extern uint8_t g_unlockCode[];
 
 extern char g_tempStr[];
 
@@ -118,7 +128,10 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 	uint16_t* ee_word_addr = NULL;
 	uint32_t* ee_dword_addr = NULL;
 
-	if(!val) return;
+	if(!val)
+	{
+		return;
+	}
 
 	switch(v)
 	{
@@ -130,11 +143,27 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 
 			while(c)
 			{
-				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]),(uint8_t)c);
+				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]), (uint8_t)c);
 				c = *char_addr++;
 			}
 
-			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i]),0);
+			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i]), 0);
+		}
+		break;
+
+		case UnlockCode:
+		{
+			uint8_t* uint8_addr = (uint8_t*)val;
+			uint8_t c = *uint8_addr++;
+			int i = 0;
+
+			while(c && (i < MAX_UNLOCK_CODE_LENGTH))
+			{
+				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i++]), c);
+				c = *uint8_addr++;
+			}
+
+			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
 		}
 		break;
 
@@ -147,6 +176,12 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Fox_setting:
 		{
 			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.fox_setting);
+		}
+		break;
+
+		case Am_audio_frequency:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.am_audio_frequency);
 		}
 		break;
 
@@ -193,6 +228,12 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		}
 		break;
 
+		case Utc_offset:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.utc_offset);
+		}
+		break;
+
 		case Eeprom_initialization_flag:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag);
@@ -223,6 +264,11 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 void EepromManager::sendEEPROMString(EE_var_t v)
 {
 	char* ee_addr = NULL;
+
+	if(!lb_enabled())
+	{
+		return;
+	}
 
 	switch(v)
 	{
@@ -327,6 +373,7 @@ BOOL EepromManager::readNonVols(void)
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), NO_CODE_START_TONES_5M);
+		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_enable_LEDs = eeprom_read_byte(&(EepromManager::ee_vars.enable_LEDs));
@@ -334,11 +381,21 @@ BOOL EepromManager::readNonVols(void)
 		g_enable_transmitter = eeprom_read_byte(&(EepromManager::ee_vars.enable_transmitter));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
+		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
 			g_messages_text[STATION_ID][i] = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.stationID_text[i])));
 			if(!g_messages_text[STATION_ID][i])
+			{
+				break;
+			}
+		}
+
+		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
+		{
+			g_unlockCode[i] = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));
+			if(!g_unlockCode[i])
 			{
 				break;
 			}
@@ -393,6 +450,9 @@ BOOL EepromManager::readNonVols(void)
 		g_fox = EEPROM_FOX_SETTING_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting), g_fox);
 
+		g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), g_AM_audio_frequency);
+
 		g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration), (uint16_t)g_atmega_temp_calibration);
 
@@ -413,11 +473,22 @@ BOOL EepromManager::readNonVols(void)
 		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
 		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);
 
-		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
-		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_finish_epoch), g_event_start_epoch);
+		g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
+		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_finish_epoch), g_event_finish_epoch);
+
+		g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.utc_offset), (uint8_t)g_utc_offset);
 
 		g_messages_text[STATION_ID][0] = '\0';
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[0]), 0);
+
+		uint8_t *v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
+		for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
+		{
+			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), *v++);
+		}
+
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
 
 		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
@@ -431,6 +502,7 @@ BOOL EepromManager::readNonVols(void)
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
 			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+/*			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); / * Set maximum attenuation at index 0 * / */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
@@ -569,6 +641,10 @@ BOOL EepromManager::readNonVols(void)
 		sprintf(g_tempStr, "FX=%d\n", byt);
 		lb_send_string(g_tempStr, TRUE);
 
+		byt = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
+		sprintf(g_tempStr, "AM=%d\n", byt);
+		lb_send_string(g_tempStr, TRUE);
+
 		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		sprintf(g_tempStr, "TC=%u\n", wrd);
 		lb_send_string(g_tempStr, TRUE);
@@ -597,6 +673,10 @@ BOOL EepromManager::readNonVols(void)
 		sprintf(g_tempStr, "FE=%lu\n", dwrd);
 		lb_send_string(g_tempStr, TRUE);
 
+		byt = eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
+		sprintf(g_tempStr, "UO=%d\n", (int8_t)byt);
+		lb_send_string(g_tempStr, TRUE);
+
 		for(int i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
 			g_messages_text[STATION_ID][i] = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.stationID_text[i])));
@@ -608,6 +688,19 @@ BOOL EepromManager::readNonVols(void)
 
 		sprintf(g_tempStr, "ID=\"%s\"\n", g_messages_text[STATION_ID]);
 		lb_send_string(g_tempStr, TRUE);
+
+		for(int i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
+		{
+			g_unlockCode[i] = eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));
+			if(!g_unlockCode[i])
+			{
+				break;
+			}
+		}
+
+		sprintf(g_tempStr, "PW=\"%s\"\n", (char*)g_unlockCode);
+		lb_send_string(g_tempStr, TRUE);
+
 
 		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
@@ -643,6 +736,6 @@ void EepromManager::send_Help(void)
 
 uint16_t EepromManager::readTemperatureTable(int i)
 {
-	return (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i]));
+	return( (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i])));
 }
 

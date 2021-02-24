@@ -404,7 +404,7 @@
 // 		BOOL fail = TRUE;
 // 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
 // 		int length = strlen((const char*)dateString);
-// 
+//
 // 		if(length >= 12)
 // 		{
 // 			data[0] = dateString[11] - '0';             /* seconds */
@@ -413,23 +413,23 @@
 // 			data[1] += ((dateString[8] - '0') << 4);    /* 10s of minutes */
 // 			data[2] = dateString[7] - '0';              /* hours */
 // 			data[2] += ((dateString[6] - '0') << 4);    /* 10s of hours */
-// 
+//
 // 			/*data[3] = Skip day of week */
-// 
+//
 // 			data[4] = dateString[5] - '0';              /* day of month digit 1 */
 // 			data[4] += ((dateString[4] - '0') << 4);    /* day of month */
 // 			data[5] = dateString[3] - '0';              /* month digit 1 */
 // 			data[5] += ((dateString[2] - '0') << 4);    /* month */
 // 			data[6] = dateString[1] - '0';              /* year digit 1 */
 // 			data[6] += ((dateString[0] - '0') << 4);    /* year - two digits */
-// 
+//
 // 			fail = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
 // 		}
-// 
+//
 // 		return( fail);
 // 	}
 
-			
+
 	void refreshRAMfromEEPROM(void)
 	{
 		uint8_t status = FALSE;
@@ -506,8 +506,10 @@ by reading all EEPROM into the RAM mirror now */
 				return( 1);
 			}
 
-			temp = 0x04;    /* Enable direct switching mode */
-			mask = 0x06;    /* 00001100 */
+// 			temp = 0x04;    /* Enable direct switching mode */
+// 			mask = 0x06;    /* 00001100 */
+ 			temp = 0x00;    /* Disable Vbackup switchover */
+ 			mask = 0x06;    /* 00001100 */
 			if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
 			{
 				return( 1);

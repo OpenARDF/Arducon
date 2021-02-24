@@ -83,7 +83,7 @@ volatile int g_fox_seconds_into_interval = 0;
 volatile int g_fox_counter = 1;
 volatile int g_number_of_foxes = 0;
 volatile BOOL g_fox_transition = FALSE;
-volatile int g_fox_id_offset = 0; /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
+volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
 volatile int g_id_interval = 0;
 volatile BOOL g_time_to_ID = FALSE;
 volatile int g_startclock_interval = 60;
@@ -96,9 +96,12 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile BOOL g_sync_enabled = TRUE;
 
 volatile BOOL g_dtmf_detected = FALSE;
+volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 int8_t g_temperature = 0;
 volatile BOOL g_config_error = FALSE;
 volatile BOOL g_use_rtc_to_start = FALSE;
+
+volatile BOOL g_DTMF_unlocked = TRUE;
 
 #if !COMPILE_FOR_ATMELSTUDIO7
 	Fox_t operator++(volatile Fox_t &orig, int)
@@ -190,7 +193,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	pinMode(PIN_LED1, OUTPUT);                                      /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                                                                  /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -310,7 +313,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		uint8_t result = rv3028_1s_sqw();
 #endif  /* !INIT_EEPROM_ONLY */
 
-	//g_current_epoch = rv3028_get_epoch(NULL, NULL);
+	/*g_current_epoch = rv3028_get_epoch(NULL, NULL); */
 	g_current_epoch = rv3028_get_epoch();
 
 #if !INIT_EEPROM_ONLY
@@ -1200,7 +1203,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                                                                                          /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                                                                                                                                                                                                              /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1716,6 +1719,25 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+			case MESSAGE_PASSWORD:
+			{
+				if(lb_buff->fields[FIELD1][0])
+				{
+					strncpy(g_tempStr, lb_buff->fields[FIELD1], MAX_UNLOCK_CODE_LENGTH);
+					g_tempStr[MAX_UNLOCK_CODE_LENGTH] = '\0';   /* truncate to no more than max characters */
+
+					if(only_digits(g_tempStr) && (strlen(g_tempStr) >= MIN_UNLOCK_CODE_LENGTH))
+					{
+						strcpy((char*)g_unlockCode, g_tempStr);
+						ee_mgr.updateEEPROMVar(UnlockCode, (void*)g_unlockCode);
+					}
+				}
+
+				sprintf(g_tempStr, "PWD=%s\n", (char*)g_unlockCode);
+				lb_send_string(g_tempStr, TRUE);
+			}
+			break;
+
 			case MESSAGE_CLOCK:
 			{
 				BOOL doprint = false;
@@ -1813,11 +1835,6 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "C=%d\n", a);
 					doprint = true;
 				}
-				else if(lb_buff->fields[FIELD1][0] == 'X')  /* Test only - Send 32 kHz square wave out of RTC */
-				{
-					EIMSK &= ~(1 << INT0);                  /* Disable INT0 interrupts */
-					rv3028_32kHz_sqw();
-				}
 				else
 				{
 					if(clockConfigurationError())
@@ -1905,10 +1922,25 @@ void handleLinkBusMsgs()
 		static int value;
 		static int stringLength;
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
+		static BOOL setPasswordEnabled = FALSE;
 
-		if(key == '*')
+		if(key == 'D')
 		{
-			state = STATE_SENTENCE_START;
+			g_DTMF_unlocked = FALSE;
+			state = STATE_SHUTDOWN;
+			return;
+		}
+
+		if(!g_DTMF_unlocked)
+		{
+			state = STATE_CHECK_PASSWORD;
+		}
+		else
+		{
+			if(key == '*')
+			{
+				state = STATE_SENTENCE_START;
+			}
 		}
 
 		switch(state)
@@ -1924,38 +1956,49 @@ void handleLinkBusMsgs()
 				value = 0;
 				digits = 0;
 
-				if(key == 'C')
+				if(g_DTMF_unlocked)
 				{
-					state = STATE_C;
+					if(key == 'C')
+					{
+						state = STATE_C;
+					}
+					else if(key != '*')
+					{
+						value = key - '0';
+#if !INIT_EEPROM_ONLY
+							setupPortsForF1975();
+#endif  /* !INIT_EEPROM_ONLY */
+						state = STATE_TEST_ATTENUATOR;
+					}
 				}
-				else if(key == 'A')
+
+				if(key == 'A')
 				{
 					state = STATE_A;
-				}
-				else if(key != '*')
-				{
-					value = key - '0';
-#if !INIT_EEPROM_ONLY
-						setupPortsForF1975();
-#endif  /* !INIT_EEPROM_ONLY */
-					state = STATE_TEST_ATTENUATOR;
 				}
 			}
 			break;
 
 			case STATE_A:
 			{
-				if(key == '0')
+				if(g_DTMF_unlocked)
 				{
-					state = STATE_PAUSE_TRANSMISSIONS;
-				}
-				else if(key == '1')
-				{
-					state = STATE_START_TRANSMISSIONS;
-				}
-				else if(key == '2')
-				{
-					state = STATE_START_TRANSMISSIONS_WITH_RTC;
+					if(key == '0')
+					{
+						state = STATE_PAUSE_TRANSMISSIONS;
+					}
+					else if(key == '1')
+					{
+						state = STATE_START_TRANSMISSIONS;
+					}
+					else if(key == '2')
+					{
+						state = STATE_START_TRANSMISSIONS_WITH_RTC;
+					}
+					else if((key == '8') && setPasswordEnabled)
+					{
+						state = STATE_SET_PASSWORD;
+					}
 				}
 			}
 			break;
@@ -2024,6 +2067,29 @@ void handleLinkBusMsgs()
 				else
 				{
 					state = STATE_SHUTDOWN;
+				}
+			}
+			break;
+
+			case STATE_SET_PASSWORD:
+			{
+				if(key == '#')
+				{
+					if(stringLength >= MIN_UNLOCK_CODE_LENGTH)
+					{
+						strcpy((char*)g_unlockCode, receivedString);
+						ee_mgr.updateEEPROMVar(UnlockCode, (void*)g_unlockCode);
+					}
+
+					state = STATE_SHUTDOWN;
+				}
+				else if((key >= '0') && (key <= '9'))
+				{
+					if(stringLength <= MAX_UNLOCK_CODE_LENGTH)
+					{
+						receivedString[stringLength++] = key;
+						receivedString[stringLength] = '\0';
+					}
 				}
 			}
 			break;
@@ -2205,6 +2271,24 @@ void handleLinkBusMsgs()
 				else if((key >= '1') && (key <= '6'))
 				{
 					value = key - '0';
+				}
+			}
+			break;
+
+			case STATE_CHECK_PASSWORD:
+			{
+				if(g_unlockCode[digits++] == key)
+				{
+					if((size_t)digits == strlen((char*)g_unlockCode))
+					{
+						g_DTMF_unlocked = TRUE;
+						setPasswordEnabled = TRUE;
+					}
+				}
+				else
+				{
+					digits = 0;
+					state = STATE_SHUTDOWN;
 				}
 			}
 			break;

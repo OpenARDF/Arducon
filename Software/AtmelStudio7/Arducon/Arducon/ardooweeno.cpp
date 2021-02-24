@@ -428,16 +428,19 @@ BOOL digitalRead(uint8_t pin)
 		{
 			result = PINB & (1 << PORTB0);
 		}
+		break;
 
 		case D9:
 		{
 			result = PINB & (1 << PORTB1);
 		}
+		break;
 
 		case D10:
 		{
 			result = PINB & (1 << PORTB2);
 		}
+		break;
 
 		case D13:
 		{

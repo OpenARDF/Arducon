@@ -71,6 +71,7 @@ typedef enum
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
 	MESSAGE_FACTORY_RESET = 'F' * 100 + 'A' * 10 + 'C',     /* Sets EEPROM back to defaults */
 	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Override DIP switch settings using this value */
+	MESSAGE_SET_AM_TONE = 'A' * 10 + 'M',					/* Set AM audio tone frequency */
 	MESSAGE_LEDS = 'L' * 100 + 'E' * 10 + 'D',              /* Turn on or off LEDs - accepts 1 or 0 or ON or OFF */
 	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',              /* Temperature  data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
@@ -81,6 +82,7 @@ typedef enum
 	/* UTILITY MESSAGES */
 	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',             /* Processor reset */
 	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
+	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
 
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;

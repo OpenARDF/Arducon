@@ -34,8 +34,8 @@
 #include <time.h>
 
 /* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.19 ***\n"
-#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version"
+#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.25 ***\n"
+#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish\n  FOX [n]- Set fox role\n  ID [c...c] -  Set callsign\n  STA [0|1] - Start tones on/off\n  SYN 0|1|2 - Synchronize\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version"
 #define TEXT_SET_TIME_TXT "CLK T YYMMDDhhmmss <- Set current time\n"
 #define TEXT_SET_START_TXT "CLK S YYMMDDhhmmss <- Set start time\n"
 #define TEXT_SET_FINISH_TXT "CLK F YYMMDDhhmmss <- Set finish time\n"
@@ -63,9 +63,11 @@ struct EE_prom
 
 	uint16_t temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 	uint8_t dataModulation[SIZE_OF_DATA_MODULATION];
+	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 
 	uint8_t id_codespeed;
 	uint8_t fox_setting;
+	uint8_t am_audio_frequency;
 	uint8_t enable_LEDs;
 	int16_t atmega_temp_calibration;
 	int16_t rv3028_offset;
@@ -73,6 +75,7 @@ struct EE_prom
 	uint8_t enable_transmitter;
 	time_t event_start_epoch;
 	time_t event_finish_epoch;
+	uint8_t utc_offset;
 	uint16_t eeprom_initialization_flag;
 };
 
@@ -94,9 +97,11 @@ typedef enum
 
 	Temperature_table,
 	DataModulation,
+	UnlockCode,
 
 	Id_codespeed,
 	Fox_setting,
+	Am_audio_frequency,
 	Enable_LEDs,
 	Atmega_temp_calibration,
 	Rv3028_offset,
@@ -104,6 +109,7 @@ typedef enum
 	Enable_transmitter,
 	Event_start_epoch,
 	Event_finish_epoch,
+	Utc_offset,
 	Eeprom_initialization_flag
 } EE_var_t;
 

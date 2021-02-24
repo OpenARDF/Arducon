@@ -82,6 +82,7 @@ typedef enum
 	/* UTILITY MESSAGES */
 	MESSAGE_RESET = 'R' * 100 + 'S' * 10 + 'T',             /* Processor reset */
 	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
+	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
 
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;

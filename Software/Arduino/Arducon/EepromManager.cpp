@@ -31,6 +31,7 @@
 #if COMPILE_FOR_ATMELSTUDIO7
 #include <avr/pgmspace.h>
 #include <stdio.h>
+#include <string.h>
 #else
 /*#include <EEPROM.h> */
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
@@ -71,8 +72,9 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .textErrTimeInPast = */ "\0",
 	/* .stationID_text = */ "\0",
 
-	/* .temperature_table = */ {0},
-	/* .dataModulation = */ {0},
+	/* .temperature_table = */ { 0 },
+	/* .dataModulation = */ { 0 },
+	/* .unlockCode = */ EEPROM_DTMF_UNLOCK_CODE_DEFAULT,
 
 	/* .id_codespeed = */ 0,
 	/* .fox_setting = */ 0,
@@ -106,6 +108,7 @@ extern volatile time_t g_event_finish_epoch;
 extern volatile int8_t g_utc_offset;
 
 extern uint8_t g_dataModulation[];
+extern uint8_t g_unlockCode[];
 
 extern char g_tempStr[];
 
@@ -125,7 +128,10 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 	uint16_t* ee_word_addr = NULL;
 	uint32_t* ee_dword_addr = NULL;
 
-	if(!val) return;
+	if(!val)
+	{
+		return;
+	}
 
 	switch(v)
 	{
@@ -137,11 +143,27 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 
 			while(c)
 			{
-				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]),(uint8_t)c);
+				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]), (uint8_t)c);
 				c = *char_addr++;
 			}
 
-			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i]),0);
+			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i]), 0);
+		}
+		break;
+
+		case UnlockCode:
+		{
+			uint8_t* uint8_addr = (uint8_t*)val;
+			uint8_t c = *uint8_addr++;
+			int i = 0;
+
+			while(c && (i < MAX_UNLOCK_CODE_LENGTH))
+			{
+				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i++]), c);
+				c = *uint8_addr++;
+			}
+
+			eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
 		}
 		break;
 
@@ -243,7 +265,10 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 {
 	char* ee_addr = NULL;
 
-	if(!lb_enabled()) return;
+	if(!lb_enabled())
+	{
+		return;
+	}
 
 	switch(v)
 	{
@@ -367,6 +392,15 @@ BOOL EepromManager::readNonVols(void)
 			}
 		}
 
+		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
+		{
+			g_unlockCode[i] = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));
+			if(!g_unlockCode[i])
+			{
+				break;
+			}
+		}
+
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)    /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
 			g_dataModulation[i] = (uint8_t)eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]));
@@ -448,6 +482,14 @@ BOOL EepromManager::readNonVols(void)
 		g_messages_text[STATION_ID][0] = '\0';
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[0]), 0);
 
+		uint8_t *v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
+		for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
+		{
+			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), *v++);
+		}
+
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
+
 		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
 		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
@@ -460,7 +502,7 @@ BOOL EepromManager::readNonVols(void)
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
 			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
-//			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
+/*			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); / * Set maximum attenuation at index 0 * / */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
@@ -600,7 +642,7 @@ BOOL EepromManager::readNonVols(void)
 		lb_send_string(g_tempStr, TRUE);
 
 		byt = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
-		sprintf(g_tempStr, "AM=%d/n", byt);
+		sprintf(g_tempStr, "AM=%d\n", byt);
 		lb_send_string(g_tempStr, TRUE);
 
 		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
@@ -647,6 +689,19 @@ BOOL EepromManager::readNonVols(void)
 		sprintf(g_tempStr, "ID=\"%s\"\n", g_messages_text[STATION_ID]);
 		lb_send_string(g_tempStr, TRUE);
 
+		for(int i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
+		{
+			g_unlockCode[i] = eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));
+			if(!g_unlockCode[i])
+			{
+				break;
+			}
+		}
+
+		sprintf(g_tempStr, "PW=\"%s\"\n", (char*)g_unlockCode);
+		lb_send_string(g_tempStr, TRUE);
+
+
 		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
 		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
@@ -681,6 +736,6 @@ void EepromManager::send_Help(void)
 
 uint16_t EepromManager::readTemperatureTable(int i)
 {
-	return (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i]));
+	return( (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i])));
 }
 
