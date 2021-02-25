@@ -519,7 +519,7 @@ by reading all EEPROM into the RAM mirror now */
 			refreshRAMfromEEPROM();
 
 /* Debug only */
-#if INIT_EEPROM_ONLY
+#if INIT_EEPROM_ONLY_DEBUG
 			uint8_t temp_byte;
 			uint8_t hold_byte;
 			for(temp_byte = 0x30; temp_byte <= 0x37; temp_byte++)
@@ -533,7 +533,7 @@ by reading all EEPROM into the RAM mirror now */
 			lb_send_NewPrompt();
 
 			g_tempStr[0] = '\0';
-#endif // INIT_EEPROM_ONLY
+#endif // INIT_EEPROM_ONLY_DEBUG
 /* End debugging */
 
 			if(!status)

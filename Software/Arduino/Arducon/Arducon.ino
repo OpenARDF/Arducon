@@ -127,8 +127,6 @@ volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile uint16_t g_time_needed_for_ID = 0;
 volatile int16_t g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
-volatile uint8_t g_enable_LEDs;
-volatile uint8_t g_enable_start_timer;
 volatile uint8_t g_enable_transmitter;
 volatile uint8_t g_temperature_check_countdown = 60;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
@@ -160,7 +158,6 @@ unsigned long g_tick_count = 0;
 
 char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
-//static volatile uint8_t g_LEDs_Timed_Out = FALSE;
 /*
  * Local function prototypes
  */
@@ -194,7 +191,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	pinMode(PIN_LED1, OUTPUT);                                                                                                      /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);          /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -300,12 +297,18 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
 
 #if INIT_EEPROM_ONLY
+		rv3028_1s_sqw();
 		if(eepromErr)
 		{
 			lb_send_string((char*)"EEPROM Erase Error!\n", TRUE);
 		}
-		ee_mgr.dumpEEPROMVars();
-		rv3028_1s_sqw();
+		else
+		{
+			ee_mgr.sendSuccessString();
+		}
+
+		digitalWrite(PIN_LED2, ON);
+		while(1);
 #else
 		if(eepromErr)
 		{
@@ -384,10 +387,8 @@ ISR(PCINT2_vect)
 {
 	BOOL pinVal = digitalRead(PIN_SYNC);
 
-	if(pinVal)                      /* Sync is high = button released */
+	if(pinVal)  /* Sync is high = button released */
 	{
-//		g_LEDs_Timed_Out = FALSE;   /* Restart LEDs */
-
 		if(g_transmissions_disabled)
 		{
 			if(g_sync_pin_stable == STABLE_LOW)
@@ -660,9 +661,6 @@ ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
 	static uint16_t codeInc = 0;
-	static uint8_t hold_last10sec = 0;
-	static int starting_blip = 0;
-	static int starting_boop = 0;
 	static BOOL playMorse = TRUE;
 	static uint8_t holdButtonState = HIGH;
 	BOOL repeat = TRUE, finished = FALSE;
@@ -695,60 +693,6 @@ ISR( TIMER2_COMPB_vect )
 		}
 	}
 
-	if(g_enable_start_timer)
-	{
-		if(hold_last10sec != g_lastSeconds)
-		{
-			hold_last10sec = g_lastSeconds;
-
-			if(hold_last10sec > 0)
-			{
-				playMorse = FALSE;
-				starting_blip = BLINK_SHORT;
-			}
-			else if(hold_last10sec == 0)
-			{
-				starting_blip = 0;
-				starting_boop = TIMER2_SECONDS_2;
-			}
-		}
-
-		if(starting_blip)
-		{
-			starting_blip--;
-
-			if(starting_blip)
-			{
-				if(g_lastSeconds > 5)
-				{
-					playStartingTone(TONE_500Hz);
-				}
-				else
-				{
-					playStartingTone(TONE_600Hz);
-				}
-			}
-			else
-			{
-				playStartingTone(0);
-			}
-
-		}
-		else if(starting_boop)
-		{
-			starting_boop--;
-
-			if(!starting_boop)
-			{
-				playStartingTone(0);
-				playMorse = TRUE;
-			}
-			else
-			{
-				playStartingTone(TONE_400Hz);
-			}
-		}
-	}
 
 	static BOOL key = OFF;
 	static uint16_t ptt_delay = 0;
@@ -786,10 +730,7 @@ ISR( TIMER2_COMPB_vect )
 
 					if(key)
 					{
-//						if(!g_LEDs_Timed_Out)
-//						{
-							digitalWrite(PIN_LED2, HIGH);   /*  LED */
-//						}
+						digitalWrite(PIN_LED2, HIGH);   /*  LED */
 
 						if(g_enable_transmitter)
 						{
@@ -807,7 +748,6 @@ ISR( TIMER2_COMPB_vect )
 			}
 			else
 			{
-//				if(!g_LEDs_Timed_Out && (g_sync_pin_stable != STABLE_LOW))
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
 					digitalWrite(PIN_LED2, key);    /*  LED */
@@ -906,7 +846,7 @@ ISR( INT0_vect )
 	{
 		if(g_use_rtc_to_start)
 		{
-			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch)) /* Event should be running */
+			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
 			{
 				g_LED_enunciating = FALSE;
 				g_transmissions_disabled = FALSE;
@@ -951,7 +891,6 @@ ISR( INT0_vect )
 				if(g_fox_counter > g_number_of_foxes)
 				{
 					g_fox_counter = 1;
-//					g_LEDs_Timed_Out = TRUE;
 					digitalWrite(PIN_LED2, OFF);
 				}
 				g_fox_transition = TRUE;
@@ -962,15 +901,6 @@ ISR( INT0_vect )
 					id_countdown = g_id_interval;
 					g_time_to_ID = TRUE;
 				}
-			}
-
-			if(g_enable_start_timer && ((g_seconds_since_sync + 11) % g_startclock_interval <= 10))
-			{
-				g_lastSeconds = (uint8_t)((g_seconds_since_sync + 11) % g_startclock_interval);
-			}
-			else
-			{
-				g_lastSeconds = 0;
 			}
 		}
 	}
@@ -1156,7 +1086,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                                                                                                                                                                                                                                                                                                              /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;   /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1372,7 +1302,7 @@ ConfigurationState_t clockConfigurationCheck(void)
 		return(CONFIGURATION_ERROR);
 	}
 
-	if(g_current_epoch > g_event_finish_epoch)   /* The scheduled event is over */
+	if(g_current_epoch > g_event_finish_epoch)  /* The scheduled event is over */
 	{
 		return(CONFIGURATION_ERROR);
 	}
@@ -1428,11 +1358,6 @@ void handleLinkBusMsgs()
 
 		switch(msg_id)
 		{
-			case MESSAGE_RESET:
-			{
-			}
-			break;
-
 			case MESSAGE_SET_FOX:
 			{
 				int c = (int)(lb_buff->fields[FIELD1][0]);
@@ -1577,51 +1502,6 @@ void handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_LEDS:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					if((lb_buff->fields[FIELD1][1] == 'F') || (lb_buff->fields[FIELD1][0] == '0'))
-					{
-						g_enable_LEDs = FALSE;
-						digitalWrite(PIN_LED1, OFF);    /*  LED Off */
-						digitalWrite(PIN_LED2, OFF);
-					}
-					else
-					{
-						g_enable_LEDs = TRUE;
-					}
-
-					ee_mgr.updateEEPROMVar(Enable_LEDs, (void*)&g_enable_LEDs);
-//					g_LEDs_Timed_Out = !g_enable_LEDs;
-				}
-
-				sprintf(g_tempStr, "LED:%s\n", g_enable_LEDs ? "ON" : "OFF");
-				lb_send_string(g_tempStr, FALSE);
-			}
-			break;
-
-			case MESSAGE_STARTTONES_ENABLE:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					if((lb_buff->fields[FIELD1][1] == 'F') || (lb_buff->fields[FIELD1][0] == '0'))
-					{
-						g_enable_start_timer = FALSE;
-					}
-					else
-					{
-						g_enable_start_timer = TRUE;
-					}
-
-					ee_mgr.updateEEPROMVar(Enable_start_timer, (void*)&g_enable_start_timer);
-				}
-
-				sprintf(g_tempStr, "STA:%s\n", g_enable_start_timer ? "ON" : "OFF");
-				lb_send_string(g_tempStr, FALSE);
-			}
-			break;
-
 			case MESSAGE_SYNC:
 			{
 				if(lb_buff->fields[FIELD1][0])
@@ -1639,17 +1519,6 @@ void handleLinkBusMsgs()
 						startEventUsingRTC();
 					}
 				}
-
-/*				sprintf(g_tempStr,"STA:%s\n",g_enable_start_timer ? "ON" : "OFF");
- *				lb_send_string(g_tempStr,FALSE);
- *				setupForFox(NULL); */
-			}
-			break;
-
-			case MESSAGE_FACTORY_RESET:
-			{
-/*				initializeEEPROMVars();
- *				softwareReset(); */
 			}
 			break;
 
@@ -2334,14 +2203,12 @@ void setupForFox(Fox_t* fox)
 		case NO_CODE_START_TONES_2M:
 		{
 			g_startclock_interval = 120;
-			g_enable_start_timer = TRUE;
 		}
 		break;
 
 		case NO_CODE_START_TONES_5M:
 		{
 			g_startclock_interval = 300;
-			g_enable_start_timer = TRUE;
 		}
 		break;
 
@@ -2375,7 +2242,7 @@ void setupForFox(Fox_t* fox)
 		{
 			g_on_air_interval = 12;
 			g_number_of_foxes = 5;
-			g_pattern_codespeed = ((g_fox == SPRINT_DEMO) || (g_fox <= SPRINT_S5)) ? 10 : 15;
+			g_pattern_codespeed = ((g_fox == SPRINT_DEMO) || (g_fox <= SPRINT_S5)) ? SPRINT_SLOW_CODE_SPEED : SPRINT_FAST_CODE_SPEED;
 			g_fox_id_offset = g_fox <= SPRINT_S5 ? SPRINT_S1 - 1 : SPRINT_F1 - 1;
 			g_id_interval = 600;
 			g_startclock_interval = 120;
@@ -2397,7 +2264,7 @@ void setupForFox(Fox_t* fox)
 
 	ConfigurationState_t state = clockConfigurationCheck();
 
-	if((g_use_rtc_to_start = ((state == SCHEDULED_EVENT_DID_NOT_START) || (state = WAITING_FOR_START))))
+	if((g_use_rtc_to_start = ((state == SCHEDULED_EVENT_DID_NOT_START) || (state == WAITING_FOR_START))))
 	{
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
@@ -2436,12 +2303,10 @@ void setupForFox(Fox_t* fox)
 		g_callsign_sent = FALSE;
 		g_fox_seconds_into_interval = 0;
 		g_fox_transition = FALSE;
-		g_fox_id_offset = 0;
 		g_time_to_ID = FALSE;
 		g_audio_tone_state = OFF;
 	}
 
-//	g_LEDs_Timed_Out = !g_enable_LEDs;
 	digitalWrite(PIN_LED2, OFF);    /*  LED Off - in case it was on in the middle of a transmission */
 }
 
@@ -2560,7 +2425,8 @@ void startEventNow(void)
 void stopEventNow(void)
 {
 	g_transmissions_disabled = TRUE;
-	if(!g_sync_pin_stable)
+	g_use_rtc_to_start = FALSE;             /* Prevent the event from running immediately if within its Start/Stop window */
+	if(g_sync_pin_stable == STABLE_LOW)
 	{
 		digitalWrite(PIN_LED2, OFF);        /*  LED Off */
 	}
