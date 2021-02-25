@@ -37,7 +37,7 @@
  *  Set for the IDE being used: Arduino or Atmel Studio 7
  */
 #define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define INIT_EEPROM_ONLY TRUE
+#define INIT_EEPROM_ONLY FALSE
 
 /*******************************************************/
 
@@ -233,6 +233,8 @@ typedef enum
 
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
+#define SPRINT_FAST_CODE_SPEED 8
+#define SPRINT_SLOW_CODE_SPEED 15
 
 #define MAX_AM_TONE_FREQUENCY 6
 #define MIN_AM_TONE_FREQUENCY 1
@@ -310,6 +312,7 @@ typedef enum
 	JUST_STARTED_UP,
 	WAITING_FOR_START,
 	CONFIGURATION_ERROR,
+	SCHEDULED_EVENT_DID_NOT_START,
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 

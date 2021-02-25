@@ -49,6 +49,10 @@ const char TEXT_ERR_START_IN_PAST[] PROGMEM = TEXT_ERR_START_IN_PAST_TXT;
 const char TEXT_ERR_INVALID_TIME[] PROGMEM = TEXT_ERR_INVALID_TIME_TXT;
 const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = TEXT_ERR_TIME_IN_PAST_TXT;
 
+#if INIT_EEPROM_ONLY
+const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_TXT;
+#endif // INIT_EEPROM_ONLY
+
 /***********************************************************************
  * Global Variables & String Constants
  *
@@ -79,10 +83,8 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .id_codespeed = */ 0,
 	/* .fox_setting = */ 0,
 	/* .am_audio_frequency = */ 0,
-	/* .enable_LEDs = */ 0,
 	/* .atmega_temp_calibration = */ 0,
 	/* .rv3028_offset = */ 0,
-	/* .enable_start_timer = */ 0,
 	/* .enable_transmitter = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
@@ -95,8 +97,6 @@ extern volatile uint8_t g_id_codespeed;
 extern volatile uint8_t g_pattern_codespeed;
 extern volatile uint16_t g_time_needed_for_ID;
 extern volatile int16_t g_atmega_temp_calibration;
-extern volatile uint8_t g_enable_LEDs;
-extern volatile uint8_t g_enable_start_timer;
 extern volatile uint8_t g_enable_transmitter;
 extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
@@ -185,12 +185,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		}
 		break;
 
-		case Enable_LEDs:
-		{
-			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.enable_LEDs);
-		}
-		break;
-
 		case Atmega_temp_calibration:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration);
@@ -200,12 +194,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Rv3028_offset:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.rv3028_offset);
-		}
-		break;
-
-		case Enable_start_timer:
-		{
-			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.enable_start_timer);
 		}
 		break;
 
@@ -376,8 +364,6 @@ BOOL EepromManager::readNonVols(void)
 		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
-		g_enable_LEDs = eeprom_read_byte(&(EepromManager::ee_vars.enable_LEDs));
-		g_enable_start_timer = eeprom_read_byte(&(EepromManager::ee_vars.enable_start_timer));
 		g_enable_transmitter = eeprom_read_byte(&(EepromManager::ee_vars.enable_transmitter));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
@@ -419,6 +405,35 @@ BOOL EepromManager::readNonVols(void)
 }
 
 #if INIT_EEPROM_ONLY
+	void EepromManager::sendSuccessString(void)
+	{
+		sendPROGMEMString((const char*)&TEXT_EEPROM_SUCCESS_MESSAGE);
+	}
+
+	void EepromManager::sendPROGMEMString(const char* fl_addr)
+	{
+		if(!lb_enabled())
+		{
+			return;
+		}
+
+		if(fl_addr)
+		{
+			char c = pgm_read_byte(fl_addr++);
+
+			while(c)
+			{
+				lb_echo_char(c);
+				c = pgm_read_byte((fl_addr++));
+
+				while(linkbusTxInProgress())
+				{
+					;
+				}
+			}
+		}
+	}
+
 /*
  * Set volatile variables to their values stored in EEPROM
  */
@@ -460,12 +475,6 @@ BOOL EepromManager::readNonVols(void)
 
 		g_rv3028_offset = rv3028_get_offset_RAM();
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset), (uint16_t)g_rv3028_offset);
-
-		g_enable_LEDs = EEPROM_ENABLE_LEDS_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.enable_LEDs), g_enable_LEDs);                  /* Only gets set by a serial command */
-
-		g_enable_start_timer = EEPROM_ENABLE_STARTTIMER_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.enable_start_timer), g_enable_start_timer);    /* Only gets set by a serial command */
 
 		g_enable_transmitter = EEPROM_ENABLE_TRANSMITTER_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.enable_transmitter), g_enable_transmitter);    /* Only gets set by a serial command */
@@ -651,14 +660,6 @@ BOOL EepromManager::readNonVols(void)
 
 		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		sprintf(g_tempStr, "RVO=%u\n", wrd);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.enable_LEDs));
-		sprintf(g_tempStr, "LED=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.enable_start_timer));
-		sprintf(g_tempStr, "STA=%d\n", byt);
 		lb_send_string(g_tempStr, TRUE);
 
 		byt = eeprom_read_byte(&(EepromManager::ee_vars.enable_transmitter));
