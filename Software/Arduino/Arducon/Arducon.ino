@@ -63,7 +63,7 @@ volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
 #endif /* !INIT_EEPROM_ONLY */
 
-volatile BOOL g_callsign_sent = FALSE;
+volatile BOOL g_callsign_sent = TRUE;
 
 volatile BOOL g_blinky_time = FALSE;
 volatile BOOL g_LED_enunciating = FALSE;
@@ -75,11 +75,13 @@ volatile int8_t g_utc_offset = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile uint8_t g_AM_audio_frequency;
+volatile BOOL g_AM_enabled = TRUE;
 volatile BOOL g_sendAMmodulationConstantly = FALSE;
 uint8_t g_dataModulation[SIZE_OF_DATA_MODULATION];
 
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
+volatile int g_cycle_period_seconds = 0;
 volatile int g_fox_seconds_into_interval = 0;
 volatile int g_fox_counter = 1;
 volatile int g_number_of_foxes = 0;
@@ -87,11 +89,9 @@ volatile BOOL g_fox_transition = FALSE;
 volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
 volatile int g_id_interval = 0;
 volatile BOOL g_time_to_ID = FALSE;
-volatile int g_startclock_interval = 60;
 volatile int g_fox_tone_offset = 1; /* Used to provide slightly different audio tones for different foxes for playback through the speaker */
 
 volatile BOOL g_audio_tone_state = FALSE;
-volatile uint8_t g_lastSeconds = 0x00;
 volatile int16_t g_sync_pin_timer = 0;
 volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile BOOL g_sync_enabled = TRUE;
@@ -100,7 +100,7 @@ volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 int8_t g_temperature = 0;
 volatile ConfigurationState_t g_config_error = JUST_STARTED_UP;
-volatile BOOL g_use_rtc_to_start = FALSE;
+volatile BOOL g_use_rtc_for_startstop = FALSE;
 
 volatile BOOL g_DTMF_unlocked = TRUE;
 
@@ -164,7 +164,7 @@ char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
-void setupForFox(Fox_t* fox);
+ConfigurationState_t setupForFox(Fox_t* fox);
 void setAMToneFrequency(uint8_t value);
 void setUpTemp(void);
 uint16_t readADC();
@@ -237,12 +237,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		setUpAudioSampling(true);
 #endif
 
-	/*******************************************************************
-	 * INT0 is for external 1-second interrupts                         */
-	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
-	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
-
-
+cli();
 	/*******************************************************************
 	 * TIMER2 is for periodic interrupts to drive Morse code generation
 	 * Reset control registers */
@@ -308,7 +303,10 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		}
 
 		digitalWrite(PIN_LED2, ON);
-		while(1);
+		while(1)
+		{
+			;
+		}
 #else
 		if(eepromErr)
 		{
@@ -352,6 +350,11 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 #endif  /* #if INIT_EEPROM_ONLY */
 
 	setupForFox(NULL);
+
+	/*******************************************************************
+	 * INT0 is for external 1-second interrupts                         */
+	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
+	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
 #if COMPILE_FOR_ATMELSTUDIO7
 		while(1)
@@ -661,7 +664,6 @@ ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
 	static uint16_t codeInc = 0;
-	static BOOL playMorse = TRUE;
 	static uint8_t holdButtonState = HIGH;
 	BOOL repeat = TRUE, finished = FALSE;
 
@@ -722,15 +724,12 @@ ISR( TIMER2_COMPB_vect )
 					{
 						key = OFF;
 						g_callsign_sent = TRUE;
-						if(playMorse)
-						{
-							sendMorseTone(OFF);
-						}
+						sendMorseTone(OFF);
 					}
 
 					if(key)
 					{
-						digitalWrite(PIN_LED2, HIGH);   /*  LED */
+						digitalWrite(PIN_LED2, HIGH);           /*  LED */
 
 						if(g_enable_transmitter)
 						{
@@ -740,10 +739,7 @@ ISR( TIMER2_COMPB_vect )
 						}
 					}
 
-					if(playMorse)
-					{
-						sendMorseTone(key);
-					}
+					sendMorseTone(key);
 				}
 			}
 			else
@@ -761,10 +757,7 @@ ISR( TIMER2_COMPB_vect )
 
 				codeInc = g_code_throttle;
 
-				if(playMorse)
-				{
-					sendMorseTone(key);
-				}
+				sendMorseTone(key);
 			}
 		}
 	}
@@ -803,11 +796,7 @@ ISR( TIMER2_COMPB_vect )
 
 			digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
 			g_sendAMmodulation = FALSE;
-
-			if(playMorse)
-			{
-				sendMorseTone(OFF);
-			}
+			sendMorseTone(OFF);
 
 			if(digitalRead(PIN_PTT_LOGIC))
 			{
@@ -826,85 +815,93 @@ ISR( TIMER2_COMPB_vect )
 }   /* End of Timer 2 ISR */
 
 
+#if !INIT_EEPROM_ONLY
 /***********************************************************************
  * Handle RTC 1-second interrupts
  **********************************************************************/
-ISR( INT0_vect )
-{
-	static int id_countdown = 0;
-
-	g_current_epoch++;
-
-	if(g_temperature_check_countdown)
+	ISR( INT0_vect )
 	{
-		g_temperature_check_countdown--;
-		/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
-		 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
-	}
+		static int id_countdown = 0;
 
-	if(g_transmissions_disabled)
-	{
-		if(g_use_rtc_to_start)
+		g_current_epoch++;
+
+		if(g_temperature_check_countdown)
 		{
-			if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
-			{
-				g_LED_enunciating = FALSE;
-				g_transmissions_disabled = FALSE;
-			}
-		}
-	}
-	else
-	{
-		if(g_use_rtc_to_start)
-		{
-			if(g_current_epoch >= g_event_finish_epoch) /* Event has ended */
-			{
-				g_use_rtc_to_start = FALSE;
-				g_transmissions_disabled = TRUE;
-				g_on_the_air = FALSE;
-			}
+			g_temperature_check_countdown--;
+			/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
+			 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
 		}
 
-		if(!g_transmissions_disabled)
+		if(g_transmissions_disabled)
 		{
-			if(g_seconds_since_sync == 0)   /* sync just occurred */
+			if(g_use_rtc_for_startstop)
 			{
-				id_countdown = g_id_interval;
-				g_fox_counter = 1;
-				g_lastSeconds = 0;
-				/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
-				 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
-			}
-
-			g_seconds_since_sync++; /* Total elapsed time counter */
-			g_fox_seconds_into_interval++;
-
-			if(id_countdown)
-			{
-				id_countdown--;
-			}
-
-			if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
-			{
-				g_fox_counter++;
-
-				if(g_fox_counter > g_number_of_foxes)
+				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
 				{
-					g_fox_counter = 1;
-					digitalWrite(PIN_LED2, OFF);
-				}
-				g_fox_transition = TRUE;
-				g_fox_seconds_into_interval = 0;
+					/* The following must wait until serial pins are not shared with attenuator control */
+// 					if(g_AM_enabled)
+// 					{
+// 						setupPortsForF1975();
+// 					}
 
-				if(!id_countdown)
+					g_LED_enunciating = FALSE;
+					g_transmissions_disabled = FALSE;
+				}
+			}
+		}
+		else
+		{
+			if(g_use_rtc_for_startstop)
+			{
+				if(g_current_epoch >= g_event_finish_epoch) /* Event has ended */
+				{
+					g_use_rtc_for_startstop = FALSE;
+					g_transmissions_disabled = TRUE;
+					g_on_the_air = FALSE;
+				}
+			}
+
+			if(!g_transmissions_disabled)
+			{
+				if(g_seconds_since_sync == 0)   /* sync just occurred */
 				{
 					id_countdown = g_id_interval;
-					g_time_to_ID = TRUE;
+					g_fox_counter = 1;
+/*				g_lastSeconds = 0; */
+					/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
+					 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
+				}
+
+				g_seconds_since_sync++; /* Total elapsed time counter */
+				g_fox_seconds_into_interval++;
+
+				if(id_countdown)
+				{
+					id_countdown--;
+				}
+
+				if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
+				{
+					g_fox_counter++;
+
+					if(g_fox_counter > g_number_of_foxes)
+					{
+						g_fox_counter = 1;
+						digitalWrite(PIN_LED2, OFF);
+					}
+					g_fox_transition = TRUE;
+					g_fox_seconds_into_interval = 0;
+
+					if(!id_countdown)
+					{
+						id_countdown = g_id_interval;
+						g_time_to_ID = TRUE;
+					}
 				}
 			}
 		}
-	}
-}   /* end of INT0 ISR */
+	}   /* end of INT0 ISR */
+#endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
  * Timer0 interrupt generates an audio tone on the audio out pin.
@@ -940,34 +937,37 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 {
 #if !INIT_EEPROM_ONLY
-		static uint8_t index = 0;
-		uint8_t port;
-		static uint8_t controlPins;
-
-		if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
+		if(g_AM_enabled)
 		{
-/*		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]); */
-			controlPins = g_dataModulation[index++];
-			if(index >= SIZE_OF_DATA_MODULATION)
+			static uint8_t index = 0;
+			uint8_t port;
+			static uint8_t controlPins;
+
+			if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 			{
-				index = 0;
+/*		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]); */
+				controlPins = g_dataModulation[index++];
+				if(index >= SIZE_OF_DATA_MODULATION)
+				{
+					index = 0;
+				}
+
+				port = PORTC & 0xF0;
+				PORTC = port | dB_low(controlPins);
+
+				port = PORTD & 0xFC;
+				PORTD = port | dB_high(controlPins);
 			}
+			else if(controlPins != MAX_ATTEN_SETTING)
+			{
+				controlPins = MAX_ATTEN_SETTING;
 
-			port = PORTC & 0xF0;
-			PORTC = port | dB_low(controlPins);
+				port = PORTC & 0xF0;
+				PORTC = port | dB_low(controlPins);
 
-			port = PORTD & 0xFC;
-			PORTD = port | dB_high(controlPins);
-		}
-		else if(controlPins != MAX_ATTEN_SETTING)
-		{
-			controlPins = MAX_ATTEN_SETTING;
-
-			port = PORTC & 0xF0;
-			PORTC = port | dB_low(controlPins);
-
-			port = PORTD & 0xFC;
-			PORTD = port | dB_high(controlPins);
+				port = PORTD & 0xFC;
+				PORTD = port | dB_high(controlPins);
+			}
 		}
 #endif  /* INIT_EEPROM_ONLY */
 }
@@ -1015,7 +1015,7 @@ void loop()
 
 					if(g_time_to_ID || (g_id_interval <= g_on_air_interval))
 					{
-						time_for_id = g_on_air_interval - (500 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+						time_for_id = g_on_air_interval - (600 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
 						g_time_to_ID = FALSE;
 					}
 					else
@@ -1069,7 +1069,7 @@ void loop()
 			{
 				g_on_the_air = FALSE;
 			}
-			else if((g_fox != g_fox_counter) && g_callsign_sent)    /* Turn off transmissions during minutes when this fox should be silent */
+			else if(g_fox != g_fox_counter)    /* Turn off transmissions during minutes when this fox should be silent */
 			{
 				g_on_the_air = FALSE;
 			}
@@ -1318,16 +1318,8 @@ ConfigurationState_t clockConfigurationCheck(void)
 
 void sendMorseTone(BOOL onOff)
 {
-	if(!g_lastSeconds)
-	{
-		OCR0A = DEFAULT_TONE_FREQUENCY - g_fox_tone_offset;
-		g_audio_tone_state = onOff;
-	}
-	else
-	{
-		OCR0A = DEFAULT_TONE_FREQUENCY;
-		g_audio_tone_state = OFF;
-	}
+	OCR0A = DEFAULT_TONE_FREQUENCY - g_fox_tone_offset;
+	g_audio_tone_state = onOff;
 }
 
 void playStartingTone(uint8_t toneFreq)
@@ -1516,6 +1508,7 @@ void handleLinkBusMsgs()
 					}
 					else if(lb_buff->fields[FIELD1][0] == '2')  /* Start the event at the programmed start time */
 					{
+						g_transmissions_disabled = TRUE;        /* Disable an event currently underway */
 						startEventUsingRTC();
 					}
 				}
@@ -1544,7 +1537,7 @@ void handleLinkBusMsgs()
 
 				if(g_messages_text[STATION_ID][0])
 				{
-					g_time_needed_for_ID = (500 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+					g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
 				}
 
 				sprintf(g_tempStr, "ID:%s\n", g_messages_text[STATION_ID]);
@@ -1565,7 +1558,7 @@ void handleLinkBusMsgs()
 
 						if(g_messages_text[STATION_ID][0])
 						{
-							g_time_needed_for_ID = (500 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+							g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM(g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
 						}
 					}
 				}
@@ -1827,7 +1820,10 @@ void handleLinkBusMsgs()
 					{
 						value = key - '0';
 #if !INIT_EEPROM_ONLY
-							setupPortsForF1975();
+							if(g_AM_enabled)
+							{
+								setupPortsForF1975();
+							}
 #endif  /* !INIT_EEPROM_ONLY */
 						state = STATE_TEST_ATTENUATOR;
 					}
@@ -2127,7 +2123,7 @@ void handleLinkBusMsgs()
 
 					state = STATE_SHUTDOWN;
 				}
-				else if((key >= '1') && (key <= '6'))
+				else if((key >= MIN_AM_TONE_FREQUENCY) && (key <= MAX_AM_TONE_FREQUENCY))
 				{
 					value = key - '0';
 				}
@@ -2188,7 +2184,7 @@ void handleLinkBusMsgs()
 #endif  /* #if !INIT_EEPROM_ONLY */
 
 
-void setupForFox(Fox_t* fox)
+ConfigurationState_t setupForFox(Fox_t* fox)
 {
 	if(fox)
 	{
@@ -2198,17 +2194,24 @@ void setupForFox(Fox_t* fox)
 		}
 	}
 
+	ConfigurationState_t state = clockConfigurationCheck();
+
+	if(state == EVENT_IN_PROGRESS)
+	{
+		stopEventNow();
+	}
+
+	cli();
+
 	switch(g_fox)
 	{
 		case NO_CODE_START_TONES_2M:
 		{
-			g_startclock_interval = 120;
 		}
 		break;
 
 		case NO_CODE_START_TONES_5M:
 		{
-			g_startclock_interval = 300;
 		}
 		break;
 
@@ -2220,34 +2223,45 @@ void setupForFox(Fox_t* fox)
 		case FOX_DEMO:
 		{
 			g_on_air_interval = 60;
+			g_cycle_period_seconds = 300;
 			g_number_of_foxes = 5;
 			g_fox_id_offset = 0;
 			g_pattern_codespeed = 8;
 			g_id_interval = 60;
-			g_startclock_interval = 300;
 		}
 		break;
 
+		case SPRINT_DEMO:
 		case SPRINT_S1:
 		case SPRINT_S2:
 		case SPRINT_S3:
 		case SPRINT_S4:
 		case SPRINT_S5:
+		{
+			g_on_air_interval = 12;
+			g_cycle_period_seconds = 60;
+			g_number_of_foxes = 5;
+			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
+			g_fox_id_offset = SPRINT_S1;
+			g_id_interval = 600;
+		}
+		break;
+
 		case SPRINT_F1:
 		case SPRINT_F2:
 		case SPRINT_F3:
 		case SPRINT_F4:
 		case SPRINT_F5:
-		case SPRINT_DEMO:
 		{
 			g_on_air_interval = 12;
+			g_cycle_period_seconds = 60;
 			g_number_of_foxes = 5;
-			g_pattern_codespeed = ((g_fox == SPRINT_DEMO) || (g_fox <= SPRINT_S5)) ? SPRINT_SLOW_CODE_SPEED : SPRINT_FAST_CODE_SPEED;
-			g_fox_id_offset = g_fox <= SPRINT_S5 ? SPRINT_S1 - 1 : SPRINT_F1 - 1;
+			g_pattern_codespeed = SPRINT_FAST_CODE_SPEED;
+			g_fox_id_offset = SPRINT_F1 - 1;
 			g_id_interval = 600;
-			g_startclock_interval = 120;
 		}
 		break;
+
 
 /* case BEACON: */
 /* case SPECTATOR: */
@@ -2257,57 +2271,62 @@ void setupForFox(Fox_t* fox)
 			g_number_of_foxes = 1;
 			g_pattern_codespeed = 8;
 			g_id_interval = 600;
-			g_startclock_interval = (g_fox == SPECTATOR) ? 120 : 300;
 		}
 		break;
 	}
 
-	ConfigurationState_t state = clockConfigurationCheck();
+	g_use_rtc_for_startstop = (state == SCHEDULED_EVENT_DID_NOT_START) || (state == WAITING_FOR_START);
 
-	if((g_use_rtc_to_start = ((state == SCHEDULED_EVENT_DID_NOT_START) || (state == WAITING_FOR_START))))
+	g_current_epoch = rv3028_get_epoch();
+
+	if(g_use_rtc_for_startstop)
 	{
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
 			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
 			g_on_the_air       = FALSE;                                     /* Controls transmitter Morse activity */
 			g_code_throttle    = 0;                                         /* Adjusts Morse code speed */
-			g_callsign_sent = FALSE;
+			g_callsign_sent = TRUE;
 
-			g_fox_seconds_into_interval = g_seconds_since_sync % g_startclock_interval;
+			g_fox_seconds_into_interval = g_seconds_since_sync % g_cycle_period_seconds;
 			g_fox_counter = CLAMP(1, 1 + (g_fox_seconds_into_interval / g_on_air_interval), g_number_of_foxes);
 			g_fox_transition = FALSE;
 			g_time_to_ID = FALSE;
-			g_audio_tone_state = OFF;
+			sendMorseTone(OFF);
 			g_fox_tone_offset = g_fox_counter;
-			g_lastSeconds = (uint8_t)((g_seconds_since_sync + 11) % g_startclock_interval);
 		}
 		else                            /* event starts in the future */
 		{
 			g_seconds_since_sync = 0;   /* Total elapsed time counter */
 			g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
 			g_code_throttle    = 0;     /* Adjusts Morse code speed */
-			g_callsign_sent = FALSE;
+			g_callsign_sent = TRUE;
 
 			g_fox_counter = 1;
 			g_fox_seconds_into_interval = 0;
 			g_fox_transition = FALSE;
 			g_time_to_ID = FALSE;
-			g_audio_tone_state = OFF;
+			sendMorseTone(OFF);
 		}
+
+		g_transmissions_disabled = TRUE;    /* Ensures timer interrupt starts transmissions */
 	}
-	else                            /* manual start */
+	else                                    /* manual start */
 	{
-		g_seconds_since_sync = 0;   /* Total elapsed time counter */
-		g_on_the_air       = FALSE; /* Controls transmitter Morse activity */
-		g_code_throttle    = 0;     /* Adjusts Morse code speed */
-		g_callsign_sent = FALSE;
+		g_seconds_since_sync = 0;           /* Total elapsed time counter */
+		g_on_the_air       = FALSE;         /* Controls transmitter Morse activity */
+		g_code_throttle    = 0;             /* Adjusts Morse code speed */
+		g_callsign_sent = TRUE;
 		g_fox_seconds_into_interval = 0;
 		g_fox_transition = FALSE;
 		g_time_to_ID = FALSE;
-		g_audio_tone_state = OFF;
+		sendMorseTone(OFF);
 	}
 
-	digitalWrite(PIN_LED2, OFF);    /*  LED Off - in case it was on in the middle of a transmission */
+	g_config_error = JUST_STARTED_UP;   /* Trigger a new configuration enunciation */
+	digitalWrite(PIN_LED2, OFF);        /*  LED Off - in case it was on in the middle of a transmission */
+	sei();
+	return(state);
 }
 
 
@@ -2413,19 +2432,29 @@ BOOL only_digits(char *s)
 void startEventNow(void)
 {
 #if !INIT_EEPROM_ONLY
-		linkbus_disable();
 		setupForFox(NULL);
-		setupPortsForF1975();
+		if(g_AM_enabled)
+		{
+			setupPortsForF1975();
+		}
+		cli();
 		g_transmissions_disabled = FALSE;
 		g_LED_enunciating = FALSE;
+		sei();
 		lb_send_string((char*)"Sync OK\n", FALSE);
 #endif  /* !INIT_EEPROM_ONLY */
 }
 
 void stopEventNow(void)
 {
+	cli();
 	g_transmissions_disabled = TRUE;
-	g_use_rtc_to_start = FALSE;             /* Prevent the event from running immediately if within its Start/Stop window */
+
+	if(clockConfigurationCheck() == SCHEDULED_EVENT_DID_NOT_START)
+	{
+		g_use_rtc_for_startstop = FALSE; /* Prevent the event from running immediately if within its Start/Stop window */
+	}
+
 	if(g_sync_pin_stable == STABLE_LOW)
 	{
 		digitalWrite(PIN_LED2, OFF);        /*  LED Off */
@@ -2434,16 +2463,16 @@ void stopEventNow(void)
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 	digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
 	g_sendAMmodulation = FALSE;
+	sei();
 
 	linkbus_init(BAUD);
 }
 
 void startEventUsingRTC(void)
 {
-	setupForFox(NULL);
-	ConfigurationState_t state = clockConfigurationCheck();
+	ConfigurationState_t state = setupForFox(NULL);
 
-	if((state == WAITING_FOR_START) || (state == EVENT_IN_PROGRESS))
+	if((state == WAITING_FOR_START) || (state == EVENT_IN_PROGRESS) || (state == SCHEDULED_EVENT_DID_NOT_START))
 	{
 		reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");
 		reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
@@ -2613,6 +2642,13 @@ void setAMToneFrequency(uint8_t value)
 {
 	switch(value)
 	{
+		case 0:
+		{
+			g_AM_enabled = FALSE;
+			OCR1A = 1000;
+		}
+		break;
+
 		case 2:
 		{
 			OCR1A = 556;    /* For ~900 Hz tone output */
