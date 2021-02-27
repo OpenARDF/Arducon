@@ -171,8 +171,8 @@ uint16_t readADC();
 float getTemp(void);
 BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
-void stopEventNow(void);
-void startEventNow(void);
+void stopEventNow(BOOL buttonActivated);
+void startEventNow(BOOL buttonActivated);
 void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
@@ -191,7 +191,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	void setup()
 #endif  /* COMPILE_FOR_ATMELSTUDIO7 */
 {
-	pinMode(PIN_LED1, OUTPUT);          /* The amber LED: This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);          /* This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -237,7 +237,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		setUpAudioSampling(true);
 #endif
 
-cli();
+	cli();
 	/*******************************************************************
 	 * TIMER2 is for periodic interrupts to drive Morse code generation
 	 * Reset control registers */
@@ -396,7 +396,7 @@ ISR(PCINT2_vect)
 		{
 			if(g_sync_pin_stable == STABLE_LOW)
 			{
-				startEventNow();
+				startEventNow(TRUE);
 				g_sync_pin_stable = UNSTABLE;
 				digitalWrite(PIN_LED2, OFF);    /*  LED */
 			}
@@ -405,7 +405,7 @@ ISR(PCINT2_vect)
 		{
 			if(g_sync_pin_stable == STABLE_LOW)
 			{
-				stopEventNow();
+				stopEventNow(TRUE);
 				g_sync_pin_stable = UNSTABLE;
 			}
 		}
@@ -839,10 +839,10 @@ ISR( TIMER2_COMPB_vect )
 				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
 				{
 					/* The following must wait until serial pins are not shared with attenuator control */
-// 					if(g_AM_enabled)
-// 					{
-// 						setupPortsForF1975();
-// 					}
+/*                  if(g_AM_enabled)
+ *                  {
+ *                      setupPortsForF1975();
+ *                  } */
 
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
@@ -993,23 +993,11 @@ void loop()
 			{
 				proceed = FALSE;
 
-				/* Choose the appropriate Morse pattern to be sent */
-				if(g_fox == FOX_DEMO)
-				{
-					strcpy(g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox_counter]);
-				}
-				else if(g_fox == SPRINT_DEMO)
-				{
-					strcpy(g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox_counter + 8]);
-				}
-				else
-				{
-					strcpy(g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
-				}
-
-				if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO) || (g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
+				if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
 				{
 					BOOL repeat = TRUE;
+					/* Choose the appropriate Morse pattern to be sent */
+					strcpy(g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
 					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
 					makeMorse(g_messages_text[PATTERN_TEXT], &repeat, NULL);
 
@@ -1041,7 +1029,7 @@ void loop()
 				id_set = TRUE;
 				g_callsign_sent = FALSE;
 			}
-			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_DEMO))
+			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5))
 			{
 				if(g_fox_transition)
 				{
@@ -1051,14 +1039,7 @@ void loop()
 				}
 			}
 
-			if((g_fox == FOX_DEMO) || (g_fox == SPRINT_DEMO))
-			{
-				if((g_callsign_sent) && g_fox_transition)   /* Ensure we've begun the next minute before proceeding */
-				{
-					proceed = TRUE;
-				}
-			}
-			else if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))   /* Proceed as soon as the callsign has been sent */
+			if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))    /* Proceed as soon as the callsign has been sent */
 			{
 				if(g_callsign_sent)
 				{
@@ -1069,7 +1050,7 @@ void loop()
 			{
 				g_on_the_air = FALSE;
 			}
-			else if(g_fox != g_fox_counter)    /* Turn off transmissions during minutes when this fox should be silent */
+			else if(g_fox != g_fox_counter) /* Turn off transmissions during minutes when this fox should be silent */
 			{
 				g_on_the_air = FALSE;
 			}
@@ -1086,7 +1067,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;   /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;     /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1275,6 +1256,13 @@ void loop()
 				g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
 				g_LED_enunciating = TRUE;
 			}
+			else if((g_config_error == SCHEDULED_EVENT_DID_NOT_START) && !g_use_rtc_for_startstop)
+			{
+				BOOL repeat = TRUE;
+				makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+				g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+				g_LED_enunciating = TRUE;
+			}
 			else
 			{
 				g_LED_enunciating = FALSE;
@@ -1289,7 +1277,7 @@ ConfigurationState_t clockConfigurationCheck(void)
 {
 	if(!g_transmissions_disabled)
 	{
-		return(EVENT_IN_PROGRESS);  /* Event is running, so clocks don't matter */
+		return(EVENT_IN_PROGRESS);  /* Event is running, so clock settings don't matter */
 	}
 
 	if(!g_event_finish_epoch || !g_event_finish_epoch || (g_current_epoch < MINIMUM_EPOCH))
@@ -1360,19 +1348,6 @@ void handleLinkBusMsgs()
 					{
 						c = BEACON;
 					}
-					else if(c == 'D')
-					{
-						char t = lb_buff->fields[FIELD2][0];
-
-						if(t == 'S')
-						{
-							c = SPRINT_DEMO;
-						}
-						else
-						{
-							c = FOX_DEMO;
-						}
-					}
 					else if(c == 'F')
 					{
 						c = FOXORING;
@@ -1441,23 +1416,6 @@ void handleLinkBusMsgs()
 							c = CLAMP(SPECTATOR, x, SPRINT_F5);
 						}
 					}
-					else if(c == 'N')
-					{
-						char t = lb_buff->fields[FIELD2][0];
-
-						if(t == '2')
-						{
-							c = NO_CODE_START_TONES_2M;
-						}
-						else if(t == '5')
-						{
-							c = NO_CODE_START_TONES_5M;
-						}
-						else
-						{
-							c = BEACON;
-						}
-					}
 					else
 					{
 						c = atoi(lb_buff->fields[FIELD1]);
@@ -1500,11 +1458,11 @@ void handleLinkBusMsgs()
 				{
 					if(lb_buff->fields[FIELD1][0] == '0')       /* Stop the event. Re-sync will occur on next start */
 					{
-						stopEventNow();
+						stopEventNow(FALSE);
 					}
 					else if(lb_buff->fields[FIELD1][0] == '1')  /* Start the event, re-syncing to a start time of now - same as a button press */
 					{
-						startEventNow();
+						startEventNow(FALSE);
 					}
 					else if(lb_buff->fields[FIELD1][0] == '2')  /* Start the event at the programmed start time */
 					{
@@ -1765,7 +1723,7 @@ void handleLinkBusMsgs()
  *  *C8 nn # - Set HT or 80m fox behavior (affects PTT timing, audio out?, attenuator control?, etc.)
  *  *C9 n # - Set AM modulation frequency n=1 => 1000Hz, n=2 => 900Hz, ... n=6 =>  500Hz
  *  *An # - n=0: stop transmissions, n=1: re-sync and start transmissions, n=3: re-start transmissions from stop
- *  *B nn # - Address the following command to only those foxes in the specified competition format (used in case more than one competition's foxes might be listening)
+ *  *B nn  - Address the following command to only a specific fox type
  *  *D c...c # - Unlock Arducon (re-enable DTMF commands) where c...c is the password
  *  *D# - Lock Arducon (disables all DTMF commands except *Dc...c#)
  */
@@ -1812,7 +1770,15 @@ void handleLinkBusMsgs()
 
 				if(g_DTMF_unlocked)
 				{
-					if(key == 'C')
+					if(key == 'A')
+					{
+						state = STATE_A;
+					}
+					else if(key == 'B')
+					{
+						state = STATE_RECEIVING_FOXES_TO_ADDRESS;
+					}
+					else if(key == 'C')
 					{
 						state = STATE_C;
 					}
@@ -1828,33 +1794,49 @@ void handleLinkBusMsgs()
 						state = STATE_TEST_ATTENUATOR;
 					}
 				}
-
-				if(key == 'A')
-				{
-					state = STATE_A;
-				}
 			}
 			break;
 
 			case STATE_A:
 			{
-				if(g_DTMF_unlocked)
+				state = STATE_SHUTDOWN;
+
+				if(key == '0')
 				{
-					if(key == '0')
+					state = STATE_PAUSE_TRANSMISSIONS;
+				}
+				else if(key == '1')
+				{
+					state = STATE_START_TRANSMISSIONS;
+				}
+				else if(key == '2')
+				{
+					state = STATE_START_TRANSMISSIONS_WITH_RTC;
+				}
+				else if((key == '8') && setPasswordEnabled)
+				{
+					state = STATE_SET_PASSWORD;
+				}
+			}
+			break;
+
+			case STATE_RECEIVING_FOXES_TO_ADDRESS:
+			{
+				if((key >= '0') && (key <= '9'))
+				{
+					value *= 10;
+					value += key - '0';
+					digits++;
+				}
+
+				if(digits >= 2)
+				{
+					state = STATE_SHUTDOWN;
+					Fox_t holdFox = (Fox_t)value;
+
+					if(holdFox == g_fox)
 					{
-						state = STATE_PAUSE_TRANSMISSIONS;
-					}
-					else if(key == '1')
-					{
-						state = STATE_START_TRANSMISSIONS;
-					}
-					else if(key == '2')
-					{
-						state = STATE_START_TRANSMISSIONS_WITH_RTC;
-					}
-					else if((key == '8') && setPasswordEnabled)
-					{
-						state = STATE_SET_PASSWORD;
+						state = STATE_SENTENCE_START;
 					}
 				}
 			}
@@ -1864,7 +1846,7 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					stopEventNow();
+					stopEventNow(FALSE);
 					state = STATE_SHUTDOWN;
 				}
 			}
@@ -1874,7 +1856,7 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					startEventNow();
+					startEventNow(FALSE);
 					state = STATE_SHUTDOWN;
 				}
 			}
@@ -2198,29 +2180,18 @@ ConfigurationState_t setupForFox(Fox_t* fox)
 
 	if(state == EVENT_IN_PROGRESS)
 	{
-		stopEventNow();
+		stopEventNow(FALSE);
 	}
 
 	cli();
 
 	switch(g_fox)
 	{
-		case NO_CODE_START_TONES_2M:
-		{
-		}
-		break;
-
-		case NO_CODE_START_TONES_5M:
-		{
-		}
-		break;
-
 		case FOX_1:
 		case FOX_2:
 		case FOX_3:
 		case FOX_4:
 		case FOX_5:
-		case FOX_DEMO:
 		{
 			g_on_air_interval = 60;
 			g_cycle_period_seconds = 300;
@@ -2231,7 +2202,6 @@ ConfigurationState_t setupForFox(Fox_t* fox)
 		}
 		break;
 
-		case SPRINT_DEMO:
 		case SPRINT_S1:
 		case SPRINT_S2:
 		case SPRINT_S3:
@@ -2429,31 +2399,52 @@ BOOL only_digits(char *s)
 	return( TRUE);
 }
 
-void startEventNow(void)
+void startEventNow(BOOL buttonActivated)
 {
 #if !INIT_EEPROM_ONLY
-		setupForFox(NULL);
+		ConfigurationState_t conf = setupForFox(NULL);
+
+		/* If a scheduled event is yet to start, and the button was pressed, then assume that this is a test start */
+		if(buttonActivated && (conf == WAITING_FOR_START))
+		{
+			g_use_rtc_for_startstop = TRUE;
+		}
+		else
+		{
+			g_use_rtc_for_startstop = FALSE;
+		}
+
 		if(g_AM_enabled)
 		{
 			setupPortsForF1975();
 		}
 		cli();
-		g_transmissions_disabled = FALSE;
+
+		g_transmissions_disabled = g_use_rtc_for_startstop;
 		g_LED_enunciating = FALSE;
 		sei();
 		lb_send_string((char*)"Sync OK\n", FALSE);
 #endif  /* !INIT_EEPROM_ONLY */
 }
 
-void stopEventNow(void)
+void stopEventNow(BOOL buttonActivated)
 {
+	ConfigurationState_t conf = clockConfigurationCheck();
+
 	cli();
+
+	/* If a scheduled event is yet to start, and the button was pressed, then assume that this is a stop after a manual test start */
+	if(buttonActivated && (conf == WAITING_FOR_START))
+	{
+		g_use_rtc_for_startstop = TRUE;
+	}
+	else //if(conf == SCHEDULED_EVENT_DID_NOT_START)
+	{
+		g_use_rtc_for_startstop = FALSE;    /* Prevent the event from running immediately if within its Start/Stop window */
+	}
+
 	g_transmissions_disabled = TRUE;
 
-	if(clockConfigurationCheck() == SCHEDULED_EVENT_DID_NOT_START)
-	{
-		g_use_rtc_for_startstop = FALSE; /* Prevent the event from running immediately if within its Start/Stop window */
-	}
 
 	if(g_sync_pin_stable == STABLE_LOW)
 	{
@@ -2463,6 +2454,7 @@ void stopEventNow(void)
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 	digitalWrite(PIN_PTT_LOGIC, OFF);       /* Unkey the microphone / de-energize transmitter */
 	g_sendAMmodulation = FALSE;
+	g_config_error = JUST_STARTED_UP;
 	sei();
 
 	linkbus_init(BAUD);
@@ -2640,11 +2632,13 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours)
 
 void setAMToneFrequency(uint8_t value)
 {
+	BOOL enableAM = TRUE;
+
 	switch(value)
 	{
 		case 0:
 		{
-			g_AM_enabled = FALSE;
+			enableAM = FALSE;
 			OCR1A = 1000;
 		}
 		break;
@@ -2681,11 +2675,12 @@ void setAMToneFrequency(uint8_t value)
 
 		default:
 		{
-			value = 1;
 			OCR1A = 500;    /* For ~1000 Hz tone output */
 		}
 		break;
 	}
+
+	g_AM_enabled = enableAM;
 }
 
 /**

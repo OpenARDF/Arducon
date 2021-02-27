@@ -181,7 +181,7 @@
 #define PIN_UNUSED_1 D5         /* Arduino Pro Mini pin# 8 = PD5 */
 #define PIN_PWDN D6             /* Arduino Pro Mini pin# 9 = PD6 */
 //#define PIN_LED2 D7             /* Arduino Pro Mini pin# 10 = PD7 */
-#define PIN_LED2 D13             /* Arduino Pro Mini pin# 10 = PD7 */
+#define PIN_LED2 D13            /* Arduino Pro Mini pin# 10 = PD7 */
 #define PIN_PTT_LOGIC D8        /* Arduino Pro Mini pin# 11 = PB0 */
 #define PIN_CW_TONE_LOGIC D9    /* Arduino Pro Mini pin# 12 = PB1 */
 #define PIN_CW_KEY_LOGIC D10    /* Arduino Pro Mini pin# 13 = PB2 */
@@ -212,7 +212,6 @@ typedef enum
 	FOX_3,
 	FOX_4,
 	FOX_5,
-	FOX_DEMO,
 	FOXORING,
 	SPECTATOR,
 	SPRINT_S1,
@@ -225,9 +224,6 @@ typedef enum
 	SPRINT_F3,
 	SPRINT_F4,
 	SPRINT_F5,
-	SPRINT_DEMO,
-	NO_CODE_START_TONES_2M,
-	NO_CODE_START_TONES_5M,
 	INVALID_FOX
 } Fox_t;
 
@@ -266,6 +262,7 @@ typedef enum
 	STATE_SET_AM_TONE_FREQUENCY,
 	STATE_SET_PASSWORD,
 	STATE_CHECK_PASSWORD,
+	STATE_RECEIVING_FOXES_TO_ADDRESS,
 	STATE_TEST_ATTENUATOR /* Temporary test definition */
 } KeyprocessState_t;
 

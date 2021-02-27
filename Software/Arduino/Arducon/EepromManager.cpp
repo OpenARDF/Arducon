@@ -360,7 +360,7 @@ BOOL EepromManager::readNonVols(void)
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
-		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), NO_CODE_START_TONES_5M);
+		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
 		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
