@@ -24,9 +24,9 @@
  */
 
 #include "defs.h"
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include <string.h>
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 #ifdef INCLUDE_RV3028_SUPPORT
 
@@ -264,14 +264,7 @@
 			data[4] = char2bcd(&datetime[4]);   /* day of month in BCD */
 			data[5] = char2bcd(&datetime[2]);   /* month in BCD */
 			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
-		}
-		else
-		{
-			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
-		}
 
-		if(!res)
-		{
 			struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			int16_t year = 100; /* start at 100 years past 1900 */
 			uint8_t month;
@@ -308,8 +301,14 @@
 			ltm.tm_sec = seconds;
 
 			epoch = ltm.tm_sec + ltm.tm_min * 60 + ltm.tm_hour * 3600L + ltm.tm_yday * 86400L +
-					(ltm.tm_year - 70) * 31536000L + ((ltm.tm_year - 69) / 4) * 86400L -
-					((ltm.tm_year - 1) / 100) * 86400L + ((ltm.tm_year + 299) / 400) * 86400L;
+			(ltm.tm_year - 70) * 31536000L + ((ltm.tm_year - 69) / 4) * 86400L -
+			((ltm.tm_year - 1) / 100) * 86400L + ((ltm.tm_year + 299) / 400) * 86400L;
+		}
+		else
+		{
+//			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+			epoch = rv3028_get_epoch();
+			res = epoch == 0;
 		}
 
 		if(result)
@@ -374,36 +373,63 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	BOOL rv3028_set_date_time(char * dateString)                                                                                         /* String format "YYMMDDhhmmss" */
+	BOOL rv3028_set_epoch(time_t epoch)
 	{
-		BOOL fail = TRUE;
-		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
-		int length = strlen((const char*)dateString);
+		uint8_t data[5] = { 0, 0, 0, 0 };
+		data[3] = (uint8_t)((epoch & 0xff000000) >> 24);
+		data[2] = (uint8_t)((epoch & 0x00ff0000) >> 16);
+		data[1] = (uint8_t)((epoch & 0x0000ff00) >> 8);
+		data[0] = (uint8_t)((epoch & 0x000000ff));
+		return(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_UNIX_TIME_0, data, 4));
+	}
 
-		if(length >= 12)
+	time_t rv3028_get_epoch(void)
+	{
+		time_t epoch = 0;
+		uint8_t data[4] = { 0, 0, 0, 0 };
+		if(!i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_UNIX_TIME_0, data, 4))
 		{
-			data[0] = dateString[11] - '0';             /* seconds */
-			data[0] += ((dateString[10] - '0') << 4);   /* 10s of seconds */
-			data[1] = dateString[9] - '0';              /* minutes */
-			data[1] += ((dateString[8] - '0') << 4);    /* 10s of minutes */
-			data[2] = dateString[7] - '0';              /* hours */
-			data[2] += ((dateString[6] - '0') << 4);    /* 10s of hours */
-
-			/*data[3] = Skip day of week */
-
-			data[4] = dateString[5] - '0';              /* day of month digit 1 */
-			data[4] += ((dateString[4] - '0') << 4);    /* day of month */
-			data[5] = dateString[3] - '0';              /* month digit 1 */
-			data[5] += ((dateString[2] - '0') << 4);    /* month */
-			data[6] = dateString[1] - '0';              /* year digit 1 */
-			data[6] += ((dateString[0] - '0') << 4);    /* year - two digits */
-
-			fail = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+			epoch |= data[0];
+			epoch |= ((time_t)data[1]) << 8;
+			epoch |= ((time_t)data[2]) << 16;
+			epoch |= ((time_t)data[3]) << 24;
 		}
 
-		return( fail);
+		return epoch;
 	}
-	
+
+
+// 	BOOL rv3028_set_date_time(char * dateString)                                                                                         /* String format "YYMMDDhhmmss" */
+// 	{
+// 		BOOL fail = TRUE;
+// 		uint8_t data[7] = { 0, 0, 0, 1, 0, 0, 0 };
+// 		int length = strlen((const char*)dateString);
+//
+// 		if(length >= 12)
+// 		{
+// 			data[0] = dateString[11] - '0';             /* seconds */
+// 			data[0] += ((dateString[10] - '0') << 4);   /* 10s of seconds */
+// 			data[1] = dateString[9] - '0';              /* minutes */
+// 			data[1] += ((dateString[8] - '0') << 4);    /* 10s of minutes */
+// 			data[2] = dateString[7] - '0';              /* hours */
+// 			data[2] += ((dateString[6] - '0') << 4);    /* 10s of hours */
+//
+// 			/*data[3] = Skip day of week */
+//
+// 			data[4] = dateString[5] - '0';              /* day of month digit 1 */
+// 			data[4] += ((dateString[4] - '0') << 4);    /* day of month */
+// 			data[5] = dateString[3] - '0';              /* month digit 1 */
+// 			data[5] += ((dateString[2] - '0') << 4);    /* month */
+// 			data[6] = dateString[1] - '0';              /* year digit 1 */
+// 			data[6] += ((dateString[0] - '0') << 4);    /* year - two digits */
+//
+// 			fail = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+// 		}
+//
+// 		return( fail);
+// 	}
+
+
 	void refreshRAMfromEEPROM(void)
 	{
 		uint8_t status = FALSE;
@@ -419,7 +445,7 @@
 	{
 		uint8_t data[2];
 		int16_t result;
-		
+
 		refreshRAMfromEEPROM(); /* Ensure we never return an altered RAM value */
 		i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
 		result = data[0] << 1;
@@ -462,12 +488,12 @@
 		{
 			uint8_t status = FALSE;
 			uint8_t temp = 0;
-			
+
 #if INIT_EEPROM_ONLY
 /* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM
 by reading all EEPROM into the RAM mirror now */
 			refreshRAMfromEEPROM();
-			
+
 			if(waitForEEPROMReady())
 			{
 				return( 1);
@@ -480,32 +506,34 @@ by reading all EEPROM into the RAM mirror now */
 				return( 1);
 			}
 
-			temp = 0x04;    /* Enable direct switching mode */
-			mask = 0x06;    /* 00001100 */
+// 			temp = 0x04;    /* Enable direct switching mode */
+// 			mask = 0x06;    /* 00001100 */
+ 			temp = 0x00;    /* Disable Vbackup switchover */
+ 			mask = 0x06;    /* 00001100 */
 			if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
 			{
 				return( 1);
 			}
-#endif // INIT_EEPROM_ONLY			
-			
+#endif // INIT_EEPROM_ONLY
+
 			refreshRAMfromEEPROM();
 
 /* Debug only */
-#if INIT_EEPROM_ONLY
+#if INIT_EEPROM_ONLY_DEBUG
 			uint8_t temp_byte;
 			uint8_t hold_byte;
-			for(temp_byte = 0x30; temp_byte <= 0x37; temp_byte++) 
+			for(temp_byte = 0x30; temp_byte <= 0x37; temp_byte++)
 			{
 				i2c_device_read(RV3028_I2C_SLAVE_ADDR, temp_byte, &hold_byte, 1);
 				sprintf(g_tempStr, "\n0x%02X = 0x%02X", temp_byte, hold_byte);
 				lb_send_string(g_tempStr, TRUE);
 			}
-			
+
 			lb_send_NewLine();
 			lb_send_NewPrompt();
-			
+
 			g_tempStr[0] = '\0';
-#endif // INIT_EEPROM_ONLY
+#endif // INIT_EEPROM_ONLY_DEBUG
 /* End debugging */
 
 			if(!status)

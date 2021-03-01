@@ -25,9 +25,10 @@
 #include "f1975.h"
 #include "linkbus.h"
 
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
+
 	static uint8_t lower4;
 	static uint8_t upper2;
 

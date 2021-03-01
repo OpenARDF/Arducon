@@ -33,23 +33,25 @@
 #define TRUE !FALSE
 #endif
 
-/******************************************************
- *  Set for the IDE being used: Arduino or Atmel Studio 7
- */
-#define COMPILE_FOR_ATMELSTUDIO7 TRUE
-#define INIT_EEPROM_ONLY TRUE
+/***********************************************************
+ * IMPORTANT:                                               *
+ * Compile for initializing EEPROM values                   *
+ * Note: Build and run with the following compilation flag  *
+ *       set to TRUE. Then build and run with the flag      *
+ *       set to FALSE.                                      */
+/***********************************************************/
+#define INIT_EEPROM_ONLY FALSE
+/***********************************************************/
 
-/*******************************************************/
-
-#if COMPILE_FOR_ATMELSTUDIO7
-		#include <avr/io.h>
-		#include <util/delay.h>
-		#include <avr/interrupt.h>
-		#define USE_WDT_RESET TRUE
+#ifdef ATMEL_STUDIO_7
+	#include <avr/io.h>
+	#include <util/delay.h>
+	#include <avr/interrupt.h>
+	#define USE_WDT_RESET TRUE
 #else
-		#include "Arduino.h"
-		#define USE_WDT_RESET FALSE
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+	#include "Arduino.h"
+	#define USE_WDT_RESET FALSE
+#endif  /* ATMEL_STUDIO_7 */
 
 #ifndef HIGH
 #define HIGH 0x1
@@ -86,13 +88,15 @@
 #define MAX_DTMF_ARG_LENGTH TEMP_STRING_LENGTH
 #define SIZE_OF_TEMPERATURE_TABLE 60
 #define SIZE_OF_DATA_MODULATION 32
+#define MAX_UNLOCK_CODE_LENGTH 8
+#define MIN_UNLOCK_CODE_LENGTH 4
 
 
 /******************************************************
  * Set Hardware Settings */
 
-/*#define TRANQUILIZE_WATCHDOG */
-/*#define DEBUG_DTMF */
+/*#define TRANQUILIZE_WATCHDOG
+ *#define DEBUG_DTMF */
 
 #define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
 #define INCLUDE_RV3028_SUPPORT
@@ -153,7 +157,7 @@
 #define D11 11
 #define D12 12
 #define D13 13
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #define A0 14
 #define A1 15
 #define A2 16
@@ -164,7 +168,7 @@
 #define SCL A5
 #define A6 20
 #define A7 21
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 /*
  *  Arducon Pin Definitions
@@ -178,7 +182,8 @@
 #define PIN_SYNC D4             /* Arduino Pro Mini pin# 7 = PD4 */
 #define PIN_UNUSED_1 D5         /* Arduino Pro Mini pin# 8 = PD5 */
 #define PIN_PWDN D6             /* Arduino Pro Mini pin# 9 = PD6 */
-#define PIN_LED2 D7             /* Arduino Pro Mini pin# 10 = PD7 */
+/*#define PIN_LED2 D7             / * Arduino Pro Mini pin# 10 = PD7 * / */
+#define PIN_LED2 D13            /* Arduino Pro Mini pin# 10 = PD7 */
 #define PIN_PTT_LOGIC D8        /* Arduino Pro Mini pin# 11 = PB0 */
 #define PIN_CW_TONE_LOGIC D9    /* Arduino Pro Mini pin# 12 = PB1 */
 #define PIN_CW_KEY_LOGIC D10    /* Arduino Pro Mini pin# 13 = PB2 */
@@ -209,7 +214,6 @@ typedef enum
 	FOX_3,
 	FOX_4,
 	FOX_5,
-	FOX_DEMO,
 	FOXORING,
 	SPECTATOR,
 	SPRINT_S1,
@@ -222,14 +226,16 @@ typedef enum
 	SPRINT_F3,
 	SPRINT_F4,
 	SPRINT_F5,
-	SPRINT_DEMO,
-	NO_CODE_START_TONES_2M,
-	NO_CODE_START_TONES_5M,
 	INVALID_FOX
 } Fox_t;
 
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
+#define SPRINT_FAST_CODE_SPEED 15
+#define SPRINT_SLOW_CODE_SPEED 8
+
+#define MAX_AM_TONE_FREQUENCY 6
+#define MIN_AM_TONE_FREQUENCY 0
 
 typedef enum
 {
@@ -253,21 +259,25 @@ typedef enum
 	STATE_RECEIVING_FOXFORMATANDID,
 	STATE_RECEIVING_START_TIME,
 	STATE_RECEIVING_FINISH_TIME,
-	STATE_RECEIVING_START_NOW,
+	STATE_RECEIVING_UTC_OFFSET,
 	STATE_RECEIVING_SET_CLOCK,
-	STATE_TEST_ATTENUATOR /* Temporary test definition */
+	STATE_SET_AM_TONE_FREQUENCY,
+	STATE_SET_PASSWORD,
+	STATE_CHECK_PASSWORD,
+	STATE_RECEIVING_FOXES_TO_ADDRESS,
+	STATE_TEST_ATTENUATOR   /* Temporary test definition */
 } KeyprocessState_t;
 
 
 /*******************************************************/
 
 #ifndef SELECTIVELY_DISABLE_OPTIMIZATION
-		#define SELECTIVELY_DISABLE_OPTIMIZATION
+	#define SELECTIVELY_DISABLE_OPTIMIZATION
 #endif
 
 /******************************************************
  * EEPROM definitions */
-#define EEPROM_INITIALIZED_FLAG 0x00BB    /* Never set to 0xFFFF */
+#define EEPROM_INITIALIZED_FLAG 0x00BB  /* Never set to 0xFFFF */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_STATION_ID_DEFAULT "FOXBOX"
@@ -283,15 +293,32 @@ typedef enum
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
 #define EEPROM_TEMP_CALIBRATION_DEFAULT -110
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
-#define EEPROM_FOX_SETTING_DEFAULT (Fox_t)0
+#define EEPROM_FOX_SETTING_DEFAULT (Fox_t)1
+#define EEPROM_AM_AUDIO_FREQ_DEFAULT 0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
 #define EEPROM_ENABLE_STARTTIMER_DEFAULT 0
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
 #define EEPROM_START_EPOCH_DEFAULT 0
 #define EEPROM_FINISH_EPOCH_DEFAULT 0
+#define EEPROM_UTC_OFFSET_DEFAULT 0
+#define EEPROM_DTMF_UNLOCK_CODE_DEFAULT ("1357")
 
-#define MINIMUM_EPOCH 1609459200 /* 1 Jan 2021 00:00:00 */
+#define MINIMUM_EPOCH ((time_t)1609459200)  /* 1 Jan 2021 00:00:00 */
 #define SECONDS_24H 86400
+
+typedef enum
+{
+	NULL_CONFIG,
+	WAITING_FOR_START,
+	CONFIGURATION_ERROR,
+	SCHEDULED_EVENT_DID_NOT_START,
+	SCHEDULED_EVENT_WILL_NEVER_RUN,
+	EVENT_IN_PROGRESS
+} ConfigurationState_t;
+
+#define ERROR_BLINK_PATTERN ((char*)"A")
+#define WAITING_BLINK_PATTERN ((char*)"E        ")
+#define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL
 	typedef uint8_t BOOL;
@@ -333,6 +360,8 @@ typedef enum
 #define TIMER2_SECONDS_3 4283
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
+#define TIMER2_MSECONDS_100 143
+#define TIMER2_MSECONDS_200 286
 
 #define BLINK_FAST 30
 #define BLINK_SHORT 100
@@ -375,5 +404,21 @@ typedef enum
 	PATTERN_TEXT,
 	STATION_ID
 } TextIndex;
+
+typedef enum
+{
+	POWER_UP,
+	PUSHBUTTON,
+	PROGRAMMATIC,
+	NO_ACTION
+} EventActionSource_t;
+
+typedef enum
+{
+	START_EVENT_NOW,
+	START_TRANSMISSIONS_NOW,
+	START_EVENT_WITH_STARTFINISH_TIMES,
+	START_NOTHING
+} EventAction_t;
 
 #endif  /* DEFS_H */

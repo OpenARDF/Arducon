@@ -67,7 +67,13 @@
  * dateString has the format 2018-03-23T18:00:00
  * ClockSetting setting = clock or alarm to be set
  */
-		BOOL rv3028_set_date_time(char * dateString);
+//		BOOL rv3028_set_date_time(char * dateString);
+
+/**
+ * Set or Get the UNIX epoch registers
+ */
+		BOOL rv3028_set_epoch(time_t epoch);
+		time_t rv3028_get_epoch(void);
 
 /**
  *  Turn on 1-second square wave on the INT/SQW pin.
