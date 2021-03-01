@@ -27,14 +27,14 @@
 
 #include "defs.h"
 
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include <avr/eeprom.h>
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 #include <time.h>
 
 /* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.32 ***\n"
+#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.33 ***\n"
 #define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [1-6] - Set AM tone frequency\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version"
 #define TEXT_SET_TIME_TXT "CLK T YYMMDDhhmmss <- Set current time\n"
 #define TEXT_SET_START_TXT "CLK S YYMMDDhhmmss <- Set start time\n"
@@ -46,9 +46,7 @@
 #define TEXT_ERR_INVALID_TIME_TXT "Err: Invalid time!\n"
 #define TEXT_ERR_TIME_IN_PAST_TXT "Err: Time in past!\n"
 
-#if INIT_EEPROM_ONLY
 #define TEXT_EEPROM_SUCCESS_MESSAGE_TXT "Success! EEPROM has been programmed. Program is done.\nReflash with #define INIT_EEPROM_ONLY FALSE\n"
-#endif // INIT_EEPROM_ONLY
 
 struct EE_prom
 {
@@ -74,7 +72,6 @@ struct EE_prom
 	uint8_t am_audio_frequency;
 	int16_t atmega_temp_calibration;
 	int16_t rv3028_offset;
-	uint8_t enable_transmitter;
 	time_t event_start_epoch;
 	time_t event_finish_epoch;
 	uint8_t utc_offset;
@@ -106,7 +103,6 @@ typedef enum
 	Am_audio_frequency,
 	Atmega_temp_calibration,
 	Rv3028_offset,
-	Enable_transmitter,
 	Event_start_epoch,
 	Event_finish_epoch,
 	Utc_offset,
@@ -135,6 +131,7 @@ void send_Help(void);
 void sendEEPROMString(EE_var_t v);
 void updateEEPROMVar(EE_var_t v, void* val);
 uint16_t readTemperatureTable(int i);
+void resetEEPROMValues(void);
 
 #if INIT_EEPROM_ONLY
 void sendSuccessString(void);
