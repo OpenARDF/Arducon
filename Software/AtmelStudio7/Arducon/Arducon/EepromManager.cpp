@@ -28,13 +28,11 @@
 #include "i2c.h"
 #include "rv3028.h"
 
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
-#else
-/*#include <EEPROM.h> */
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 /* Set Firmware Version Here */
 const char PRODUCT_NAME_LONG[] PROGMEM = PRODUCT_NAME_LONG_TXT;
@@ -85,7 +83,6 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .am_audio_frequency = */ 0,
 	/* .atmega_temp_calibration = */ 0,
 	/* .rv3028_offset = */ 0,
-	/* .enable_transmitter = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
 	/* .utc_offset = */ 0,
@@ -97,7 +94,6 @@ extern volatile uint8_t g_id_codespeed;
 extern volatile uint8_t g_pattern_codespeed;
 extern volatile uint16_t g_time_needed_for_ID;
 extern volatile int16_t g_atmega_temp_calibration;
-extern volatile uint8_t g_enable_transmitter;
 extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
@@ -194,13 +190,6 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Rv3028_offset:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.rv3028_offset);
-		}
-		break;
-
-		case Enable_transmitter:
-		{
-			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.enable_transmitter);
-
 		}
 		break;
 
@@ -360,11 +349,10 @@ BOOL EepromManager::readNonVols(void)
 	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
-		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), NO_CODE_START_TONES_5M);
+		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
 		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
-		g_enable_transmitter = eeprom_read_byte(&(EepromManager::ee_vars.enable_transmitter));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
@@ -442,7 +430,7 @@ BOOL EepromManager::readNonVols(void)
 		BOOL err = FALSE;
 		uint16_t i;
 
-#if !COMPILE_FOR_ATMELSTUDIO7
+#ifndef ATMEL_STUDIO_7
 			/* Erase full EEPROM */
 			for(i = 0; i < 0x0400; i++)
 			{
@@ -457,7 +445,7 @@ BOOL EepromManager::readNonVols(void)
 					err = TRUE;
 				}
 			}
-#endif  /* !COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* !ATMEL_STUDIO_7 */
 
 		g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
@@ -476,9 +464,6 @@ BOOL EepromManager::readNonVols(void)
 		g_rv3028_offset = rv3028_get_offset_RAM();
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset), (uint16_t)g_rv3028_offset);
 
-		g_enable_transmitter = EEPROM_ENABLE_TRANSMITTER_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.enable_transmitter), g_enable_transmitter);    /* Only gets set by a serial command */
-
 		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
 		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);
 
@@ -494,10 +479,12 @@ BOOL EepromManager::readNonVols(void)
 		uint8_t *v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
 		for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
 		{
+			g_unlockCode[i] = *v;
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), *v++);
 		}
 
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
+		g_unlockCode[i] = '\0';
 
 		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
 		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
@@ -662,10 +649,6 @@ BOOL EepromManager::readNonVols(void)
 		sprintf(g_tempStr, "RVO=%u\n", wrd);
 		lb_send_string(g_tempStr, TRUE);
 
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.enable_transmitter));
-		sprintf(g_tempStr, "ETX=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
 		dwrd = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		sprintf(g_tempStr, "SE=%lu\n", dwrd);
 		lb_send_string(g_tempStr, TRUE);
@@ -721,6 +704,30 @@ BOOL EepromManager::readNonVols(void)
 		lb_send_NewLine();
 	}
 #endif  /* INIT_EEPROM_ONLY */
+
+void EepromManager::resetEEPROMValues(void)
+{
+	uint8_t i;
+
+	uint8_t *v = (uint8_t*)EEPROM_DTMF_UNLOCK_CODE_DEFAULT;
+	for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
+	{
+		g_unlockCode[i] = *v;
+		eeprom_write_byte((uint8_t*)&(g_unlockCode[i]), *v++);
+	}
+
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
+	g_unlockCode[i] = '\0';
+
+	g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), g_AM_audio_frequency);
+
+	g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
+	eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);
+
+	g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
+	eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_finish_epoch), g_event_finish_epoch);
+}
 
 /***********************************************************************
  * send_Help(void)

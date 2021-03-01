@@ -35,12 +35,12 @@
 
 #if !INIT_EEPROM_ONLY
 
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
 #include <stdlib.h>
 #else
 #include "Arduino.h"
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 #define MAXN 209
 #define ADCCENTER 512

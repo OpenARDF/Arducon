@@ -24,9 +24,9 @@
  */
 
 #include "defs.h"
-#if COMPILE_FOR_ATMELSTUDIO7
+#ifdef ATMEL_STUDIO_7
 #include <string.h>
-#endif  /* COMPILE_FOR_ATMELSTUDIO7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 #ifdef INCLUDE_RV3028_SUPPORT
 

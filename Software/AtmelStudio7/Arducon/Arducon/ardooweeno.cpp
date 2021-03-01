@@ -29,6 +29,50 @@ void pinMode(uint8_t pin, uint8_t mode)
 {
 	switch(pin)
 	{
+		case PIN_RXD:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRD  |= (1 << PORTD0);
+			}
+			else
+			{
+				DDRD  &= ~(1 << PORTD0);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTD  |= (1 << PORTD0);
+				}
+				else
+				{
+					PORTD &= ~(1 << PORTD0);
+				}
+			}
+		}
+		break;
+		
+		case PIN_TXD:
+		{
+			if(mode == OUTPUT)
+			{
+				DDRD  |= (1 << PORTD1);
+			}
+			else
+			{
+				DDRD  &= ~(1 << PORTD1);
+
+				if(mode == INPUT_PULLUP)
+				{
+					PORTD  |= (1 << PORTD1);
+				}
+				else
+				{
+					PORTD &= ~(1 << PORTD1);
+				}
+			}
+		}
+		break;
+		
 		case D2:
 		{
 			if(mode == OUTPUT)
@@ -269,6 +313,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		case A1:
 		{
@@ -290,6 +335,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		case A2:
 		{
@@ -311,6 +357,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		case A3:
 		{
@@ -332,6 +379,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		case A4:
 		{
@@ -353,6 +401,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		case A5:
 		{
@@ -374,6 +423,7 @@ void pinMode(uint8_t pin, uint8_t mode)
 				}
 			}
 		}
+		break;
 
 		default:
 		{
@@ -485,6 +535,32 @@ void digitalWrite(uint8_t pin, uint8_t value)
 {
 	switch(pin)
 	{
+		case PIN_RXD:
+		{
+			if(value)
+			{
+				PORTD  |= (1 << PORTD0);
+			}
+			else
+			{
+				PORTD  &= ~(1 << PORTD0);
+			}
+		} 
+		break;
+		
+		case PIN_TXD:
+		{
+			if(value)
+			{
+				PORTD  |= (1 << PORTD1);
+			}
+			else
+			{
+				PORTD  &= ~(1 << PORTD1);
+			}
+		}
+		break;
+		
 		case D2:
 		{
 			if(value)
