@@ -5,7 +5,7 @@ $Descr B 17000 11000
 encoding utf-8
 Sheet 1 2
 Title "Arducon"
-Date "2021-02-24"
+Date "2021-03-03"
 Rev "P2.0"
 Comp ""
 Comment1 ""
@@ -2408,13 +2408,15 @@ EXTERNAL_PWR_SOURCE
 Text GLabel 14550 7950 2    39   Output ~ 0
 EXTERNAL_PWR_SOURCE
 $Comp
-L Jumper:SolderJumper_3_Bridged12 SJ102
+L Jumper:SolderJumper_3_Bridged12 SJ111
 U 1 1 60436DAC
 P 2150 6800
-F 0 "SJ102" V 2150 6867 50  0000 L CNN
+F 0 "SJ111" V 2150 6867 50  0000 L CNN
 F 1 "SolderJumper_3_Bridged12" V 2195 6868 50  0001 L CNN
 F 2 "Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small" H 2150 6800 50  0001 C CNN
-F 3 "~" H 2150 6800 50  0001 C CNN
+F 3 "" H 2150 6800 50  0001 C CNN
+F 4 "np" H 2150 6800 50  0001 C CNN "Part No."
+F 5 "np" H 2150 6800 50  0001 C CNN "Link"
 	1    2150 6800
 	0    -1   1    0   
 $EndComp
@@ -2437,13 +2439,15 @@ Wire Wire Line
 Wire Wire Line
 	3700 4750 3700 6150
 $Comp
-L Jumper:SolderJumper_3_Bridged12 SJ101
+L Jumper:SolderJumper_3_Bridged12 SJ110
 U 1 1 6050CA09
 P 2300 5550
-F 0 "SJ101" H 2300 5663 50  0000 C CNN
+F 0 "SJ110" H 2300 5663 50  0000 C CNN
 F 1 "SolderJumper_3_Bridged12" V 2345 5618 50  0001 L CNN
 F 2 "Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small" H 2300 5550 50  0001 C CNN
-F 3 "~" H 2300 5550 50  0001 C CNN
+F 3 "" H 2300 5550 50  0001 C CNN
+F 4 "np" H 2300 5550 50  0001 C CNN "Part No."
+F 5 "np" H 2300 5550 50  0001 C CNN "Link"
 	1    2300 5550
 	-1   0    0    1   
 $EndComp
