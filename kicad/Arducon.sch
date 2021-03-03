@@ -281,7 +281,7 @@ Text Label 5000 7700 2    39   ~ 0
 PB4
 Text Label 5000 7800 2    39   ~ 0
 PB5
-Text Notes 6000 2250 0    79   ~ 16
+Text Notes 6400 1550 0    79   ~ 16
 Real-Time Clock
 Text Notes 12350 9500 0    118  ~ 24
 PCB: Arducon ARDF Controller (p. 1/2)
@@ -299,23 +299,23 @@ $EndComp
 $Comp
 L power:GNDD #PWR0116
 U 1 1 591E902A
-P 5700 2850
-F 0 "#PWR0116" H 5700 2600 50  0001 C CNN
-F 1 "GNDD" H 5700 2700 50  0000 C CNN
-F 2 "" H 5700 2850 50  0000 C CNN
-F 3 "" H 5700 2850 50  0000 C CNN
-	1    5700 2850
+P 5350 2700
+F 0 "#PWR0116" H 5350 2450 50  0001 C CNN
+F 1 "GNDD" H 5350 2550 50  0000 C CNN
+F 2 "" H 5350 2700 50  0000 C CNN
+F 3 "" H 5350 2700 50  0000 C CNN
+	1    5350 2700
 	0    1    -1   0   
 $EndComp
 $Comp
 L power:GNDD #PWR0109
 U 1 1 591EABD4
-P 7550 2850
-F 0 "#PWR0109" H 7550 2600 50  0001 C CNN
-F 1 "GNDD" H 7550 2700 50  0000 C CNN
-F 2 "" H 7550 2850 50  0000 C CNN
-F 3 "" H 7550 2850 50  0000 C CNN
-	1    7550 2850
+P 7550 2700
+F 0 "#PWR0109" H 7550 2450 50  0001 C CNN
+F 1 "GNDD" H 7550 2550 50  0000 C CNN
+F 2 "" H 7550 2700 50  0000 C CNN
+F 3 "" H 7550 2700 50  0000 C CNN
+	1    7550 2700
 	0    -1   -1   0   
 $EndComp
 $Comp
@@ -340,7 +340,7 @@ F 3 "" H 3950 4300 50  0000 C CNN
 	1    3950 4300
 	1    0    0    -1  
 $EndComp
-Text GLabel 6950 3550 0    39   Output ~ 0
+Text GLabel 6200 3300 0    39   Output ~ 0
 RTC_SQW
 Text GLabel 6550 6600 2    39   Input ~ 0
 RTC_SQW
@@ -410,25 +410,25 @@ $EndComp
 $Comp
 L Arducon-rescue:Vproc #PWR0107
 U 1 1 5AB7DABB
-P 7350 2450
-F 0 "#PWR0107" H 7350 2300 50  0001 C CNN
-F 1 "Vproc" H 7350 2600 50  0000 C CNN
-F 2 "" H 7350 2450 50  0000 C CNN
-F 3 "" H 7350 2450 50  0000 C CNN
-	1    7350 2450
+P 7350 2300
+F 0 "#PWR0107" H 7350 2150 50  0001 C CNN
+F 1 "Vproc" H 7350 2450 50  0000 C CNN
+F 2 "" H 7350 2300 50  0000 C CNN
+F 3 "" H 7350 2300 50  0000 C CNN
+	1    7350 2300
 	1    0    0    -1  
 $EndComp
 $Comp
 L Arducon-rescue:Battery_Single_Cell BT101
 U 1 1 5BCD438E
-P 5850 2850
-F 0 "BT101" V 6000 2750 50  0000 L CNN
-F 1 "CR1220" V 5700 2650 50  0000 L CNN
-F 2 "Oddities:BC501SM_CR1220_BAT_Handsolder" V 5850 2890 50  0001 C CNN
-F 3 "" V 5850 2890 50  0000 C CNN
-F 4 "BC501SM-ND" H 5850 2850 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=BC501SM-ND\">Link</a>" H 5850 2850 60  0001 C CNN "Link"
-	1    5850 2850
+P 5500 2700
+F 0 "BT101" V 5650 2600 50  0000 L CNN
+F 1 "CR1220" V 5350 2500 50  0000 L CNN
+F 2 "Oddities:BC501SM_CR1220_BAT_Handsolder" V 5500 2740 50  0001 C CNN
+F 3 "" V 5500 2740 50  0000 C CNN
+F 4 "BC501SM-ND" H 5500 2700 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=BC501SM-ND\">Link</a>" H 5500 2700 60  0001 C CNN "Link"
+	1    5500 2700
 	0    1    -1   0   
 $EndComp
 $Comp
@@ -470,14 +470,14 @@ D3
 $Comp
 L Device:R R103
 U 1 1 5F9AFE5B
-P 6500 3250
-F 0 "R103" H 6600 3400 50  0000 C CNN
-F 1 "10k" V 6400 3250 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 6430 3250 50  0001 C CNN
-F 3 "" H 6500 3250 50  0001 C CNN
-F 4 "311-10.0KCRCT-ND" H 6500 3250 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 6500 3250 60  0001 C CNN "Link"
-	1    6500 3250
+P 6700 2450
+F 0 "R103" H 6800 2600 50  0000 C CNN
+F 1 "10k" V 6600 2450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 6630 2450 50  0001 C CNN
+F 3 "" H 6700 2450 50  0001 C CNN
+F 4 "311-10.0KCRCT-ND" H 6700 2450 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 6700 2450 60  0001 C CNN "Link"
+	1    6700 2450
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
@@ -547,8 +547,8 @@ Wire Wire Line
 Wire Wire Line
 	5650 7800 5500 7800
 Wire Wire Line
-	7350 2750 7350 2850
-Connection ~ 7350 2850
+	7350 2600 7350 2700
+Connection ~ 7350 2700
 Wire Wire Line
 	6550 6600 6400 6600
 Wire Wire Line
@@ -590,13 +590,9 @@ Wire Wire Line
 Wire Wire Line
 	6550 7100 6400 7100
 Wire Wire Line
-	6950 3700 6500 3700
+	6950 3700 6850 3700
 Wire Wire Line
-	6500 3700 6500 3400
-Wire Wire Line
-	6500 3100 6500 2850
-Wire Wire Line
-	6500 2850 6950 2850
+	6150 2700 6700 2700
 Text GLabel 6550 6800 2    39   Output ~ 0
 PTT_LOGIC
 Text GLabel 6550 6900 2    39   Output ~ 0
@@ -778,7 +774,7 @@ F 3 "" H 11550 9750 50  0000 C CNN
 $EndComp
 Connection ~ 11550 9850
 Wire Wire Line
-	7350 2850 7350 2950
+	7350 2700 7350 2950
 Wire Wire Line
 	11550 10200 11550 10300
 Wire Wire Line
@@ -2267,27 +2263,27 @@ Wire Notes Line
 $Comp
 L Device:C_Small C104
 U 1 1 60097870
-P 7450 2850
-F 0 "C104" V 7550 2750 50  0000 L CNN
-F 1 "10uF" V 7350 2750 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 7450 2850 50  0001 C CNN
-F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 7450 2850 50  0001 C CNN
-F 4 "490-5523-1-ND" H 7450 2850 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 7450 2850 60  0001 C CNN "Link"
-	1    7450 2850
+P 7450 2700
+F 0 "C104" V 7550 2600 50  0000 L CNN
+F 1 "10uF" V 7350 2600 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 7450 2700 50  0001 C CNN
+F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 7450 2700 50  0001 C CNN
+F 4 "490-5523-1-ND" H 7450 2700 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 7450 2700 60  0001 C CNN "Link"
+	1    7450 2700
 	0    -1   -1   0   
 $EndComp
 $Comp
 L Diode:MSS1P4-M3_89A D108
 U 1 1 60344B01
-P 7350 2600
-F 0 "D108" H 7350 2700 50  0000 C CNN
-F 1 "MSS1P4-M3_89A" H 7600 2800 50  0000 C CNN
-F 2 "Diodes_SMD:DO-219AD" H 7350 2425 50  0001 C CNN
-F 3 "" H 7350 2600 50  0001 C CNN
-F 4 "MSS1P4-M3/89AGICT-ND" H 7350 2600 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 7350 2600 50  0001 C CNN "Link"
-	1    7350 2600
+P 7350 2450
+F 0 "D108" V 7350 2700 50  0000 C CNN
+F 1 "MSS1P4-M3_89A" V 7500 2850 50  0000 C CNN
+F 2 "Diodes_SMD:DO-219AD" H 7350 2275 50  0001 C CNN
+F 3 "" H 7350 2450 50  0001 C CNN
+F 4 "MSS1P4-M3/89AGICT-ND" H 7350 2450 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 7350 2450 50  0001 C CNN "Link"
+	1    7350 2450
 	0    1    -1   0   
 $EndComp
 $Comp
@@ -2306,19 +2302,18 @@ $EndComp
 $Comp
 L Diode:MSS1P4-M3_89A D109
 U 1 1 6037BF00
-P 6350 2850
-F 0 "D109" H 6350 2950 50  0000 C CNN
-F 1 "MSS1P4-M3_89A" H 6300 3050 50  0000 C CNN
-F 2 "Diodes_SMD:DO-219AD" H 6350 2675 50  0001 C CNN
-F 3 "" H 6350 2850 50  0001 C CNN
-F 4 "MSS1P4-M3/89AGICT-ND" H 6350 2850 50  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 6350 2850 50  0001 C CNN "Link"
-	1    6350 2850
+P 6000 2700
+F 0 "D109" H 6000 2800 50  0000 C CNN
+F 1 "MSS1P4-M3_89A" H 6150 2950 50  0000 C CNN
+F 2 "Diodes_SMD:DO-219AD" H 6000 2525 50  0001 C CNN
+F 3 "" H 6000 2700 50  0001 C CNN
+F 4 "MSS1P4-M3/89AGICT-ND" H 6000 2700 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 6000 2700 50  0001 C CNN "Link"
+	1    6000 2700
 	-1   0    0    -1  
 $EndComp
-Connection ~ 6500 2850
 Wire Wire Line
-	6000 2850 6200 2850
+	5650 2700 5850 2700
 $Comp
 L Device:R R111
 U 1 1 604113C9
@@ -2350,19 +2345,19 @@ Wire Wire Line
 $Comp
 L power:PWR_FLAG #FLG0104
 U 1 1 60438C92
-P 6950 2800
-F 0 "#FLG0104" H 6950 2875 50  0001 C CNN
-F 1 "PWR_FLAG" H 6950 2973 50  0000 C CNN
-F 2 "" H 6950 2800 50  0001 C CNN
-F 3 "~" H 6950 2800 50  0001 C CNN
-	1    6950 2800
+P 6950 2650
+F 0 "#FLG0104" H 6950 2725 50  0001 C CNN
+F 1 "PWR_FLAG" H 6950 2823 50  0000 C CNN
+F 2 "" H 6950 2650 50  0001 C CNN
+F 3 "~" H 6950 2650 50  0001 C CNN
+	1    6950 2650
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	6950 2800 6950 2850
-Connection ~ 6950 2850
+	6950 2650 6950 2700
+Connection ~ 6950 2700
 Wire Wire Line
-	6950 2850 7350 2850
+	6950 2700 7350 2700
 Text GLabel 2700 5900 2    39   Input ~ 0
 CW_KEY_LOGIC
 $Comp
@@ -2413,10 +2408,10 @@ EXTERNAL_PWR_SOURCE
 Text GLabel 14550 7950 2    39   Output ~ 0
 EXTERNAL_PWR_SOURCE
 $Comp
-L Jumper:SolderJumper_3_Bridged12 JP102
+L Jumper:SolderJumper_3_Bridged12 SJ102
 U 1 1 60436DAC
 P 2150 6800
-F 0 "JP102" V 2150 6867 50  0000 L CNN
+F 0 "SJ102" V 2150 6867 50  0000 L CNN
 F 1 "SolderJumper_3_Bridged12" V 2195 6868 50  0001 L CNN
 F 2 "Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small" H 2150 6800 50  0001 C CNN
 F 3 "~" H 2150 6800 50  0001 C CNN
@@ -2442,10 +2437,10 @@ Wire Wire Line
 Wire Wire Line
 	3700 4750 3700 6150
 $Comp
-L Jumper:SolderJumper_3_Bridged12 JP101
+L Jumper:SolderJumper_3_Bridged12 SJ101
 U 1 1 6050CA09
 P 2300 5550
-F 0 "JP101" H 2300 5663 50  0000 C CNN
+F 0 "SJ101" H 2300 5663 50  0000 C CNN
 F 1 "SolderJumper_3_Bridged12" V 2345 5618 50  0001 L CNN
 F 2 "Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small" H 2300 5550 50  0001 C CNN
 F 3 "~" H 2300 5550 50  0001 C CNN
@@ -2458,8 +2453,10 @@ U 1 1 60513603
 P 1450 5100
 F 0 "J106" H 1400 5350 50  0000 C CNN
 F 1 "Logic Level" V 1550 5050 50  0000 C CNN
-F 2 "" H 1450 5100 50  0001 C CNN
-F 3 "~" H 1450 5100 50  0001 C CNN
+F 2 "Pin_Headers:Pin_Header_Straight_1x04" H 1450 5100 50  0001 C CNN
+F 3 "" H 1450 5100 50  0001 C CNN
+F 4 "np" H 1450 5100 50  0001 C CNN "Part No."
+F 5 "np" H 1450 5100 50  0001 C CNN "Link"
 	1    1450 5100
 	-1   0    0    -1  
 $EndComp
@@ -2526,12 +2523,94 @@ NoConn ~ 6550 6000
 NoConn ~ 6550 6100
 Wire Wire Line
 	6400 6200 7150 6200
-Text GLabel 7750 3300 2    39   Output ~ 0
-~RTC_INT~
 Text GLabel 6550 6700 2    39   Input ~ 0
 ~RTC_INT~
 Wire Wire Line
 	6550 6700 6400 6700
+$Comp
+L Transistor_BJT:PN2222A Q104
+U 1 1 6041235C
+P 6450 3550
+F 0 "Q104" H 6641 3596 50  0000 L CNN
+F 1 "PN2222A" H 6641 3505 50  0000 L CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23" H 6650 3475 50  0001 L CIN
+F 3 "" H 6450 3550 50  0001 L CNN
+F 4 "MMBT2222ATPMSCT-ND" H 6450 3550 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 6450 3550 50  0001 C CNN "Link"
+	1    6450 3550
+	-1   0    0    -1  
+$EndComp
+$Comp
+L power:GNDD #PWR0157
+U 1 1 60418738
+P 6350 3750
+F 0 "#PWR0157" H 6350 3500 50  0001 C CNN
+F 1 "GNDD" H 6350 3600 50  0000 C CNN
+F 2 "" H 6350 3750 50  0000 C CNN
+F 3 "" H 6350 3750 50  0000 C CNN
+	1    6350 3750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6850 3700 6850 4300
+Wire Wire Line
+	6850 4300 8450 4300
+Wire Wire Line
+	8450 4300 8450 1950
+Wire Wire Line
+	8450 1950 6700 1950
+Wire Wire Line
+	6700 1950 6700 2300
+Wire Wire Line
+	6700 2600 6700 2700
+Connection ~ 6700 2700
+Wire Wire Line
+	6700 2700 6950 2700
+$Comp
+L Device:R R112
+U 1 1 604ACF88
+P 6350 3100
+F 0 "R112" H 6450 3250 50  0000 C CNN
+F 1 "10k" V 6250 3100 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 6280 3100 50  0001 C CNN
+F 3 "" H 6350 3100 50  0001 C CNN
+F 4 "311-10.0KCRCT-ND" H 6350 3100 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 6350 3100 60  0001 C CNN "Link"
+	1    6350 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R R113
+U 1 1 604CAF89
+P 6800 3550
+F 0 "R113" V 6900 3550 50  0000 C CNN
+F 1 "210k" V 6700 3550 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" V 6730 3550 50  0001 C CNN
+F 3 "" H 6800 3550 50  0001 C CNN
+F 4 "311-210KCRCT-ND" H 6800 3550 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-210KCRCT-ND\">Link</a>" H 6800 3550 60  0001 C CNN "Link"
+	1    6800 3550
+	0    1    1    0   
+$EndComp
+$Comp
+L Arducon-rescue:Vproc #PWR0146
+U 1 1 605016E9
+P 6350 2950
+F 0 "#PWR0146" H 6350 2800 50  0001 C CNN
+F 1 "Vproc" H 6350 3100 50  0000 C CNN
+F 2 "" H 6350 2950 50  0000 C CNN
+F 3 "" H 6350 2950 50  0000 C CNN
+	1    6350 2950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	6350 3350 6350 3300
+Wire Wire Line
+	6200 3300 6350 3300
+Connection ~ 6350 3300
+Wire Wire Line
+	6350 3300 6350 3250
+NoConn ~ 7750 3300
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC
