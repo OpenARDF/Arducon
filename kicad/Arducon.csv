@@ -25,9 +25,10 @@ R102 ,1,2.2k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?k
 R110 ,1,10,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND">Link</a>,311-10.0CRCT-ND
 R113 ,1,210k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-210KCRCT-ND">Link</a>,311-210KCRCT-ND
 RV101 ,1,10k,Potentiometers:Potentiometer_ST32ET_Handsolder,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,TC33X-103ECT-ND
-SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 SJ109 ,9,SolderJumper_2_Open,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,np,np
+SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,8,SolderJumper_2_Open,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,np,np
 SJ111 SJ110 ,2,SolderJumper_3_Bridged12,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small,np,np
 SW101 ,1,SPST_small,Buttons_Switches_SMD:PTS645SL50SMTR92,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,CKN9088CT-ND
+SW102 ,1,5V/12V,Buttons_Switches_SMD:SW_SPDT_PCM12,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>,401-2016-1-ND
 TP101 ,1,I2C,Pin_Headers:Pin_Header_Straight_1x03,np,np
 U103 ,1,RV-3028-C7,Oddities:RV-3028-C7,<a href="https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND">Link</a>,2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND
 U104 ,1,F1975,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>,800-3576-ND
