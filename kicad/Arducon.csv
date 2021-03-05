@@ -3,7 +3,7 @@ BT101 ,1,CR1220,Oddities:BC501SM_CR1220_BAT_Handsolder,<a href="https://www.digi
 C106 C101 C102 C104 ,4,10uF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,490-5523-1-ND
 C108 C107 C103 C109 C110 ,5,100nF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
 D101 D108 D109 ,3,MSS1P4-M3_89A,Diodes_SMD:DO-219AD,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>,MSS1P4-M3/89AGICT-ND
-D103 D104 D105 D106 D107 ,5,ESD9B5.0ST5G,Resistors_SMD:R_0603,<a href="https://www.digikey.com/products/en?keywords=ESD9B5.0ST5GOSCT-ND">Link</a>,ESD9B5.0ST5GOSCT-ND
+D103 D104 D105 D106 D107 ,5,CG0603MLC-05LECT-ND,Resistors_SMD:R_0603,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,CG0603MLC-05LECT-ND
 J102 ,1,DB9 Female,Connect:DB9F_CI,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,609-1525-ND
 J103 ,1,To Antenna,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
 J101 ,1,To Radio,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
@@ -26,7 +26,7 @@ R110 ,1,10,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?key
 R113 ,1,210k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-210KCRCT-ND">Link</a>,311-210KCRCT-ND
 RV101 ,1,10k,Potentiometers:Potentiometer_ST32ET_Handsolder,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,TC33X-103ECT-ND
 SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,8,SolderJumper_2_Open,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,np,np
-SJ111 SJ110 ,2,SolderJumper_3_Bridged12,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small,np,np
+SJ110 ,1,SolderJumper_3_Bridged12,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small,np,np
 SW101 ,1,SPST_small,Buttons_Switches_SMD:PTS645SL50SMTR92,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,CKN9088CT-ND
 SW102 ,1,5V/12V,Buttons_Switches_SMD:SW_SPDT_PCM12,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>,401-2016-1-ND
 TP101 ,1,I2C,Pin_Headers:Pin_Header_Straight_1x03,np,np
