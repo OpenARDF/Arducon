@@ -33,7 +33,7 @@
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
 #define LINKBUS_MAX_MSG_FIELD_LENGTH 20
-#define LINKBUS_MAX_MSG_NUMBER_OF_FIELDS 3
+#define LINKBUS_MAX_MSG_NUMBER_OF_FIELDS 2
 #define LINKBUS_NUMBER_OF_RX_MSG_BUFFERS 2
 #define LINKBUS_MAX_TX_MSG_LENGTH 41
 #define LINKBUS_NUMBER_OF_TX_MSG_BUFFERS 4
@@ -71,12 +71,11 @@ typedef enum
 	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
 	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Override DIP switch settings using this value */
 	MESSAGE_SET_AM_TONE = 'A' * 10 + 'M',					/* Set AM audio tone frequency */
-	MESSAGE_TEMP = 'T' * 100 + 'E' * 10 + 'M',              /* Temperature  data */
+	MESSAGE_UTIL = 'U' * 100 + 'T' * 10 + 'I',              /* Temperature  and Voltage data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
 	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
 	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',        /* Set Morse code speeds */
 	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
-	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
 	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
 
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
@@ -96,8 +95,7 @@ typedef enum
 typedef enum
 {
 	FIELD1 = 0,
-	FIELD2 = 1,
-	FIELD3 = 2
+	FIELD2 = 1
 } LBMessageField;
 
 typedef enum

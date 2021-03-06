@@ -492,7 +492,7 @@
 		uint8_t rv3028_1s_sqw(BOOL onOff)
 		{
 			uint8_t status = FALSE;
-			uint8_t temp = 0;
+			uint8_t temp = onOff; /* remove compile warning */
 
 #if INIT_EEPROM_ONLY
 /* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM

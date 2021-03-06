@@ -76,7 +76,6 @@ typedef enum
 	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
 	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',        /* Set Morse code speeds */
 	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
-	MESSAGE_VERSION = 'V' * 100 + 'E' * 10 + +'R',          /* S/W version number */
 	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
 
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */

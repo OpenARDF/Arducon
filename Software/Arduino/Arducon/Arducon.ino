@@ -99,6 +99,7 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 int8_t g_temperature = 0;
+uint16_t g_voltage = 0;
 volatile ConfigurationState_t g_config_error = NULL_CONFIG;
 volatile BOOL g_use_rtc_for_startstop = FALSE;
 
@@ -130,7 +131,8 @@ volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile uint16_t g_time_needed_for_ID = 0;
 volatile int16_t g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 volatile uint8_t g_enable_transmitter = 1;
-volatile uint8_t g_temperature_check_countdown = 60;
+volatile uint8_t g_temperature_check_countdown = 0;
+volatile uint8_t g_voltage_check_countdown = 0;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
 #define _N 201
@@ -168,9 +170,9 @@ void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 void setAMToneFrequency(uint8_t value);
-void setUpTemp(void);
 uint16_t readADC();
 float getTemp(void);
+uint16_t getVoltage(void);
 BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
 void stopEventNow(EventActionSource_t activationSource);
@@ -183,7 +185,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 #if !INIT_EEPROM_ONLY
 	void processKey(char key);
-	void setUpAudioSampling(BOOL enableSampling);
+	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
 #endif  /* !INIT_EEPROM_ONLY */
 
 #ifdef ATMEL_STUDIO_7
@@ -219,19 +221,19 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 	linkbus_disable();
 
-//	pinMode(PIN_D0, OUTPUT);
-//	pinMode(PIN_D1, OUTPUT);
-//	pinMode(PIN_D2, OUTPUT);
-//	pinMode(PIN_D3, OUTPUT);
-//	pinMode(PIN_D4, OUTPUT);    /* Also RXD */
-//	pinMode(PIN_D5, OUTPUT);    /* Also TXD */
+/*	pinMode(PIN_D0, OUTPUT);
+ *	pinMode(PIN_D1, OUTPUT);
+ *	pinMode(PIN_D2, OUTPUT);
+ *	pinMode(PIN_D3, OUTPUT);
+ *	pinMode(PIN_D4, OUTPUT);    / * Also RXD * /
+ *	pinMode(PIN_D5, OUTPUT);    / * Also TXD * / */
 
-//	digitalWrite(PIN_D0, OFF);
-//	digitalWrite(PIN_D1, OFF);
-//	digitalWrite(PIN_D2, OFF);
-//	digitalWrite(PIN_D3, OFF);
-//	digitalWrite(PIN_D4, OFF);
-//	digitalWrite(PIN_D5, OFF);
+/*	digitalWrite(PIN_D0, OFF);
+ *	digitalWrite(PIN_D1, OFF);
+ *	digitalWrite(PIN_D2, OFF);
+ *	digitalWrite(PIN_D3, OFF);
+ *	digitalWrite(PIN_D4, OFF);
+ *	digitalWrite(PIN_D5, OFF); */
 	DDRC |= 0x0F;
 	PORTC &= 0xF0;
 	DDRD |= 0x03;
@@ -249,7 +251,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
-		setUpAudioSampling(true);
+		setUpSampling(AUDIO_SAMPLING, TRUE);
 #endif
 
 	cli();
@@ -312,7 +314,8 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
 #if INIT_EEPROM_ONLY
-		rv3028_1s_sqw();
+		rv3028_1s_sqw(ON);
+
 		if(eepromErr)
 		{
 			lb_send_string((char*)"EEPROM Erase Error!\n", TRUE);
@@ -332,10 +335,10 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		{
 			lb_send_string((char*)"EEPROM Error!\n", TRUE);
 		}
-		uint8_t result = rv3028_1s_sqw();
+
+		uint8_t result = rv3028_1s_sqw(ON);
 #endif  /* !INIT_EEPROM_ONLY */
 
-	/*g_current_epoch = rv3028_get_epoch(NULL, NULL); */
 	g_current_epoch = rv3028_get_epoch();
 
 #if !INIT_EEPROM_ONLY
@@ -757,8 +760,8 @@ ISR( TIMER2_COMPB_vect )
 						sendMorseTone(OFF);
 					}
 
-					digitalWrite(PIN_LED2, key);       /*  LED */
-					digitalWrite(PIN_CW_KEY_LOGIC, key); /* TX key line */
+					digitalWrite(PIN_LED2, key);            /*  LED */
+					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
 					g_sendAMmodulation = key;
 					sendMorseTone(key);
 				}
@@ -848,8 +851,11 @@ ISR( TIMER2_COMPB_vect )
 		if(g_temperature_check_countdown)
 		{
 			g_temperature_check_countdown--;
-			/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
-			 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
+		}
+
+		if(g_voltage_check_countdown)
+		{
+			g_voltage_check_countdown--;
 		}
 
 		if(g_transmissions_disabled)
@@ -874,7 +880,6 @@ ISR( TIMER2_COMPB_vect )
 				{
 					g_use_rtc_for_startstop = FALSE;
 					g_transmissions_disabled = TRUE;
-/*					g_on_the_air = FALSE; */
 				}
 			}
 
@@ -884,9 +889,6 @@ ISR( TIMER2_COMPB_vect )
 				{
 					id_countdown = g_id_interval;
 					g_fox_counter = 1;
-/*				g_lastSeconds = 0; */
-					/* TODO: only access RTC/I2C functions if sleeping - never if foreground processes are running
-					 * g_current_epoch = rv3028_get_epoch(NULL, NULL); / * resync to RTC periodically * / */
 				}
 
 				g_seconds_since_sync++; /* Total elapsed time counter */
@@ -1020,9 +1022,20 @@ void loop()
 
 				if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
 				{
-					BOOL repeat = TRUE;
+					BOOL repeat;
 					/* Choose the appropriate Morse pattern to be sent */
-					strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+					if(g_fox == REPORT_BATTERY)
+					{
+						sprintf(g_tempStr, "|||%dR%d/%d", g_voltage / 100, (5 + (g_voltage % 100)) / 10, g_temperature);
+						strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
+						repeat = FALSE;
+					}
+					else
+					{
+						strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+						repeat = TRUE;
+					}
+
 					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
 					makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
 
@@ -1075,7 +1088,7 @@ void loop()
 			{
 				g_on_the_air = FALSE;
 			}
-			else if(g_fox != g_fox_counter) /* Turn off transmissions during minutes when this fox should be silent */
+			else if(g_fox != (g_fox_counter + g_fox_id_offset)) /* Turn off transmissions during times when this fox should be silent */
 			{
 				g_on_the_air = FALSE;
 			}
@@ -1099,7 +1112,7 @@ void loop()
 			if(!g_temperature_check_countdown)
 			{
 
-				setUpTemp();
+				setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 				int8_t temp = (int8_t)getTemp();
 				if(temp != g_temperature)
 				{
@@ -1109,8 +1122,15 @@ void loop()
 					rv3028_set_offset_RAM(g_rv3028_offset + adj);
 				}
 
-				setUpAudioSampling(false);
-				g_temperature_check_countdown = 60;
+				setUpSampling(AUDIO_SAMPLING, FALSE);
+				g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
+			}
+			else if(!g_voltage_check_countdown)
+			{
+				setUpSampling(VOLTAGE_SAMPLING, FALSE);
+				g_voltage = getVoltage();
+				setUpSampling(AUDIO_SAMPLING, FALSE);
+				g_voltage_check_countdown = VOLTAGE_POLL_INTERVAL_SECONDS;
 			}
 
 			for(int i = 0; i < 4; i++)
@@ -1540,28 +1560,20 @@ void handleLinkBusMsgs()
 
 			case MESSAGE_CODE_SPEED:
 			{
-				if(lb_buff->fields[FIELD1][0] == 'I')
+				if(lb_buff->fields[FIELD1][0])
 				{
-					if(lb_buff->fields[FIELD2][0])
-					{
-						uint8_t speed = atol(lb_buff->fields[FIELD2]);
-						g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
-						ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
+					uint8_t speed = atol(lb_buff->fields[FIELD2]);
+					g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
+					ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
 
-						if(g_messages_text[STATION_ID][0])
-						{
-							g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
-						}
+					if(g_messages_text[STATION_ID][0])
+					{
+						g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
 					}
 				}
+
 				sprintf(g_tempStr, "ID: %d wpm\n", g_id_codespeed);
 				lb_send_string(g_tempStr, FALSE);
-			}
-			break;
-
-			case MESSAGE_VERSION:
-			{
-				ee_mgr.sendEEPROMString(TextVersion);
 			}
 			break;
 
@@ -1707,7 +1719,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
-			case MESSAGE_TEMP:
+			case MESSAGE_UTIL:
 			{
 				if(lb_buff->fields[FIELD1][0] == 'C')
 				{
@@ -1723,10 +1735,13 @@ void handleLinkBusMsgs()
 					}
 
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
-					lb_send_string(g_tempStr, FALSE);
+					lb_send_string(g_tempStr, TRUE);
 				}
 
-				sprintf(g_tempStr, "T=%d\n", g_temperature);
+				sprintf(g_tempStr, "T=%dC\n", g_temperature);
+				lb_send_string(g_tempStr, TRUE);
+
+				sprintf(g_tempStr, "V=%d.%02dV\n", g_voltage / 100, g_voltage % 100);
 				lb_send_string(g_tempStr, TRUE);
 			}
 			break;
@@ -1849,6 +1864,10 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_START_TRANSMISSIONS_WITH_RTC;
 				}
+				else if(key == '3')
+				{
+					state = STATE_START_TRANSMITTING_NOW;
+				}
 				else if((key == '8') && setPasswordEnabled)
 				{
 					state = STATE_SET_PASSWORD;
@@ -1908,6 +1927,16 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+			case STATE_START_TRANSMITTING_NOW:
+			{
+				if(key == '#')
+				{
+					setupForFox(NULL, START_TRANSMISSIONS_NOW);
+					state = STATE_SHUTDOWN;
+				}
+			}
+			break;
+
 			case STATE_C:
 			{
 				if(key == '1')
@@ -1938,6 +1967,10 @@ void handleLinkBusMsgs()
 				else if(key == '9')
 				{
 					state = STATE_SET_AM_TONE_FREQUENCY;
+				}
+				else if(key == 'B')
+				{
+					state = STATE_GET_BATTERY_VOLTAGE;
 				}
 				else
 				{
@@ -2148,6 +2181,18 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+			case STATE_GET_BATTERY_VOLTAGE:
+			{
+				if(key == '#')
+				{
+					Fox_t f = REPORT_BATTERY;
+					setupForFox(&f, START_TRANSMISSIONS_NOW);
+				}
+
+				state = STATE_SHUTDOWN;
+			}
+			break;
+
 			case STATE_CHECK_PASSWORD:
 			{
 				if(g_unlockCode[digits++] == key)
@@ -2241,7 +2286,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_cycle_period_seconds = 60;
 			g_number_of_foxes = 5;
 			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
-			g_fox_id_offset = SPRINT_S1;
+			g_fox_id_offset = SPRINT_S1 - 1;
 			g_id_interval = 600;
 		}
 		break;
@@ -2258,6 +2303,17 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_pattern_codespeed = SPRINT_FAST_CODE_SPEED;
 			g_fox_id_offset = SPRINT_F1 - 1;
 			g_id_interval = 600;
+		}
+		break;
+
+		case REPORT_BATTERY:
+		{
+			g_on_air_interval = 30;
+			g_cycle_period_seconds = 60;
+			g_number_of_foxes = 2;
+			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
+			g_fox_id_offset = REPORT_BATTERY - 1;
+			g_id_interval = 15;
 		}
 		break;
 
@@ -2289,9 +2345,9 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	}
 	else if(action == START_TRANSMISSIONS_NOW)                      /* Immediately start transmitting, regardless RTC or time slot */
 	{
-		g_fox_counter = g_fox;
+		g_fox_counter = g_fox - g_fox_id_offset;
 		g_seconds_since_sync = g_fox_counter * g_on_air_interval;   /* Total elapsed time counter */
-		g_fox_seconds_into_interval = g_seconds_since_sync;
+		g_fox_seconds_into_interval = 0;
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 	}
@@ -2338,35 +2394,16 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 
 
 /*
- * Set up registers for measuring processor temperature
- */
-void setUpTemp(void)
-{
-	/* The internal temperature has to be used
-	 * with the internal reference of 1.1V.
-	 * Channel 8 can not be selected with
-	 * the analogRead function yet. */
-	/* Set the internal reference and mux. */
-	ADMUX = ((1 << REFS1) | (1 << REFS0) | (1 << MUX3));
-
-	/* Slow the ADC clock down to 125 KHz
-	 * by dividing by 128. Assumes that the
-	 * standard Arduino 16 MHz clock is in use. */
-	ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
-	ADCSRA |= (1 << ADEN);  /* enable the ADC */
-	ADCSRA |= (1 << ADSC);  /* Start the ADC */
-	readADC();
-}
-
-/*
  * Read the temperature ADC value
  */
 uint16_t readADC()
 {
 	/* Make sure the most recent ADC read is complete. */
-	while((ADCSRA & (1 << ADSC)))
+	uint16_t c = MAX_UINT16;
+
+	while((ADCSRA & (1 << ADSC)) && c)
 	{
-		;   /* Just wait for ADC to finish. */
+		c--;    /* Just wait for ADC to finish. */
 	}
 	uint16_t result = ADCW;
 	/* Initiate another reading. */
@@ -2386,40 +2423,78 @@ float getTemp(void)
 	return(roundf(offset + (readADC() - 324.31) / 1.22));
 }
 
-void setUpAudioSampling(BOOL enableSampling)
+uint16_t getVoltage(void)
 {
-	ADCSRA = 0;                             /* clear ADCSRA register */
-	ADCSRB = 0;                             /* clear ADCSRB register */
-	ADMUX = 0;
-	ADMUX |= 0x06;                          /* set A6 analog input pin */
-	ADMUX |= (1 << REFS1) | (1 << REFS0);   /* set reference voltage to internal 1.1V */
-	ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
+	readADC();  /* throw away first reading */
+	uint16_t hold = readADC();
+	hold = (uint16_t)(((uint32_t)hold * 237) >> 7);
+	return(hold);
+}
 
-	/* sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
-	 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
+void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
+{
+	ADCSRA = 0; /* clear ADCSRA register */
+	ADCSRB = 0; /* clear ADCSRB register */
+	ADMUX = 0;
+
+	if(channel == AUDIO_SAMPLING)
+	{
+		ADMUX |= 0x06;                          /* set A6 analog input pin */
+		ADMUX |= (1 << REFS1) | (1 << REFS0);   /* set reference voltage to internal 1.1V */
+		ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
+
+		/* Sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
+		 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
 
 #if SAMPLE_RATE == 154080
-		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
+			ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
 #elif SAMPLE_RATE == 77040
-		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
+			ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
 #elif SAMPLE_RATE == 38520
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
+			ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
 #elif SAMPLE_RATE == 19260
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
+			ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
 #elif SAMPLE_RATE == 9630
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
+			ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
 #else
 #error "Select a valid sample rate."
 #endif
 
-	ADCSRA |= (1 << ADATE);     /* enable auto trigger */
-	ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
-	ADCSRA |= (1 << ADEN);      /* enable ADC */
+		ADCSRA |= (1 << ADATE);     /* enable auto trigger */
+		ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
+		ADCSRA |= (1 << ADEN);      /* enable ADC */
 
-	if(enableSampling)
+		if(enableSampling)
+		{
+			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+		}
+	}
+	else
 	{
-		ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+		/* The internal temperature has to be used
+		 * with the internal reference of 1.1V.
+		 * Channel 8 can not be selected with
+		 * the analogRead function yet. */
+		/* Set the internal reference and mux. */
+		ADMUX |= ((1 << REFS1) | (1 << REFS0));
+
+		if(channel == TEMPERATURE_SAMPLING)
+		{
+			ADMUX |= (1 << MUX3);
+		}
+		else    /* channel == VOLTAGE_SAMPLING */
+		{
+			ADMUX |= (1 << MUX2) | (1 << MUX1) | (1 << MUX0);
+		}
+
+		/* Slow the ADC clock down to 125 KHz
+		 * by dividing by 128. Assumes that the
+		 * standard Arduino 16 MHz clock is in use. */
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+		ADCSRA |= (1 << ADEN);  /* enable the ADC */
+		ADCSRA |= (1 << ADSC);  /* Start the ADC */
+		readADC();
 	}
 }
 
@@ -2483,7 +2558,6 @@ void startEventNow(EventActionSource_t activationSource)
 			else if(conf == SCHEDULED_EVENT_WILL_NEVER_RUN)
 			{
 				setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);                                                              /* rtc starts the event */
-/*				setupForFox(NULL, START_EVENT_NOW);                             / * start the event now * / */
 			}
 			else                                                                                                                    /* Event should be running now */
 			{
@@ -2495,8 +2569,8 @@ void startEventNow(EventActionSource_t activationSource)
 	g_LED_enunciating = FALSE;
 	sei();
 
-/*	g_current_epoch = rv3028_get_epoch(); */
-/*	lb_send_string((char*)"Sync OK\n", FALSE); */
+/*	g_current_epoch = rv3028_get_epoch();
+ *	lb_send_string((char*)"Sync OK\n", FALSE); */
 }
 
 void stopEventNow(EventActionSource_t activationSource)
@@ -2643,7 +2717,7 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	return( failure);
 }
 
-time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours)
+time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 {
 	time_t valid = 0;
 	int len = strlen(str);
@@ -2754,11 +2828,11 @@ void setAMToneFrequency(uint8_t value)
 	}
 
 #if !INIT_EEPROM_ONLY
-	if(enableAM)
-	{
-		setupPortsForF1975();
-	}
-#endif // INIT_EEPROM_ONLY
+		if(enableAM)
+		{
+			setupPortsForF1975();
+		}
+#endif  /* INIT_EEPROM_ONLY */
 
 	g_AM_enabled = enableAM;
 }

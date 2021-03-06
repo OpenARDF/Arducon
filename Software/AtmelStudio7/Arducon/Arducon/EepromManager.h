@@ -34,8 +34,8 @@
 #include <time.h>
 
 /* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.34 ***\n"
-#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [1-6] - Set AM tone frequency\n  TEM - Read temp\n  SPD [s] - Set ID code speed\n  VER - S/W version"
+#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 0.35 ***\n"
+#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [1-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SPD [s] - Set ID code speed"
 #define TEXT_SET_TIME_TXT "CLK T YYMMDDhhmmss <- Set current time\n"
 #define TEXT_SET_START_TXT "CLK S YYMMDDhhmmss <- Set start time\n"
 #define TEXT_SET_FINISH_TXT "CLK F YYMMDDhhmmss <- Set finish time\n"

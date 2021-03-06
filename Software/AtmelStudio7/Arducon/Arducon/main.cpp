@@ -1123,14 +1123,14 @@ void loop()
 				}
 
 				setUpSampling(AUDIO_SAMPLING, FALSE);
-				g_temperature_check_countdown = 60;
+				g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
 			}
 			else if(!g_voltage_check_countdown)
 			{
 				setUpSampling(VOLTAGE_SAMPLING, FALSE);
 				g_voltage = getVoltage();
 				setUpSampling(AUDIO_SAMPLING, FALSE);
-				g_voltage_check_countdown = 10;
+				g_voltage_check_countdown = VOLTAGE_POLL_INTERVAL_SECONDS;
 			}
 
 			for(int i = 0; i < 4; i++)
@@ -1560,28 +1560,20 @@ void handleLinkBusMsgs()
 
 			case MESSAGE_CODE_SPEED:
 			{
-				if(lb_buff->fields[FIELD1][0] == 'I')
+				if(lb_buff->fields[FIELD1][0])
 				{
-					if(lb_buff->fields[FIELD2][0])
-					{
-						uint8_t speed = atol(lb_buff->fields[FIELD2]);
-						g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
-						ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
+					uint8_t speed = atol(lb_buff->fields[FIELD2]);
+					g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
+					ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
 
-						if(g_messages_text[STATION_ID][0])
-						{
-							g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
-						}
+					if(g_messages_text[STATION_ID][0])
+					{
+						g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
 					}
 				}
+
 				sprintf(g_tempStr, "ID: %d wpm\n", g_id_codespeed);
 				lb_send_string(g_tempStr, FALSE);
-			}
-			break;
-
-			case MESSAGE_VERSION:
-			{
-				ee_mgr.sendEEPROMString(TextVersion);
 			}
 			break;
 
