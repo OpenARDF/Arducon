@@ -1,0 +1,37 @@
+Ref,Qty,Value,Footprint,Link,Part No.,
+BT101 ,1,CR1220,Oddities:BC501SM_CR1220_BAT_Handsolder,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>,BC501SM-ND
+C106 C101 C102 C104 ,4,10uF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,490-5523-1-ND
+C108 C107 C103 C109 C110 ,5,100nF,Capacitors_SMD:C_0805,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,478-1395-1-ND
+D101 D108 D109 ,3,MSS1P4-M3_89A,Diodes_SMD:DO-219AD,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>,MSS1P4-M3/89AGICT-ND
+D103 D104 D105 D106 D107 ,5,CG0603MLC-05LECT-ND,Resistors_SMD:R_0603,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,CG0603MLC-05LECT-ND
+J102 ,1,DB9 Female,Connect:DB9F_CI,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>,609-1525-ND
+J103 ,1,To Antenna,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
+J101 ,1,To Radio,Connect:CON-SMA-EDGE-S,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,CON-SMA-EDGE-S-ND
+J108 ,1,Controlled Power,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
+J104 J105 ,2,Conn_01x08,Pin_Headers:Pin_Header_Straight_1x08,np,np
+J109 J110 ,2,Conn_01x01,Pin_Headers:Pin_Header_Straight_1x01,np,np
+J107 ,1,External Power Source,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
+J106 ,1,Logic Level,Pin_Headers:Pin_Header_Straight_1x04,np,np
+MOD101 ,1,Arduino Pro Mini (5V Version),Modules:Arduino_Pro_Mini,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,1568-1055-ND
+P101 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
+PCB201 ,1,Printed Circuit Board,Oddities:Dummy_Empty,np,np
+Q102 ,1,LMN400E01,TO_SOT_Packages_SMD:SOT-363-0.65,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>,LMN400E01DICT-ND
+Q101 Q103 Q104 ,3,PN2222A,TO_SOT_Packages_SMD:SOT-23,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>,MMBT2222ATPMSCT-ND
+R103 R104 R108 R111 R109 R112 ,6,10k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,311-10.0KCRCT-ND
+R107 ,1,162k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>,311-162KCRCT-ND
+R101 R106 ,2,100k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>,311-100KCRCT-ND
+R105 ,1,1M,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=RMCF0805FT1M00CT-ND">Link</a>,RMCF0805FT1M00CT-ND
+R102 ,1,2.2k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND">Link</a>,311-2.20KCRCT-ND
+R110 ,1,10,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND">Link</a>,311-10.0CRCT-ND
+R113 ,1,210k,Resistors_SMD:R_0805,<a href="https://www.digikey.com/products/en?keywords=311-210KCRCT-ND">Link</a>,311-210KCRCT-ND
+RV101 ,1,10k,Potentiometers:Potentiometer_ST32ET_Handsolder,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,TC33X-103ECT-ND
+SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,8,SolderJumper_2_Open,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,np,np
+SJ110 ,1,SolderJumper_3_Bridged12,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small,np,np
+SW101 ,1,SPST_small,Buttons_Switches_SMD:PTS645SL50SMTR92,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,CKN9088CT-ND
+SW102 ,1,5V/12V,Buttons_Switches_SMD:SW_SPDT_PCM12,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>,401-2016-1-ND
+TP101 ,1,I2C,Pin_Headers:Pin_Header_Straight_1x03,np,np
+U103 ,1,RV-3028-C7,Oddities:RV-3028-C7,<a href="https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND">Link</a>,2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND
+U104 ,1,F1975,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>,800-3576-ND
+U102 ,1,CD74HC4050M96,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm,<a href="https://www.digikey.com/products/en?keywords=296-14529-1-ND">Link</a>,296-14529-1-ND
+U101 ,1,MIC5219-3.3YM5,TO_SOT_Packages_SMD:SOT-23-5,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND ">Link</a>,576-1281-1-ND 
+W101 W102 ,2,CONN_01X01,Pin_Headers:Pin_Header_Straight_1x01,np,np
