@@ -1,5 +1,11 @@
 # Arducon
-Arducon is a transmitter controller for Amateur Radio Direction Finding (ARDF). The project is based on the Arduino Pro Mini, and it includes everything needed to create printed circuit boards and executable software. A complete Bill of Material (BOM) is provided to assist with ordering all the parts you'll need.
+Arducon is an Arduino-based ARDF transmitter controller for conducting Amateur Radio Direction-Finding (ARDF) competitions.
+
+When connected to the audio output of an Amateur Radio handy-talky or similar receiver Arducon will decode Dual-Tone Multi Frequency (DTMF) tones that are used to configure and control Arducon. 
+
+When connected to the microphone input of an Amateur Radio handy-talky or similar transmitter Arducon will control the transmitter to cause it to send signals of the proper timing and format for regulation ARDF competitions. Arducon is suitable for controlling most 2m or 80m transmitters used for ARDF.
+
+Consult the <a href="https://docs.google.com/document/d/12K_Gxl0QbTVqAUzWxVBv87l9BldALZO71cXGYb9wk7I/edit?usp=sharing">User Manual</a>  for more information on Arducon and its capabilities.
 
 ![Docs/Arducon1.png](Docs/Arducon1.png)
 
