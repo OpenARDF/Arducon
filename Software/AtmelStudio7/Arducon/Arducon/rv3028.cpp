@@ -94,8 +94,10 @@
    #define EE_COMMAND_READ_ALL_EEPROM     0x12
 
 #if INIT_EEPROM_ONLY
-	extern char g_tempStr[];
-#endif // INIT_EEPROM_ONLY
+		extern char g_tempStr[];
+#endif  /* INIT_EEPROM_ONLY */
+
+	static BOOL g_1HzSqWave_on = FALSE;
 
 	BOOL waitForEEPROMReady(void);
 	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val);
@@ -266,7 +268,7 @@
 			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
 
 			struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-			int16_t year = 100; /* start at 100 years past 1900 */
+			int16_t year = 100;                 /* start at 100 years past 1900 */
 			uint8_t month;
 			uint8_t date;
 			uint8_t hours;
@@ -301,12 +303,12 @@
 			ltm.tm_sec = seconds;
 
 			epoch = ltm.tm_sec + ltm.tm_min * 60 + ltm.tm_hour * 3600L + ltm.tm_yday * 86400L +
-			(ltm.tm_year - 70) * 31536000L + ((ltm.tm_year - 69) / 4) * 86400L -
-			((ltm.tm_year - 1) / 100) * 86400L + ((ltm.tm_year + 299) / 400) * 86400L;
+					(ltm.tm_year - 70) * 31536000L + ((ltm.tm_year - 69) / 4) * 86400L -
+					((ltm.tm_year - 1) / 100) * 86400L + ((ltm.tm_year + 299) / 400) * 86400L;
 		}
 		else
 		{
-//			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7);
+/*			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7); */
 			epoch = rv3028_get_epoch();
 			res = epoch == 0;
 		}
@@ -376,6 +378,7 @@
 	BOOL rv3028_set_epoch(time_t epoch)
 	{
 		uint8_t data[5] = { 0, 0, 0, 0 };
+
 		data[3] = (uint8_t)((epoch & 0xff000000) >> 24);
 		data[2] = (uint8_t)((epoch & 0x00ff0000) >> 16);
 		data[1] = (uint8_t)((epoch & 0x0000ff00) >> 8);
@@ -387,6 +390,7 @@
 	{
 		time_t epoch = 0;
 		uint8_t data[4] = { 0, 0, 0, 0 };
+
 		if(!i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_UNIX_TIME_0, data, 4))
 		{
 			epoch |= data[0];
@@ -395,7 +399,7 @@
 			epoch |= ((time_t)data[3]) << 24;
 		}
 
-		return epoch;
+		return( epoch);
 	}
 
 
@@ -434,6 +438,7 @@
 	{
 		uint8_t status = FALSE;
 		uint8_t temp = 0;
+
 		status = i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1);
 		waitForEEPROMReady();
 		temp = 0x12;    /* Refresh RAM from EEPROM */
@@ -484,39 +489,54 @@
  #define RTC_EE_COMMAND                  0x27
  #define RTC_STATUS                      0x0E
  */
-		uint8_t rv3028_1s_sqw(void)
+		uint8_t rv3028_1s_sqw(BOOL onOff)
 		{
 			uint8_t status = FALSE;
 			uint8_t temp = 0;
 
 #if INIT_EEPROM_ONLY
 /* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM
-by reading all EEPROM into the RAM mirror now */
-			refreshRAMfromEEPROM();
+ * by reading all EEPROM into the RAM mirror now */
+				refreshRAMfromEEPROM();
 
-			if(waitForEEPROMReady())
-			{
-				return( 1);
-			}
+				if(waitForEEPROMReady())
+				{
+					return( 1);
+				}
 
-			temp = 0xC5;    /* Enable 1Hz Output */
-			uint8_t mask = 0xFF;    /* 11111111 */
-			if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
-			{
-				return( 1);
-			}
+				temp = 0xC5;            /* Enable 1Hz Output */
+				uint8_t mask = 0xFF;    /* 11111111 */
+				if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
+				{
+					return( 1);
+				}
 
-// 			temp = 0x04;    /* Enable direct switching mode */
-// 			mask = 0x06;    /* 00001100 */
- 			temp = 0x00;    /* Disable Vbackup switchover */
- 			mask = 0x06;    /* 00001100 */
-			if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
-			{
-				return( 1);
-			}
-#endif // INIT_EEPROM_ONLY
+/*          temp = 0x04;    / * Enable direct switching mode * / */
+/*          mask = 0x06;    / * 00001100 * / */
+				temp = 0x00;    /* Disable Vbackup switchover */
+				mask = 0x06;    /* 00001100 */
+				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
+				{
+					return( 1);
+				}
 
-			refreshRAMfromEEPROM();
+				refreshRAMfromEEPROM();
+#else
+				if(onOff)
+				{
+					temp = 0xC5;    /* turn on 1-Hz signal */
+					g_1HzSqWave_on = TRUE;
+				}
+				else
+				{
+					temp = 0x45;    /* turn off 1-Hz signal */
+					g_1HzSqWave_on = FALSE;
+				}
+
+				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &temp, 1);
+
+#endif  /* INIT_EEPROM_ONLY */
+
 
 /* Debug only */
 #if INIT_EEPROM_ONLY_DEBUG
@@ -572,12 +592,8 @@ by reading all EEPROM into the RAM mirror now */
 
 #endif  /* INIT_EEPROM_ONLY */
 
-	void rv3028_32kHz_sqw(void)
+	BOOL rv3028_1Hz_enabled(void)
 	{
-		/* Just set RAM value */
-		uint8_t byte = 0xC0;    /* FD = 32.768 kHz */
-
-		i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &byte, 1);
+		return(g_1HzSqWave_on);
 	}
-
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */

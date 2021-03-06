@@ -311,7 +311,10 @@ BOOL linkbus_send_text(char* text)
 
 void lb_send_NewPrompt(void)
 {
-	if(g_bus_disabled) return;
+	if(g_bus_disabled)
+	{
+		return;
+	}
 
 	while(linkbus_send_text((char*)textPrompt))
 	{
@@ -321,13 +324,19 @@ void lb_send_NewPrompt(void)
 
 void lb_send_NewLine(void)
 {
-	if(g_bus_disabled) return;
+	if(g_bus_disabled)
+	{
+		return;
+	}
 	linkbus_send_text((char*)crlf);
 }
 
 void lb_echo_char(uint8_t c)
 {
-	if(g_bus_disabled) return;
+	if(g_bus_disabled)
+	{
+		return;
+	}
 	g_tempMsgBuff[0] = c;
 	g_tempMsgBuff[1] = '\0';
 	linkbus_send_text(g_tempMsgBuff);
@@ -339,12 +348,17 @@ BOOL lb_send_string(char* str, BOOL wait)
 
 	if(g_bus_disabled)
 	{
-		return TRUE;
+		return( TRUE);
 	}
 
 	if(str == NULL)
 	{
 		return( TRUE);
+	}
+
+	if(!*str)
+	{
+		return(TRUE);
 	}
 
 	if(strlen(str) > LINKBUS_MAX_TX_MSG_LENGTH)
@@ -376,7 +390,11 @@ BOOL lb_send_string(char* str, BOOL wait)
 void lb_send_value(uint16_t value, char* label)
 {
 	BOOL err;
-	if(g_bus_disabled) return;
+
+	if(g_bus_disabled)
+	{
+		return;
+	}
 
 	sprintf(g_tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
 	while((err = linkbus_send_text(g_tempMsgBuff)))
@@ -392,5 +410,5 @@ void lb_send_value(uint16_t value, char* label)
 
 BOOL lb_enabled(void)
 {
-	return !g_bus_disabled;
+	return( !g_bus_disabled);
 }
