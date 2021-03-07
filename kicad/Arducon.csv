@@ -12,6 +12,8 @@ J104 J105 ,2,Conn_01x08,Pin_Headers:Pin_Header_Straight_1x08,np,np
 J109 J110 ,2,Conn_01x01,Pin_Headers:Pin_Header_Straight_1x01,np,np
 J107 ,1,External Power Source,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,np,np
 J106 ,1,Logic Level,Pin_Headers:Pin_Header_Straight_1x04,np,np
+J112 ,1,Conn_01x06,Pin_Headers:Pin_Header_Angled_1x06,<a href="https://www.digikey.com/products/en?keywords=929550-01-06-ND">Link</a>,929550-01-06-ND
+J111 ,1,DB9_Male,Connect:DB9F_CI,<a href="https://www.digikey.com/products/en?keywords=609-5908-ND">Link</a>,609-5908-ND
 MOD101 ,1,Arduino Pro Mini (5V Version),Modules:Arduino_Pro_Mini,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,1568-1055-ND
 P101 ,1,ISP/PDI,Pin_Headers:SM_Pin_Header_Straight_2x03,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,609-3487-1-ND
 PCB201 ,1,Printed Circuit Board,Oddities:Dummy_Empty,np,np
