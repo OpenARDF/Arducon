@@ -322,7 +322,7 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
-#define ERROR_BLINK_PATTERN ((char*)"A")
+#define ERROR_BLINK_PATTERN ((char*)"E")
 #define WAITING_BLINK_PATTERN ((char*)"E        ")
 #define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
