@@ -82,15 +82,14 @@ volatile BOOL g_sendAMmodulationConstantly = FALSE;
 uint8_t g_dataModulation[SIZE_OF_DATA_MODULATION];
 
 volatile BOOL g_transmissions_disabled = TRUE;
-volatile int g_on_air_interval = 0;
+volatile int g_on_air_interval_seconds = 0;
 volatile int g_cycle_period_seconds = 0;
-volatile int g_seconds_into_cycle = 0;
 volatile int g_fox_counter = 1;
 volatile int g_number_of_foxes = 0;
-//volatile BOOL g_fox_transition = FALSE;
+/*volatile BOOL g_fox_transition = FALSE; */
 volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
-volatile int g_id_interval = 0;
-volatile EventAction_t g_initialize_fox_transmissions = START_NOTHING;
+volatile int g_id_interval_seconds = 0;
+volatile InitializeAction_t g_initialize_fox_transmissions = INIT_NOT_SPECIFIED;
 volatile int g_fox_tone_offset = 1; /* Used to provide slightly different audio tones for different foxes for playback through the speaker */
 volatile BOOL g_use_ptt_periodic_reset = FALSE;
 
@@ -132,7 +131,6 @@ volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 volatile uint8_t g_pattern_codespeed = EEPROM_PATTERN_CODE_SPEED_DEFAULT;
 volatile uint16_t g_time_needed_for_ID = 0;
 volatile int16_t g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
-volatile uint8_t g_enable_transmitter = 1;
 volatile uint8_t g_temperature_check_countdown = 0;
 volatile uint8_t g_voltage_check_countdown = 0;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
@@ -199,7 +197,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED1, OUTPUT);                  /* This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                      /* This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -848,7 +846,7 @@ ISR( TIMER2_COMPB_vect )
 		g_sendAMmodulation = FALSE;
 		sendMorseTone(OFF);
 	}
-}   /* End of Timer 2 ISR */
+}                                               /* End of Timer 2 ISR */
 
 
 #if !INIT_EEPROM_ONLY
@@ -857,11 +855,11 @@ ISR( TIMER2_COMPB_vect )
  **********************************************************************/
 	ISR( INT0_vect )
 	{
-//		static BOOL id_set = TRUE;
-		static int seconds_since_sync_to_send_ID = 99;
-//		BOOL proceed = FALSE;
-		static BOOL send_ID_now = FALSE;
+		static int32_t post_sync_seconds_to_send_ID = 0;
+		static int seconds_into_cycle = 0;
 		static BOOL fox_transition_occurred = FALSE;
+		BOOL send_ID_now = FALSE;
+		BOOL energizeTx = FALSE;
 
 		g_current_epoch++;
 
@@ -904,82 +902,94 @@ ISR( TIMER2_COMPB_vect )
 
 			if(!g_transmissions_disabled)
 			{
-				if(g_seconds_since_sync == 0)   /* sync occurring now */
+				int secondsForID = (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+
+				if((g_seconds_since_sync == 0) && (g_initialize_fox_transmissions == INIT_NOT_SPECIFIED))   /* sync occurs now */
 				{
 					send_ID_now = FALSE;
-					if(g_id_interval <= g_cycle_period_seconds)
+					if(g_id_interval_seconds <= g_cycle_period_seconds)
 					{
 						int slot = MAX(1, g_fox - g_fox_id_offset);
-	 					seconds_since_sync_to_send_ID =  (slot * g_on_air_interval) - (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+						post_sync_seconds_to_send_ID =  (slot * g_on_air_interval_seconds) - secondsForID;
 					}
+
+					seconds_into_cycle = 0;
 				}
 				else
 				{
-					if(g_id_interval <= g_cycle_period_seconds) /* This condition must be met or there will be no IDs sent */
-					{
-						int secondsForID = (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+					seconds_into_cycle = g_seconds_since_sync % g_cycle_period_seconds;
 
-						if(g_initialize_fox_transmissions == START_TRANSMISSIONS_NOW)
+					if(g_id_interval_seconds) /* This condition must be met or there will be no IDs sent */
+					{
+						if(g_initialize_fox_transmissions == INIT_EVENT_STARTING_NOW)
 						{
 							send_ID_now = FALSE;
-							seconds_since_sync_to_send_ID = g_seconds_since_sync + g_on_air_interval - secondsForID;
+							post_sync_seconds_to_send_ID = g_seconds_since_sync + g_on_air_interval_seconds - secondsForID;
+							energizeTx = TRUE;
 						}
-						else if(g_initialize_fox_transmissions == START_EVENT_WITH_STARTFINISH_TIMES)
+						else if(g_initialize_fox_transmissions == INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES)
 						{
-							if((g_fox - g_fox_id_offset) == g_fox_counter) /* This transmitter is on-the-air now */
+							if(((g_fox - g_fox_id_offset) == g_fox_counter) || (g_number_of_foxes == 1)) /* This transmitter is on-the-air now */
 							{
-								int secondsLeftOfXmsn = g_seconds_into_cycle % g_on_air_interval;
+								int secondsLeftOfXmsn = g_on_air_interval_seconds - (seconds_into_cycle % g_on_air_interval_seconds);
 
 								if(secondsLeftOfXmsn > secondsForID)
 								{
-									seconds_since_sync_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn - secondsForID;
+									post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn - secondsForID;
 								}
 								else if(secondsLeftOfXmsn < secondsForID)
 								{
-									seconds_since_sync_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn + g_cycle_period_seconds - secondsForID;
+									post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn + g_cycle_period_seconds - secondsForID;
 								}
 								else
 								{
 									send_ID_now = TRUE;
 								}
+
+								energizeTx = TRUE;
 							}
 							else
 							{
-								seconds_since_sync_to_send_ID = g_seconds_since_sync - g_seconds_into_cycle + ((g_fox - g_fox_id_offset)*g_on_air_interval) - secondsForID;
+								post_sync_seconds_to_send_ID = g_seconds_since_sync - seconds_into_cycle + ((g_fox - g_fox_id_offset) * g_on_air_interval_seconds) - secondsForID;
+								if(post_sync_seconds_to_send_ID < g_seconds_since_sync) post_sync_seconds_to_send_ID += g_id_interval_seconds;
 								send_ID_now = FALSE;
 							}
 						}
-						else if(seconds_since_sync_to_send_ID == g_seconds_since_sync)
+						else if(post_sync_seconds_to_send_ID == g_seconds_since_sync)
 						{
 							send_ID_now = TRUE;
-							seconds_since_sync_to_send_ID = g_seconds_since_sync + g_id_interval;
+							post_sync_seconds_to_send_ID = g_seconds_since_sync + g_id_interval_seconds;
 						}
 					}
 				}
 
-				if(send_ID_now) /* Send the call sign at the right time */
+				/* Handle transitions from one fox to the next */
+				if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval_seconds) == 0))
 				{
-					send_ID_now = FALSE;
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
-					BOOL repeat = FALSE;
-					makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
-					g_callsign_sent = FALSE;
-				}
+					if(g_seconds_since_sync && !g_initialize_fox_transmissions)
+					{
+						g_fox_counter++;
+					}
 
-				if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
-				{
-					if(g_seconds_since_sync && !g_initialize_fox_transmissions) g_fox_counter++;
 					fox_transition_occurred = TRUE;
 
-					if(g_fox_counter > g_number_of_foxes) /* End of cycle */
+					if(g_fox_counter > g_number_of_foxes)   /* End of cycle */
 					{
 						g_fox_counter = 1;
 					}
 
-					g_seconds_into_cycle = 0;
+					seconds_into_cycle = 0;
 				}
 
-				if(fox_transition_occurred && g_callsign_sent)
+				if(send_ID_now) /* Sending the call sign takes priority */
+				{
+					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
+					BOOL repeat = FALSE;
+					makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
+					g_callsign_sent = FALSE;
+					g_on_the_air = TRUE;
+				}
+				else if((fox_transition_occurred && g_callsign_sent) || energizeTx)
 				{
 					digitalWrite(PIN_LED2, OFF);
 					fox_transition_occurred = FALSE;
@@ -1012,12 +1022,12 @@ ISR( TIMER2_COMPB_vect )
 					}
 				}
 
-				g_initialize_fox_transmissions = START_NOTHING;
+				g_initialize_fox_transmissions = INIT_NOT_SPECIFIED;
 				g_seconds_since_sync++; /* Total elapsed time counter */
-				g_seconds_into_cycle++;
+				seconds_into_cycle++;
 			}
 		}
-	}   /* end of INT0 ISR */
+	}                                   /* end of INT0 ISR */
 #endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
@@ -1117,7 +1127,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                             /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                                         /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1284,7 +1294,7 @@ void loop()
 		}
 #endif  /* !INIT_EEPROM_ONLY */
 
-	if(g_transmissions_disabled)
+	if(!g_on_the_air)
 	{
 		if(g_dtmf_detected)
 		{
@@ -1294,7 +1304,7 @@ void loop()
 			g_LED_enunciating = TRUE;
 			g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 		}
-		else
+		else if(g_transmissions_disabled)
 		{
 			ConfigurationState_t hold_config_err = g_config_error;
 			g_config_error = clockConfigurationCheck();
@@ -1391,8 +1401,8 @@ void playStartingTone(uint8_t toneFreq)
 }
 
 
-/* The compiler does not seem to optimize large switch statements correctly
- * void __attribute__((optimize("O0"))) handleLinkBusMsgs() */
+/* The compiler does not seem to always optimize large switch statements correctly */
+//void __attribute__((optimize("O3"))) handleLinkBusMsgs()
 void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
@@ -1435,7 +1445,7 @@ void handleLinkBusMsgs()
 					}
 					else if(c == 'S')
 					{
-						int x = 0;
+						char x = 0;
 						char t = lb_buff->fields[FIELD2][0];
 						char u = lb_buff->fields[FIELD2][1];
 						lb_buff->fields[FIELD2][2] = '\0';
@@ -1477,9 +1487,13 @@ void handleLinkBusMsgs()
 							}
 						}
 
-						if(x != BEACON)
+						if((x >= SPECTATOR) && (x <= SPRINT_F5))
 						{
-							c = CLAMP(SPECTATOR, x, SPRINT_F5);
+							c = x;
+						}
+						else
+						{
+							c = BEACON;
 						}
 					}
 					else
@@ -1609,6 +1623,7 @@ void handleLinkBusMsgs()
 					if(x)
 					{
 						g_ptt_periodic_reset_enabled = ((x == '1') || (x == 'T') || (x == 'Y'));
+						ee_mgr.updateEEPROMVar(Ptt_periodic_reset, (void*)&g_ptt_periodic_reset_enabled);
 					}
 
 					sprintf(g_tempStr, "DRP:%d\n", g_ptt_periodic_reset_enabled);
@@ -2313,12 +2328,12 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		case FOX_4:
 		case FOX_5:
 		{
-			g_on_air_interval = 60;
+			g_on_air_interval_seconds = 60;
 			g_cycle_period_seconds = 300;
 			g_number_of_foxes = 5;
 			g_fox_id_offset = 0;
 			g_pattern_codespeed = 8;
-			g_id_interval = 300;
+			g_id_interval_seconds = 300;
 		}
 		break;
 
@@ -2328,12 +2343,12 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		case SPRINT_S4:
 		case SPRINT_S5:
 		{
-			g_on_air_interval = 12;
+			g_on_air_interval_seconds = 12;
 			g_cycle_period_seconds = 60;
 			g_number_of_foxes = 5;
 			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
 			g_fox_id_offset = SPRINT_S1 - 1;
-			g_id_interval = 600;
+			g_id_interval_seconds = 600;
 		}
 		break;
 
@@ -2343,23 +2358,23 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		case SPRINT_F4:
 		case SPRINT_F5:
 		{
-			g_on_air_interval = 12;
+			g_on_air_interval_seconds = 12;
 			g_cycle_period_seconds = 60;
 			g_number_of_foxes = 5;
 			g_pattern_codespeed = SPRINT_FAST_CODE_SPEED;
 			g_fox_id_offset = SPRINT_F1 - 1;
-			g_id_interval = 600;
+			g_id_interval_seconds = 600;
 		}
 		break;
 
 		case REPORT_BATTERY:
 		{
-			g_on_air_interval = 30;
+			g_on_air_interval_seconds = 30;
 			g_cycle_period_seconds = 60;
 			g_number_of_foxes = 2;
 			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
 			g_fox_id_offset = REPORT_BATTERY - 1;
-			g_id_interval = 15;
+			g_id_interval_seconds = 60;
 		}
 		break;
 
@@ -2371,10 +2386,10 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
 			g_number_of_foxes = 1;
 			g_pattern_codespeed = 8;
-			g_id_interval = g_ptt_periodic_reset_enabled ? 60:600;
-			g_on_air_interval = g_id_interval;
+			g_id_interval_seconds = g_ptt_periodic_reset_enabled ? 60 : 600;
+			g_on_air_interval_seconds = g_id_interval_seconds;
 			g_fox_id_offset = 0;
-			g_cycle_period_seconds = g_id_interval;
+			g_cycle_period_seconds = g_id_interval_seconds;
 		}
 		break;
 	}
@@ -2387,33 +2402,30 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	else if(action == START_EVENT_NOW)
 	{
 		g_fox_counter = 1;
-		g_seconds_since_sync = 0;   /* Total elapsed time since synchronization */
-		g_seconds_into_cycle = 0;
+		g_seconds_since_sync = 0;                                           /* Total elapsed time since synchronization */
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 	}
-	else if(action == START_TRANSMISSIONS_NOW)        /* Immediately start transmitting, regardless RTC or time slot */
+	else if(action == START_TRANSMISSIONS_NOW)                              /* Immediately start transmitting, regardless RTC or time slot */
 	{
-		g_fox_counter = g_fox - g_fox_id_offset;
-		g_seconds_since_sync = g_fox_counter * g_on_air_interval;   /* Total elapsed time since start of event */
-		g_seconds_into_cycle = 0;
+		g_fox_counter = MAX(1, g_fox - g_fox_id_offset);
+		g_seconds_since_sync = (g_fox_counter - 1) * g_on_air_interval_seconds;           /* Total elapsed time since start of event */
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
+		g_initialize_fox_transmissions = INIT_EVENT_STARTING_NOW;
 	}
 	else                                                                    /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
 			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
-			g_seconds_into_cycle = g_seconds_since_sync % g_cycle_period_seconds;
-			g_fox_counter = CLAMP(1, 1 + (g_seconds_into_cycle / g_on_air_interval), g_number_of_foxes);
-			g_initialize_fox_transmissions = START_EVENT_WITH_STARTFINISH_TIMES;
+			g_fox_counter = CLAMP(1, 1 + ((g_seconds_since_sync % g_cycle_period_seconds) / g_on_air_interval_seconds), g_number_of_foxes);
+			g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES;
 		}
 		else                                                                /* event starts in the future */
 		{
 			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
 			g_fox_counter = 1;
-			g_seconds_into_cycle = 0;
 		}
 
 		g_use_rtc_for_startstop = TRUE;

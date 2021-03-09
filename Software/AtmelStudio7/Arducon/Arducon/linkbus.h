@@ -81,8 +81,6 @@ typedef enum
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;
 
-#define MESSAGE_VER_LABEL "VER"
-
 typedef enum
 {
 	LINKBUS_MSG_UNKNOWN = 0,
