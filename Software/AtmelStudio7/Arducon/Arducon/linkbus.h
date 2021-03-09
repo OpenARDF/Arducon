@@ -68,13 +68,13 @@ typedef enum
 {
 	MESSAGE_EMPTY = 0,
 
-	/*	DUAL-BAND TX MESSAGE FAMILY (FUNCTIONAL MESSAGING) */
+	/*	ARDUCON MESSAGE FAMILY (SERIAL MESSAGING) */
 	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Override DIP switch settings using this value */
 	MESSAGE_SET_AM_TONE = 'A' * 10 + 'M',					/* Set AM audio tone frequency */
 	MESSAGE_UTIL = 'U' * 100 + 'T' * 10 + 'I',              /* Temperature  and Voltage data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
 	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
-	MESSAGE_CODE_SPEED = 'S' * 100 + 'P' * 10 + 'D',        /* Set Morse code speeds */
+	MESSAGE_CODE_SETTINGS = 'S' * 100 + 'E' * 10 + 'T',     /* Set Morse code speeds */
 	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
 	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
 

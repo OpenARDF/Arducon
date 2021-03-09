@@ -61,7 +61,7 @@ volatile BOOL g_on_the_air       = 0;       /* Used to indicate and control tran
 volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
 #if !INIT_EEPROM_ONLY
-	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
+	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
 #endif /* !INIT_EEPROM_ONLY */
 
 volatile BOOL g_callsign_sent = TRUE;
@@ -73,6 +73,7 @@ volatile time_t g_current_epoch = 0;
 volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 volatile int8_t g_utc_offset = 0;
+volatile BOOL g_ptt_periodic_reset_enabled;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile uint8_t g_AM_audio_frequency;
@@ -83,14 +84,15 @@ uint8_t g_dataModulation[SIZE_OF_DATA_MODULATION];
 volatile BOOL g_transmissions_disabled = TRUE;
 volatile int g_on_air_interval = 0;
 volatile int g_cycle_period_seconds = 0;
-volatile int g_fox_seconds_into_interval = 0;
+volatile int g_seconds_into_cycle = 0;
 volatile int g_fox_counter = 1;
 volatile int g_number_of_foxes = 0;
-volatile BOOL g_fox_transition = FALSE;
+//volatile BOOL g_fox_transition = FALSE;
 volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
 volatile int g_id_interval = 0;
-volatile BOOL g_time_to_ID = FALSE;
+volatile EventAction_t g_initialize_fox_transmissions = START_NOTHING;
 volatile int g_fox_tone_offset = 1; /* Used to provide slightly different audio tones for different foxes for playback through the speaker */
+volatile BOOL g_use_ptt_periodic_reset = FALSE;
 
 volatile BOOL g_audio_tone_state = FALSE;
 volatile int16_t g_sync_pin_timer = 0;
@@ -197,7 +199,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED1, OUTPUT);              /* This led blinks when off cycle and blinks with code when on cycle. */
+	pinMode(PIN_LED1, OUTPUT);                  /* This led blinks when off cycle and blinks with code when on cycle. */
 	digitalWrite(PIN_LED1, OFF);
 
 	pinMode(PIN_LED2, OUTPUT);
@@ -338,8 +340,6 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 		uint8_t result = rv3028_1s_sqw(ON);
 #endif  /* !INIT_EEPROM_ONLY */
-
-	g_current_epoch = rv3028_get_epoch();
 
 #if !INIT_EEPROM_ONLY
 		ee_mgr.send_Help();
@@ -731,6 +731,7 @@ ISR( TIMER2_COMPB_vect )
 
 	static BOOL key = OFF;
 	static uint16_t ptt_delay = 0;
+	static uint16_t ptt_dropped = 0;
 
 	if(!g_transmissions_disabled && g_on_the_air)
 	{
@@ -757,7 +758,12 @@ ISR( TIMER2_COMPB_vect )
 					{
 						key = OFF;
 						g_callsign_sent = TRUE;
-						sendMorseTone(OFF);
+
+						if(g_use_ptt_periodic_reset)
+						{
+							g_on_the_air = FALSE;
+							ptt_dropped = TIMER2_SECONDS_1;
+						}
 					}
 
 					digitalWrite(PIN_LED2, key);            /*  LED */
@@ -796,6 +802,15 @@ ISR( TIMER2_COMPB_vect )
 				{
 					digitalWrite(PIN_PTT_LOGIC, OFF);   /* Unkey the microphone / de-energize transmitter */
 				}
+			}
+		}
+		else if(ptt_dropped)
+		{
+			ptt_dropped--;
+
+			if(!ptt_dropped)
+			{
+				g_on_the_air = TRUE;
 			}
 		}
 
@@ -842,7 +857,11 @@ ISR( TIMER2_COMPB_vect )
  **********************************************************************/
 	ISR( INT0_vect )
 	{
-		static int id_countdown = 0;
+//		static BOOL id_set = TRUE;
+		static int seconds_since_sync_to_send_ID = 99;
+//		BOOL proceed = FALSE;
+		static BOOL send_ID_now = FALSE;
+		static BOOL fox_transition_occurred = FALSE;
 
 		g_current_epoch++;
 
@@ -885,38 +904,117 @@ ISR( TIMER2_COMPB_vect )
 
 			if(!g_transmissions_disabled)
 			{
-				if(g_seconds_since_sync == 0)   /* sync just occurred */
+				if(g_seconds_since_sync == 0)   /* sync occurring now */
 				{
-					id_countdown = g_id_interval;
-					g_fox_counter = 1;
+					send_ID_now = FALSE;
+					if(g_id_interval <= g_cycle_period_seconds)
+					{
+						int slot = MAX(1, g_fox - g_fox_id_offset);
+	 					seconds_since_sync_to_send_ID =  (slot * g_on_air_interval) - (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+					}
+				}
+				else
+				{
+					if(g_id_interval <= g_cycle_period_seconds) /* This condition must be met or there will be no IDs sent */
+					{
+						int secondsForID = (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+
+						if(g_initialize_fox_transmissions == START_TRANSMISSIONS_NOW)
+						{
+							send_ID_now = FALSE;
+							seconds_since_sync_to_send_ID = g_seconds_since_sync + g_on_air_interval - secondsForID;
+						}
+						else if(g_initialize_fox_transmissions == START_EVENT_WITH_STARTFINISH_TIMES)
+						{
+							if((g_fox - g_fox_id_offset) == g_fox_counter) /* This transmitter is on-the-air now */
+							{
+								int secondsLeftOfXmsn = g_seconds_into_cycle % g_on_air_interval;
+
+								if(secondsLeftOfXmsn > secondsForID)
+								{
+									seconds_since_sync_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn - secondsForID;
+								}
+								else if(secondsLeftOfXmsn < secondsForID)
+								{
+									seconds_since_sync_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn + g_cycle_period_seconds - secondsForID;
+								}
+								else
+								{
+									send_ID_now = TRUE;
+								}
+							}
+							else
+							{
+								seconds_since_sync_to_send_ID = g_seconds_since_sync - g_seconds_into_cycle + ((g_fox - g_fox_id_offset)*g_on_air_interval) - secondsForID;
+								send_ID_now = FALSE;
+							}
+						}
+						else if(seconds_since_sync_to_send_ID == g_seconds_since_sync)
+						{
+							send_ID_now = TRUE;
+							seconds_since_sync_to_send_ID = g_seconds_since_sync + g_id_interval;
+						}
+					}
 				}
 
-				g_seconds_since_sync++; /* Total elapsed time counter */
-				g_fox_seconds_into_interval++;
-
-				if(id_countdown)
+				if(send_ID_now) /* Send the call sign at the right time */
 				{
-					id_countdown--;
+					send_ID_now = FALSE;
+					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
+					BOOL repeat = FALSE;
+					makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
+					g_callsign_sent = FALSE;
 				}
 
 				if(g_number_of_foxes && ((g_seconds_since_sync % g_on_air_interval) == 0))
 				{
-					g_fox_counter++;
+					if(g_seconds_since_sync && !g_initialize_fox_transmissions) g_fox_counter++;
+					fox_transition_occurred = TRUE;
 
-					if(g_fox_counter > g_number_of_foxes)
+					if(g_fox_counter > g_number_of_foxes) /* End of cycle */
 					{
 						g_fox_counter = 1;
-						digitalWrite(PIN_LED2, OFF);
 					}
-					g_fox_transition = TRUE;
-					g_fox_seconds_into_interval = 0;
 
-					if(!id_countdown)
+					g_seconds_into_cycle = 0;
+				}
+
+				if(fox_transition_occurred && g_callsign_sent)
+				{
+					digitalWrite(PIN_LED2, OFF);
+					fox_transition_occurred = FALSE;
+
+					if((g_number_of_foxes > 1) && (g_fox != (g_fox_counter + g_fox_id_offset))) /* Turn off transmissions during times when this fox should be silent */
 					{
-						id_countdown = g_id_interval;
-						g_time_to_ID = TRUE;
+						g_on_the_air = FALSE;
+					}
+					else
+					{
+						BOOL repeat;
+						/* Choose the appropriate Morse pattern to be sent */
+						if(g_fox == REPORT_BATTERY)
+						{
+							sprintf(g_tempStr, "|||%dR%d/%d", g_voltage / 100, (5 + (g_voltage % 100)) / 10, g_temperature);
+							strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
+							repeat = FALSE;
+						}
+						else
+						{
+							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							repeat = TRUE;
+						}
+
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
+						makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
+
+						g_on_the_air = TRUE;
+						g_fox_tone_offset = g_fox_counter;
 					}
 				}
+
+				g_initialize_fox_transmissions = START_NOTHING;
+				g_seconds_since_sync++; /* Total elapsed time counter */
+				g_seconds_into_cycle++;
 			}
 		}
 	}   /* end of INT0 ISR */
@@ -998,10 +1096,6 @@ ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 void loop()
 {
 #if !INIT_EEPROM_ONLY
-		static int time_for_id = 99;
-		static BOOL id_set = TRUE;
-		static BOOL proceed = FALSE;
-
 		if(g_perform_EEPROM_reset)
 		{
 			g_perform_EEPROM_reset = FALSE;
@@ -1013,88 +1107,6 @@ void loop()
 	handleLinkBusMsgs();
 
 #if !INIT_EEPROM_ONLY
-		if(!g_on_the_air || proceed)
-		{
-			/* At the appropriate time set the pattern to be sent and start transmissions */
-			if(!g_transmissions_disabled)
-			{
-				proceed = FALSE;
-
-				if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR) || (g_fox == (g_fox_counter + g_fox_id_offset)))
-				{
-					BOOL repeat;
-					/* Choose the appropriate Morse pattern to be sent */
-					if(g_fox == REPORT_BATTERY)
-					{
-						sprintf(g_tempStr, "|||%dR%d/%d", g_voltage / 100, (5 + (g_voltage % 100)) / 10, g_temperature);
-						strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
-						repeat = FALSE;
-					}
-					else
-					{
-						strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
-						repeat = TRUE;
-					}
-
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
-					makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
-
-					if(g_time_to_ID || (g_id_interval <= g_on_air_interval))
-					{
-						time_for_id = g_on_air_interval - (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
-						g_time_to_ID = FALSE;
-					}
-					else
-					{
-						time_for_id = g_on_air_interval + 99;   /* prevent sending ID */
-					}
-
-					id_set = FALSE;
-					g_on_the_air = TRUE;
-					g_callsign_sent = FALSE;
-					g_fox_transition = FALSE;
-					g_fox_tone_offset = g_fox_counter;
-				}
-			}
-		}
-		else
-		{
-			if(!id_set && (g_fox_seconds_into_interval == time_for_id)) /* Send the call sign at the right time */
-			{
-				g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
-				BOOL repeat = FALSE;
-				makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
-				id_set = TRUE;
-				g_callsign_sent = FALSE;
-			}
-			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5))
-			{
-				if(g_fox_transition)
-				{
-					g_fox_transition = FALSE;
-					g_on_the_air = FALSE;
-					proceed = TRUE;
-				}
-			}
-
-			if((g_fox == BEACON) || (g_fox == FOXORING) || (g_fox == SPECTATOR))    /* Proceed as soon as the callsign has been sent */
-			{
-				if(g_callsign_sent)
-				{
-					proceed = TRUE;
-				}
-			}
-			else if((g_fox >= SPRINT_S1) && (g_fox <= SPRINT_F5) && g_callsign_sent)
-			{
-				g_on_the_air = FALSE;
-			}
-			else if(g_fox != (g_fox_counter + g_fox_id_offset)) /* Turn off transmissions during times when this fox should be silent */
-			{
-				g_on_the_air = FALSE;
-			}
-		}
-
-
 		if(g_goertzel.SamplesReady())
 		{
 			float magnitudeX;
@@ -1105,7 +1117,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                 /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;                             /* Set above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1523,6 +1535,18 @@ void handleLinkBusMsgs()
 						g_transmissions_disabled = TRUE;        /* Disable an event currently underway */
 						startEventUsingRTC();
 					}
+					else if(lb_buff->fields[FIELD1][0] == '3')  /* Start the event at the programmed start time */
+					{
+						setupForFox(NULL, START_TRANSMISSIONS_NOW);
+					}
+					else
+					{
+						lb_send_string((char*)"err\n", TRUE);
+					}
+				}
+				else
+				{
+					lb_send_string((char*)"err\n", TRUE);
 				}
 			}
 			break;
@@ -1558,21 +1582,43 @@ void handleLinkBusMsgs()
 			break;
 
 
-			case MESSAGE_CODE_SPEED:
+			case MESSAGE_CODE_SETTINGS:
 			{
-				if(lb_buff->fields[FIELD1][0])
+				if(lb_buff->fields[FIELD1][0] == 'S')
 				{
-					uint8_t speed = atol(lb_buff->fields[FIELD2]);
-					g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
-					ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
+					char x = lb_buff->fields[FIELD2][0];
 
-					if(g_messages_text[STATION_ID][0])
+					if(x)
 					{
-						g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+						uint8_t speed = atol(lb_buff->fields[FIELD2]);
+						g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, speed, MAX_CODE_SPEED_WPM);
+						ee_mgr.updateEEPROMVar(Id_codespeed, (void*)&g_id_codespeed);
+
+						if(g_messages_text[STATION_ID][0])
+						{
+							g_time_needed_for_ID = (600 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+						}
 					}
+
+					sprintf(g_tempStr, "ID: %d wpm\n", g_id_codespeed);
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'P')
+				{
+					char x = lb_buff->fields[FIELD2][0];
+
+					if(x)
+					{
+						g_ptt_periodic_reset_enabled = ((x == '1') || (x == 'T') || (x == 'Y'));
+						ee_mgr.updateEEPROMVar(Ptt_periodic_reset, (void*)&g_ptt_periodic_reset_enabled);
+					}
+
+					sprintf(g_tempStr, "DRP:%d\n", g_ptt_periodic_reset_enabled);
+				}
+				else
+				{
+					sprintf(g_tempStr, "err\n");
 				}
 
-				sprintf(g_tempStr, "ID: %d wpm\n", g_id_codespeed);
 				lb_send_string(g_tempStr, FALSE);
 			}
 			break;
@@ -1633,7 +1679,6 @@ void handleLinkBusMsgs()
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
-/*						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES); */
 						startEventUsingRTC();
 					}
 					else
@@ -1654,7 +1699,6 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-/*						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES); */
 						startEventUsingRTC();
 					}
 					else
@@ -2257,6 +2301,9 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
+	g_current_epoch = rv3028_get_epoch();
+	g_use_ptt_periodic_reset = FALSE;
+
 	cli();
 
 	switch(g_fox)
@@ -2272,7 +2319,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_number_of_foxes = 5;
 			g_fox_id_offset = 0;
 			g_pattern_codespeed = 8;
-			g_id_interval = 60;
+			g_id_interval = 300;
 		}
 		break;
 
@@ -2322,10 +2369,13 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 /* case SPECTATOR: */
 		default:
 		{
-			g_on_air_interval = 600;
+			g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
 			g_number_of_foxes = 1;
 			g_pattern_codespeed = 8;
-			g_id_interval = 600;
+			g_id_interval = g_ptt_periodic_reset_enabled ? 60:600;
+			g_on_air_interval = g_id_interval;
+			g_fox_id_offset = 0;
+			g_cycle_period_seconds = g_id_interval;
 		}
 		break;
 	}
@@ -2338,16 +2388,16 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	else if(action == START_EVENT_NOW)
 	{
 		g_fox_counter = 1;
-		g_seconds_since_sync = 0;   /* Total elapsed time counter */
-		g_fox_seconds_into_interval = 0;
+		g_seconds_since_sync = 0;   /* Total elapsed time since synchronization */
+		g_seconds_into_cycle = 0;
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 	}
-	else if(action == START_TRANSMISSIONS_NOW)                      /* Immediately start transmitting, regardless RTC or time slot */
+	else if(action == START_TRANSMISSIONS_NOW)        /* Immediately start transmitting, regardless RTC or time slot */
 	{
 		g_fox_counter = g_fox - g_fox_id_offset;
-		g_seconds_since_sync = g_fox_counter * g_on_air_interval;   /* Total elapsed time counter */
-		g_fox_seconds_into_interval = 0;
+		g_seconds_since_sync = g_fox_counter * g_on_air_interval;   /* Total elapsed time since start of event */
+		g_seconds_into_cycle = 0;
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 	}
@@ -2356,16 +2406,16 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
 			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
-			g_fox_seconds_into_interval = g_seconds_since_sync % g_cycle_period_seconds;
-			g_fox_counter = CLAMP(1, 1 + (g_fox_seconds_into_interval / g_on_air_interval), g_number_of_foxes);
+			g_seconds_into_cycle = g_seconds_since_sync % g_cycle_period_seconds;
+			g_fox_counter = CLAMP(1, 1 + (g_seconds_into_cycle / g_on_air_interval), g_number_of_foxes);
+			g_initialize_fox_transmissions = START_EVENT_WITH_STARTFINISH_TIMES;
 		}
 		else                                                                /* event starts in the future */
 		{
 			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
 			g_fox_counter = 1;
-			g_fox_seconds_into_interval = 0;
+			g_seconds_into_cycle = 0;
 		}
-
 
 		g_use_rtc_for_startstop = TRUE;
 		g_transmissions_disabled = TRUE;
@@ -2374,11 +2424,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	g_fox_tone_offset = g_fox_counter;
 
 	sendMorseTone(OFF);
-	g_time_to_ID = FALSE;
-	g_callsign_sent = TRUE;
 	g_code_throttle    = 0;                 /* Adjusts Morse code speed */
-	g_fox_transition = FALSE;
-
 	g_on_the_air       = FALSE;             /* Controls transmitter Morse activity */
 
 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
@@ -2628,6 +2674,8 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
+	g_current_epoch = rv3028_get_epoch();
+
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
 		ee_mgr.sendEEPROMString(TextSetID);
