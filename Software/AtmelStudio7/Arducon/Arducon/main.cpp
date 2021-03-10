@@ -731,7 +731,7 @@ ISR( TIMER2_COMPB_vect )
 	static uint16_t ptt_delay = 0;
 	static uint16_t ptt_dropped = 0;
 
-	if(!g_transmissions_disabled && g_on_the_air)
+	if(!g_transmissions_disabled && g_on_the_air && !ptt_dropped)
 	{
 		if(!digitalRead(PIN_PTT_LOGIC))
 		{
@@ -985,7 +985,14 @@ ISR( TIMER2_COMPB_vect )
 				{
 					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
 					BOOL repeat = FALSE;
-					makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
+					if(g_messages_text[STATION_ID][0])
+					{
+						makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
+					}
+					else
+					{
+						makeMorse((char*)" ", &repeat, NULL);
+					}
 					g_callsign_sent = FALSE;
 					g_on_the_air = TRUE;
 				}
@@ -1004,7 +1011,8 @@ ISR( TIMER2_COMPB_vect )
 						/* Choose the appropriate Morse pattern to be sent */
 						if(g_fox == REPORT_BATTERY)
 						{
-							sprintf(g_tempStr, "|||%dR%d/%d", g_voltage / 100, (5 + (g_voltage % 100)) / 10, g_temperature);
+							uint16_t v = g_voltage + 5;
+							sprintf(g_tempStr, "|||%dR%d/%d", v / 100, (v % 100) / 10, g_temperature);
 							strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
 							repeat = FALSE;
 						}
@@ -1624,6 +1632,7 @@ void handleLinkBusMsgs()
 					{
 						g_ptt_periodic_reset_enabled = ((x == '1') || (x == 'T') || (x == 'Y'));
 						ee_mgr.updateEEPROMVar(Ptt_periodic_reset, (void*)&g_ptt_periodic_reset_enabled);
+						g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
 					}
 
 					sprintf(g_tempStr, "DRP:%d\n", g_ptt_periodic_reset_enabled);
@@ -2026,6 +2035,10 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_SET_AM_TONE_FREQUENCY;
 				}
+				else if(key == 'A')
+				{
+					state = STATE_SET_PTT_PERIODIC_RESET;
+				}
 				else if(key == 'B')
 				{
 					state = STATE_GET_BATTERY_VOLTAGE;
@@ -2233,6 +2246,26 @@ void handleLinkBusMsgs()
 					state = STATE_SHUTDOWN;
 				}
 				else if((key >= MIN_AM_TONE_FREQUENCY) && (key <= MAX_AM_TONE_FREQUENCY))
+				{
+					value = key - '0';
+				}
+			}
+			break;
+
+			case STATE_SET_PTT_PERIODIC_RESET:
+			{
+				if(key == '#')
+				{
+					if((value >= 0) && (value <= 1))
+					{
+						g_ptt_periodic_reset_enabled = (uint8_t)value;
+						g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
+						ee_mgr.updateEEPROMVar(Ptt_periodic_reset, (void*)&g_ptt_periodic_reset_enabled);
+					}
+
+					state = STATE_SHUTDOWN;
+				}
+				else if((key >= '0') && (key <= '1'))
 				{
 					value = key - '0';
 				}
