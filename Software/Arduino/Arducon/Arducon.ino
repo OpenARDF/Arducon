@@ -714,7 +714,7 @@ ISR( TIMER2_COMPB_vect )
 		{
 			g_sync_pin_stable = (button == HIGH) ? STABLE_HIGH : STABLE_LOW;
 
-			if(button == LOW)
+			if((button == LOW) && !g_reset_button_held)
 			{
 				digitalWrite(PIN_LED2, ON);
 			}
@@ -1119,6 +1119,10 @@ void loop()
 			g_perform_EEPROM_reset = FALSE;
 			ee_mgr.resetEEPROMValues();
 			linkbus_init(BAUD);
+			while(g_reset_button_held)
+			{
+				digitalWrite(PIN_LED2, OFF);    /*  LED */
+			}
 		}
 #endif  /* !INIT_EEPROM_ONLY */
 
