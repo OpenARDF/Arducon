@@ -86,6 +86,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
 	/* .utc_offset = */ 0,
+	/* .ptt_periodic_reset = */ 0,
 	/* .eeprom_initialization_flag = */ 0
 };
 
@@ -102,6 +103,7 @@ extern volatile uint8_t g_AM_audio_frequency;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 extern volatile int8_t g_utc_offset;
+extern volatile uint8_t g_ptt_periodic_reset_enabled;
 
 extern uint8_t g_dataModulation[];
 extern uint8_t g_unlockCode[];
@@ -208,6 +210,12 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Utc_offset:
 		{
 			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.utc_offset);
+		}
+		break;
+
+		case Ptt_periodic_reset:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.ptt_periodic_reset);
 		}
 		break;
 
@@ -356,6 +364,7 @@ BOOL EepromManager::readNonVols(void)
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
+		g_ptt_periodic_reset_enabled = eeprom_read_byte(&(EepromManager::ee_vars.ptt_periodic_reset));
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
@@ -472,6 +481,9 @@ BOOL EepromManager::readNonVols(void)
 
 		g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.utc_offset), (uint8_t)g_utc_offset);
+
+		g_ptt_periodic_reset_enabled = EEPROM_PTT_PERIODIC_RESET_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.ptt_periodic_reset), g_ptt_periodic_reset_enabled);
 
 		g_messages_text[STATION_ID][0] = '\0';
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[0]), 0);
@@ -659,6 +671,10 @@ BOOL EepromManager::readNonVols(void)
 
 		byt = eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
 		sprintf(g_tempStr, "UO=%d\n", (int8_t)byt);
+		lb_send_string(g_tempStr, TRUE);
+
+		byt = eeprom_read_byte(&(EepromManager::ee_vars.ptt_periodic_reset));
+		sprintf(g_tempStr, "PT=%d\n", byt);
 		lb_send_string(g_tempStr, TRUE);
 
 		for(int i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
