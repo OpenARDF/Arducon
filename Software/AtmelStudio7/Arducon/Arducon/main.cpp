@@ -1705,6 +1705,7 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
+						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
 						startEventUsingRTC();
 					}
