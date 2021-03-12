@@ -197,11 +197,11 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED1, OUTPUT);                      /* This led blinks when off cycle and blinks with code when on cycle. */
-	digitalWrite(PIN_LED1, OFF);
+	pinMode(PIN_LED, OUTPUT);                      /* This led blinks when off cycle and blinks with code when on cycle. */
+	digitalWrite(PIN_LED, OFF);
 
-	pinMode(PIN_LED2, OUTPUT);
-	digitalWrite(PIN_LED2, OFF);
+	pinMode(PIN_LED, OUTPUT);
+	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);
@@ -325,7 +325,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 			ee_mgr.sendSuccessString();
 		}
 
-		digitalWrite(PIN_LED2, ON);
+		digitalWrite(PIN_LED, ON);
 		while(1)
 		{
 			;
@@ -420,7 +420,7 @@ ISR(PCINT2_vect)
 			if(g_sync_pin_stable == STABLE_LOW)
 			{
 				g_sync_pin_stable = UNSTABLE;
-				digitalWrite(PIN_LED2, OFF);    /*  LED */
+				digitalWrite(PIN_LED, OFF);    /*  LED */
 				startEventNow(PUSHBUTTON);
 			}
 		}
@@ -716,7 +716,7 @@ ISR( TIMER2_COMPB_vect )
 
 			if((button == LOW) && !g_reset_button_held)
 			{
-				digitalWrite(PIN_LED2, ON);
+				digitalWrite(PIN_LED, ON);
 			}
 		}
 	}
@@ -764,7 +764,7 @@ ISR( TIMER2_COMPB_vect )
 						}
 					}
 
-					digitalWrite(PIN_LED2, key);            /*  LED */
+					digitalWrite(PIN_LED, key);            /*  LED */
 					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
 					g_sendAMmodulation = key;
 					sendMorseTone(key);
@@ -774,7 +774,7 @@ ISR( TIMER2_COMPB_vect )
 			{
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED2, key);        /*  LED */
+					digitalWrite(PIN_LED, key);        /*  LED */
 				}
 
 				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
@@ -821,7 +821,7 @@ ISR( TIMER2_COMPB_vect )
 				if(!codeInc)
 				{
 					key = makeMorse(NULL, &repeat, &finished);
-					digitalWrite(PIN_LED2, key);    /*  LED */
+					digitalWrite(PIN_LED, key);    /*  LED */
 					codeInc = g_code_throttle;
 				}
 			}
@@ -837,7 +837,7 @@ ISR( TIMER2_COMPB_vect )
 				key = OFF;
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED2, OFF);    /*  LED Off */
+					digitalWrite(PIN_LED, OFF);    /*  LED Off */
 				}
 			}
 		}
@@ -998,7 +998,7 @@ ISR( TIMER2_COMPB_vect )
 				}
 				else if((fox_transition_occurred && g_callsign_sent) || energizeTx)
 				{
-					digitalWrite(PIN_LED2, OFF);
+					digitalWrite(PIN_LED, OFF);
 					fox_transition_occurred = FALSE;
 
 					if((g_number_of_foxes > 1) && (g_fox != (g_fox_counter + g_fox_id_offset))) /* Turn off transmissions during times when this fox should be silent */
@@ -1121,7 +1121,7 @@ void loop()
 			linkbus_init(BAUD);
 			while(g_reset_button_held)
 			{
-				digitalWrite(PIN_LED2, OFF);    /*  LED */
+				digitalWrite(PIN_LED, OFF);    /*  LED */
 			}
 		}
 #endif  /* !INIT_EEPROM_ONLY */
@@ -1287,7 +1287,7 @@ void loop()
 					g_dtmf_detected = FALSE;
 					if(g_transmissions_disabled && !g_LED_enunciating)
 					{
-						digitalWrite(PIN_LED1, OFF);
+						digitalWrite(PIN_LED, OFF);
 					}
 
 					if(delta < 1500)
@@ -1347,7 +1347,7 @@ void loop()
 				else
 				{
 					g_LED_enunciating = FALSE;
-					digitalWrite(PIN_LED2, OFF);    /* ensure LED is off */
+					digitalWrite(PIN_LED, OFF);    /* ensure LED is off */
 				}
 			}
 		}
@@ -2477,7 +2477,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	g_on_the_air       = FALSE;             /* Controls transmitter Morse activity */
 
 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
-	digitalWrite(PIN_LED2, OFF);            /*  LED Off - in case it was left on */
+	digitalWrite(PIN_LED, OFF);            /*  LED Off - in case it was left on */
 
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 	g_sendAMmodulation = FALSE;
@@ -2696,7 +2696,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 	if(g_sync_pin_stable == STABLE_LOW)
 	{
-		digitalWrite(PIN_LED2, OFF);    /*  LED Off */
+		digitalWrite(PIN_LED, OFF);    /*  LED Off */
 	}
 }
 
