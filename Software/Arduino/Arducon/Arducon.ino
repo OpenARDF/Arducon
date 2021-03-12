@@ -169,7 +169,11 @@ void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
+
+#if !SUPPORT_ONLY_80M
 void setAMToneFrequency(uint8_t value);
+#endif // !SUPPORT_ONLY_80M
+
 uint16_t readADC();
 float getTemp(void);
 uint16_t getVoltage(void);
@@ -197,10 +201,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED, OUTPUT);                      /* This led blinks when off cycle and blinks with code when on cycle. */
-	digitalWrite(PIN_LED, OFF);
-
-	pinMode(PIN_LED, OUTPUT);
+	pinMode(PIN_LED, OUTPUT);           /* This is the enunciator LED */
 	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
@@ -215,36 +216,51 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	pinMode(PIN_AUDIO_INPUT, INPUT);    /* Receiver Audio sampling */
 	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
 
-	pinMode(PIN_MISO, INPUT_PULLUP);
-	pinMode(PIN_MOSI, OUTPUT);
-	digitalWrite(PIN_MOSI, OFF);
-
-	linkbus_disable();
-
-/*	pinMode(PIN_D0, OUTPUT);
- *	pinMode(PIN_D1, OUTPUT);
- *	pinMode(PIN_D2, OUTPUT);
- *	pinMode(PIN_D3, OUTPUT);
- *	pinMode(PIN_D4, OUTPUT);    / * Also RXD * /
- *	pinMode(PIN_D5, OUTPUT);    / * Also TXD * / */
-
-/*	digitalWrite(PIN_D0, OFF);
- *	digitalWrite(PIN_D1, OFF);
- *	digitalWrite(PIN_D2, OFF);
- *	digitalWrite(PIN_D3, OFF);
- *	digitalWrite(PIN_D4, OFF);
- *	digitalWrite(PIN_D5, OFF); */
-	DDRC |= 0x0F;
-	PORTC &= 0xF0;
-	DDRD |= 0x03;
-	PORTD &= 0xFC;
-
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
 
-	/* Set unused pins as inputs pulled high */
-	pinMode(A4, INPUT_PULLUP);
-	pinMode(A5, INPUT_PULLUP);
+	linkbus_disable();
+
+#if SUPPORT_ONLY_80M
+/*	Set unused port pins */
+	pinMode(PIN_UNUSED_1, OUTPUT);
+	digitalWrite(PIN_UNUSED_1, OFF);
+
+	pinMode(PIN_UNUSED_2, OUTPUT);
+	digitalWrite(PIN_UNUSED_2, OFF);
+
+	pinMode(PIN_UNUSED_3, OUTPUT);
+	digitalWrite(PIN_UNUSED_3, OFF);
+
+	pinMode(PIN_UNUSED_4, OUTPUT);
+	digitalWrite(PIN_UNUSED_4, OFF);
+
+	pinMode(PIN_UNUSED_5, OUTPUT);
+	digitalWrite(PIN_UNUSED_5, OFF);
+
+	pinMode(PIN_UNUSED_6, OUTPUT);
+	digitalWrite(PIN_UNUSED_6, OFF);
+
+	pinMode(PIN_UNUSED_7, OUTPUT);
+	digitalWrite(PIN_UNUSED_7, OFF);
+
+	pinMode(PIN_UNUSED_8, OUTPUT);
+	digitalWrite(PIN_UNUSED_8, OFF);
+#else
+	/*	Set unused port pins */
+	pinMode(PIN_UNUSED_1, OUTPUT);
+	digitalWrite(PIN_UNUSED_1, OFF);
+
+	pinMode(PIN_UNUSED_2, OUTPUT);
+	digitalWrite(PIN_UNUSED_2, OFF);
+
+	pinMode(PIN_UNUSED_3, OUTPUT);
+	digitalWrite(PIN_UNUSED_3, OFF);
+
+	/*	Set attenuator control port pins */
+	DDRB |= 0x3F;
+	PORTB &= 0xC0;
+#endif // !SUPPORT_ONLY_80M
 
 #if INIT_EEPROM_ONLY
 		BOOL eepromErr = ee_mgr.initializeEEPROMVars(); /* Must happen after pins are configured due to I2C access */
@@ -278,13 +294,13 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	TCCR1A = 0;                                 /* set entire TCCR1A register to 0 */
 	TCCR1B = 0;                                 /* same for TCCR1B */
 	TCNT1 = 0;                                  /* initialize counter value to 0 */
+#if !SUPPORT_ONLY_80M
 	setAMToneFrequency(g_AM_audio_frequency);   /* For attenuator tone output */
 /* turn on CTC mode */
 	TCCR1B |= (1 << WGM12);
 /* Set CS10 bit for no prescaling */
 	TCCR1B |= (1 << CS10);
-/* enable timer compare interrupt
- *	TIMSK1 |= (1 << OCIE1A); */
+#endif // !SUPPORT_ONLY_80M
 
 
 	/********************************************************************/
@@ -366,7 +382,9 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
+#if !SUPPORT_ONLY_80M
 		TIMSK1 |= (1 << OCIE1A);    /* start timer 1 interrupts */
+#endif // !SUPPORT_ONLY_80M
 
 #endif  /* #if INIT_EEPROM_ONLY */
 
@@ -1064,6 +1082,7 @@ ISR(TIMER0_COMPA_vect)
 	}
 }
 
+#if !SUPPORT_ONLY_80M
 /***********************************************************************
  * Timer/Counter1 Compare Match A ISR
  *
@@ -1107,6 +1126,7 @@ ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 		}
 #endif  /* INIT_EEPROM_ONLY */
 }
+#endif // !SUPPORT_ONLY_80M
 
 /***********************************************************************
  *  Here is the main loop
@@ -1529,6 +1549,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+#if !SUPPORT_ONLY_80M
 			case MESSAGE_SET_AM_TONE:
 			{
 				if(lb_buff->fields[FIELD1][0])
@@ -1543,6 +1564,7 @@ void handleLinkBusMsgs()
 				lb_send_string(g_tempStr, FALSE);
 			}
 			break;
+#endif // !SUPPORT_ONLY_80M
 
 			case MESSAGE_SYNC:
 			{
@@ -1905,6 +1927,7 @@ void handleLinkBusMsgs()
 					{
 						state = STATE_C;
 					}
+#if !SUPPORT_ONLY_80M
 					else if(key != '*')
 					{
 						value = key - '0';
@@ -1916,6 +1939,7 @@ void handleLinkBusMsgs()
 #endif  /* !INIT_EEPROM_ONLY */
 						state = STATE_TEST_ATTENUATOR;
 					}
+#endif // !SUPPORT_ONLY_80M
 				}
 			}
 			break;
@@ -2036,10 +2060,12 @@ void handleLinkBusMsgs()
 					state = STATE_RECEIVING_UTC_OFFSET;
 					digits = 1;
 				}
+#if !SUPPORT_ONLY_80M
 				else if(key == '9')
 				{
 					state = STATE_SET_AM_TONE_FREQUENCY;
 				}
+#endif // !SUPPORT_ONLY_80M
 				else if(key == 'A')
 				{
 					state = STATE_SET_PTT_PERIODIC_RESET;
@@ -2240,6 +2266,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+#if !SUPPORT_ONLY_80M
 			case STATE_SET_AM_TONE_FREQUENCY:
 			{
 				if(key == '#')
@@ -2256,6 +2283,7 @@ void handleLinkBusMsgs()
 				}
 			}
 			break;
+#endif // !SUPPORT_ONLY_80M
 
 			case STATE_SET_PTT_PERIODIC_RESET:
 			{
@@ -2307,6 +2335,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+#if !SUPPORT_ONLY_80M
 			case STATE_TEST_ATTENUATOR:
 			{
 				if(key == '#')
@@ -2314,13 +2343,11 @@ void handleLinkBusMsgs()
 					if(value == 0)
 					{
 						setAtten(0);
-						/* TIMSK1 |= (1 << OCIE1A); / * start timer 1 interrupts * / */
 						g_sendAMmodulationConstantly = TRUE;
 					}
 					else if(value > 315)
 					{
 						g_sendAMmodulationConstantly = FALSE;
-						/* TIMSK1 &= ~(1 << OCIE1A); / * stop timer 1 interrupts * / */
 						setAtten(315);
 					}
 					else
@@ -2337,6 +2364,7 @@ void handleLinkBusMsgs()
 				}
 			}
 			break;
+#endif // !SUPPORT_ONLY_80M
 		}
 	}
 
@@ -2873,6 +2901,7 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 	return(valid);
 }
 
+#if !SUPPORT_ONLY_80M
 void setAMToneFrequency(uint8_t value)
 {
 	BOOL enableAM = TRUE;
@@ -2933,6 +2962,7 @@ void setAMToneFrequency(uint8_t value)
 
 	g_AM_enabled = enableAM;
 }
+#endif // SUPPORT_ONLY_80M
 
 /**
  *   Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"

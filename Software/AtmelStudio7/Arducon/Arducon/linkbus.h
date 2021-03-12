@@ -70,7 +70,9 @@ typedef enum
 
 	/*	ARDUCON MESSAGE FAMILY (SERIAL MESSAGING) */
 	MESSAGE_SET_FOX = 'F' * 100 + 'O' * 10 + 'X',           /* Set the fox role to be used to define timing and signals */
+#if !SUPPORT_ONLY_80M
 	MESSAGE_SET_AM_TONE = 'A' * 10 + 'M',					/* Set AM audio tone frequency */
+#endif // !SUPPORT_ONLY_80M
 	MESSAGE_UTIL = 'U' * 100 + 'T' * 10 + 'I',              /* Temperature  and Voltage data */
 	MESSAGE_SET_STATION_ID = 'I' * 10 + 'D',                /* Sets amateur radio callsign text */
 	MESSAGE_SYNC = 'S' * 100 + 'Y' * 10 + 'N',              /* Synchronizes transmissions */
