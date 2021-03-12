@@ -174,26 +174,26 @@
  *  Arducon Pin Definitions
  */
 #define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
-#define PIN_D4 PIN_RXD          /* Arduino Pro Mini pin# 1/28 = PD0 */
 #define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
-#define PIN_D5 PIN_TXD          /* Arduino Pro Mini pin# 2/29 = PD1 */
+#define PIN_RESET               /* Arduino Pro Mini pin# 3/22 = PC6 */
 #define PIN_RTC_SQW D2          /* Arduino Pro Mini pin# 5 = PD2 */
-#define PIN_RTC_INT D3          /* Arduino Pro Mini pin# 6 = PD3 */
-#define PIN_SYNC D4             /* Arduino Pro Mini pin# 7 = PD4 */
-#define PIN_UNUSED_1 D5         /* Arduino Pro Mini pin# 8 = PD5 */
-#define PIN_PWDN D6             /* Arduino Pro Mini pin# 9 = PD6 */
-/*#define PIN_LED2 D7             / * Arduino Pro Mini pin# 10 = PD7 * / */
-#define PIN_LED2 D13            /* Arduino Pro Mini pin# 10 = PD7 */
-#define PIN_PTT_LOGIC D8        /* Arduino Pro Mini pin# 11 = PB0 */
-#define PIN_CW_TONE_LOGIC D9    /* Arduino Pro Mini pin# 12 = PB1 */
-#define PIN_CW_KEY_LOGIC D10    /* Arduino Pro Mini pin# 13 = PB2 */
+#define PIN_UNUSED_1 D3         /* Arduino Pro Mini pin# 6 = PD3 */
+#define PIN_PTT_LOGIC D4        /* Arduino Pro Mini pin# 7 = PD4 */
+#define PIN_CW_TONE_LOGIC D5    /* Arduino Pro Mini pin# 8 = PD5 */
+#define PIN_CW_KEY_LOGIC D6     /* Arduino Pro Mini pin# 9 = PD6 */
+#define PIN_PWDN D7             /* Arduino Pro Mini pin# 10 = PD7 */
+#define PIN_D0 D8               /* Arduino Pro Mini pin# 11 = PB0 */
+#define PIN_D1 D9               /* Arduino Pro Mini pin# 12 = PB1 */
+#define PIN_D2 D10              /* Arduino Pro Mini pin# 13 = PB2 */
 #define PIN_MOSI D11            /* Arduino Pro Mini pin# 14 = PB3 */
+#define PIN_D3 D11              /* Arduino Pro Mini pin# 14 = PB3 */
 #define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
-#define PIN_LED1 D13            /* Arduino Pro Mini pin# 16 = PB5 = SCK */
-#define PIN_D0 A0               /* Arduino Pro Mini pin# 17 = PC0 */
-#define PIN_D1 A1               /* Arduino Pro Mini pin# 18 = PC1 */
-#define PIN_D2 A2               /* Arduino Pro Mini pin# 19 = PC2 */
-#define PIN_D3 A3               /* Arduino Pro Mini pin# 20 = PC3 */
+#define PIN_D4 D12              /* Arduino Pro Mini pin# 15 = PB4 */
+#define PIN_D5 D13              /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+#define PIN_UNUSED_2 A0         /* Arduino Pro Mini pin# 17 = PC0 */
+#define PIN_UNUSED_3 A1         /* Arduino Pro Mini pin# 18 = PC1 */
+#define PIN_LED A2              /* Arduino Pro Mini pin# 19 = PC2 */
+#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
 #define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
 #define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 #define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
@@ -386,7 +386,7 @@ typedef enum
 #define VOLTS(x) ((x * VOLTAGE_MAX_MV) / 1023L)
 
 /* Input voltage thresholds */
-#define VOLTAGE_THRESHOLD_LOW	1160
+#define VOLTAGE_THRESHOLD_LOW   1160
 #define VOLTAGE_THRESHOLD_HIGH  1250
 
 /******************************************************
