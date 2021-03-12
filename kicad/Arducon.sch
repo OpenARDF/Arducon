@@ -562,8 +562,6 @@ Wire Wire Line
 Wire Wire Line
 	6550 6000 6400 6000
 Wire Wire Line
-	6550 6100 6400 6100
-Wire Wire Line
 	6550 5000 6400 5000
 Wire Wire Line
 	6550 7000 6400 7000
@@ -2468,7 +2466,6 @@ Wire Wire Line
 	6400 6900 6550 6900
 NoConn ~ 6550 5900
 NoConn ~ 6550 6000
-NoConn ~ 6550 6100
 Wire Wire Line
 	6400 6200 7150 6200
 Wire Wire Line
@@ -2680,6 +2677,49 @@ Wire Wire Line
 	8700 8250 8700 8100
 Wire Wire Line
 	8700 8100 8850 8100
+$Comp
+L Device:LED_ALT D102
+U 1 1 604C2CC2
+P 7400 5950
+F 0 "D102" H 7400 6050 50  0000 C CNN
+F 1 "LED" H 7400 5850 50  0000 C CNN
+F 2 "LEDs:LED_0805" H 7400 5950 50  0001 C CNN
+F 3 "" H 7400 5950 50  0001 C CNN
+F 4 "732-4984-1-ND" H 7400 5950 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=732-4984-1-ND\">Link</a>" H 7400 5950 50  0001 C CNN "Link"
+	1    7400 5950
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GNDD #PWR0158
+U 1 1 604C760D
+P 7550 5950
+F 0 "#PWR0158" H 7550 5700 50  0001 C CNN
+F 1 "GNDD" H 7550 5800 50  0000 C CNN
+F 2 "" H 7550 5950 50  0000 C CNN
+F 3 "" H 7550 5950 50  0000 C CNN
+	1    7550 5950
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6800 6100 6800 5950
+Wire Wire Line
+	6400 6100 6800 6100
+$Comp
+L Device:R R114
+U 1 1 605220BB
+P 7100 5950
+F 0 "R114" V 7200 5950 50  0000 C CNN
+F 1 "470" V 7000 5950 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 7030 5950 50  0001 C CNN
+F 3 "" H 7100 5950 50  0001 C CNN
+F 4 "311-470CRCT-ND" H 7100 5950 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-470CRCT-ND\">Link</a>" H 7100 5950 60  0001 C CNN "Link"
+	1    7100 5950
+	0    -1   1    0   
+$EndComp
+Wire Wire Line
+	6800 5950 6950 5950
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC
