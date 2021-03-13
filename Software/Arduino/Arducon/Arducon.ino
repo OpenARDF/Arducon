@@ -1767,7 +1767,9 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
-					if(clockConfigurationCheck() == CONFIGURATION_ERROR)
+					ConfigurationState_t cfg = clockConfigurationCheck();
+
+					if((cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS))
 					{
 						reportConfigErrors();
 					}
