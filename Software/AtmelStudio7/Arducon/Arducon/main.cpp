@@ -322,10 +322,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 	sei();                      /* Enable interrupts */
 
-	if(!g_AM_enabled)
-	{
-		linkbus_init(BAUD);     /* Start the Link Bus serial comms */
-	}
+	linkbus_init(BAUD);     /* Start the Link Bus serial comms */
 
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
@@ -2919,14 +2916,6 @@ void setAMToneFrequency(uint8_t value)
 
 	switch(value)
 	{
-		case 0:
-		{
-			enableAM = FALSE;
-			OCR1A = 1000;
-			linkbus_init(BAUD);
-		}
-		break;
-
 		case 2:
 		{
 			OCR1A = 556;    /* For ~900 Hz tone output */
