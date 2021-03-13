@@ -1357,7 +1357,7 @@ void loop()
 
 ConfigurationState_t clockConfigurationCheck(void)
 {
-	if((g_event_finish_epoch < MINIMUM_EPOCH) || (g_event_finish_epoch < MINIMUM_EPOCH) || (g_current_epoch < MINIMUM_EPOCH))
+	if((g_event_finish_epoch < MINIMUM_EPOCH) || (g_event_start_epoch < MINIMUM_EPOCH) || (g_current_epoch < MINIMUM_EPOCH))
 	{
 		return(CONFIGURATION_ERROR);
 	}
@@ -1705,7 +1705,6 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
 						startEventUsingRTC();
 					}
@@ -1725,16 +1724,15 @@ void handleLinkBusMsgs()
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
+						lb_send_string(g_tempStr, TRUE);
 						startEventUsingRTC();
 					}
 					else
 					{
 						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
+						doprint = true;
 					}
-
-					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
@@ -2702,17 +2700,21 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
 	g_current_epoch = rv3028_get_epoch();
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
 	{
+		setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
 		reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");
-		reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
+
 		if(g_event_start_epoch < g_current_epoch)
 		{
 			reportTimeTill(g_current_epoch, g_event_finish_epoch, "Time Remaining: ", NULL);
+		}
+		else
+		{
+			reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
 		}
 	}
 	else
@@ -2746,7 +2748,14 @@ void reportConfigErrors(void)
 	}
 	else if(g_event_start_epoch < g_current_epoch)  /* Event has already started */
 	{
-		lb_send_string((char*)"Event running...\n", TRUE);
+		if(g_event_start_epoch < MINIMUM_EPOCH)   /* Event has already started */
+		{
+			ee_mgr.sendEEPROMString(TextSetStart);
+		}
+		else
+		{
+			lb_send_string((char*)"Event running...\n", TRUE);
+		}
 	}
 }
 
