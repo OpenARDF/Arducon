@@ -44,6 +44,13 @@
 /***********************************************************/
 
 
+/*************************************************************************
+ * IMPORTANT: CHANGING ANY COMPILE SETTINGS BELOW THIS LINE WILL REQUIRE  *
+ * BUILDING AND RUNNING THE PROGRAM WITH INIT_EEPROM_ONLY TRUE,           *
+ * AND THEN BUILDING AND RUNNING THE PROGRAM WITH INIT_EEPROM_ONLY FALSE. */
+/*************************************************************************/
+
+
 /***********************************************************
  * OPTIONAL COMPILE:                                        *
  * Compile for AM Attenuator Support                        *
@@ -195,17 +202,17 @@
 	#define PIN_CW_TONE_LOGIC D5    /* Arduino Pro Mini pin# 8 = PD5 */
 	#define PIN_CW_KEY_LOGIC D6     /* Arduino Pro Mini pin# 9 = PD6 */
 	#define PIN_PWDN D7             /* Arduino Pro Mini pin# 10 = PD7 */
-	#define PIN_UNUSED_2 D8               /* Arduino Pro Mini pin# 11 = PB0 */
-	#define PIN_UNUSED_3 D9               /* Arduino Pro Mini pin# 12 = PB1 */
-	#define PIN_UNUSED_4 D10              /* Arduino Pro Mini pin# 13 = PB2 */
+	#define PIN_UNUSED_2 D8         /* Arduino Pro Mini pin# 11 = PB0 */
+	#define PIN_UNUSED_3 D9         /* Arduino Pro Mini pin# 12 = PB1 */
+	#define PIN_UNUSED_4 D10        /* Arduino Pro Mini pin# 13 = PB2 */
 	#define PIN_MOSI D11            /* Arduino Pro Mini pin# 14 = PB3 */
-	#define PIN_UNUSED_5 D11              /* Arduino Pro Mini pin# 14 = PB3 */
+	#define PIN_UNUSED_5 D11        /* Arduino Pro Mini pin# 14 = PB3 */
 	#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
-	#define PIN_UNUSED_6 D12              /* Arduino Pro Mini pin# 15 = PB4 */
+	#define PIN_UNUSED_6 D12        /* Arduino Pro Mini pin# 15 = PB4 */
 	#define PIN_LED D13             /* Arduino Pro Mini pin# 16 = PB5 = SCK */
 	#define PIN_UNUSED_7 A0         /* Arduino Pro Mini pin# 17 = PC0 */
 	#define PIN_UNUSED_8 A1         /* Arduino Pro Mini pin# 18 = PC1 */
-	#define PIN_UNUSED_9 A2              /* Arduino Pro Mini pin# 19 = PC2 */
+	#define PIN_UNUSED_9 A2         /* Arduino Pro Mini pin# 19 = PC2 */
 	#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
 	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
 	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
@@ -237,7 +244,7 @@
 	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 	#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
 	#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
-#endif // SUPPORT_ONLY_80M
+#endif /* SUPPORT_ONLY_80M */
 
 typedef enum
 {
@@ -307,9 +314,9 @@ typedef enum
 	STATE_RECEIVING_UTC_OFFSET,
 	STATE_RECEIVING_SET_CLOCK,
 #if !SUPPORT_ONLY_80M
-	STATE_SET_AM_TONE_FREQUENCY,
-	STATE_TEST_ATTENUATOR,   /* Temporary test definition */
-#endif // !SUPPORT_ONLY_80M
+		STATE_SET_AM_TONE_FREQUENCY,
+		STATE_TEST_ATTENUATOR,  /* Temporary test definition */
+#endif /* !SUPPORT_ONLY_80M */
 	STATE_SET_PTT_PERIODIC_RESET,
 	STATE_GET_BATTERY_VOLTAGE,
 	STATE_SET_PASSWORD,
@@ -432,7 +439,7 @@ typedef enum
 #define VOLTAGE_THRESHOLD_HIGH  1250
 
 /******************************************************
- * UI Hardware-related definitions */
+ * UI Hardware-related definitions                     */
 
 typedef enum
 {
