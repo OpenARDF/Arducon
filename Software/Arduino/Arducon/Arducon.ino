@@ -99,14 +99,16 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
-int8_t g_temperature = 0;
-uint16_t g_voltage = 0;
+volatile int8_t g_temperature = 0;
+volatile uint16_t g_voltage = 0;
 volatile ConfigurationState_t g_config_error = NULL_CONFIG;
 volatile BOOL g_use_rtc_for_startstop = FALSE;
 
 volatile BOOL g_DTMF_unlocked = TRUE;
 volatile BOOL g_reset_button_held = FALSE;
 volatile BOOL g_perform_EEPROM_reset = FALSE;
+
+volatile uint16_t g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 #ifndef ATMEL_STUDIO_7
 	Fox_t operator++(volatile Fox_t &orig, int)
@@ -447,6 +449,8 @@ ISR(PCINT2_vect)
 				stopEventNow(PUSHBUTTON);
 			}
 		}
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 	}
 }
 
@@ -885,6 +889,11 @@ ISR( TIMER2_COMPB_vect )
 			g_temperature_check_countdown--;
 		}
 
+		if(g_LED_timeout_countdown)
+		{
+			g_LED_timeout_countdown--;
+		}
+
 		if(g_voltage_check_countdown)
 		{
 			g_voltage_check_countdown--;
@@ -1162,7 +1171,6 @@ void loop()
 
 			if(!g_temperature_check_countdown)
 			{
-
 				setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 				int8_t temp = (int8_t)getTemp();
 				if(temp != g_temperature)
@@ -1335,36 +1343,39 @@ void loop()
 		}
 		else if(g_transmissions_disabled)
 		{
-			ConfigurationState_t hold_config_err = g_config_error;
-			g_config_error = clockConfigurationCheck();
-
-			if(g_config_error != hold_config_err)
+			if(g_LED_timeout_countdown)
 			{
-				if(g_config_error == CONFIGURATION_ERROR)
+				ConfigurationState_t hold_config_err = g_config_error;
+				g_config_error = clockConfigurationCheck();
+
+				if(g_config_error != hold_config_err)
 				{
-					BOOL repeat = TRUE;
-					makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
-					g_LED_enunciating = TRUE;
-				}
-				else if(g_config_error == WAITING_FOR_START)
-				{
-					BOOL repeat = TRUE;
-					makeMorse(WAITING_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
-					g_LED_enunciating = TRUE;
-				}
-				else if((g_config_error == SCHEDULED_EVENT_WILL_NEVER_RUN) || (g_config_error == SCHEDULED_EVENT_DID_NOT_START))
-				{
-					BOOL repeat = TRUE;
-					makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
-					g_LED_enunciating = TRUE;
-				}
-				else
-				{
-					g_LED_enunciating = FALSE;
-					digitalWrite(PIN_LED, OFF);    /* ensure LED is off */
+					if(g_config_error == CONFIGURATION_ERROR)
+					{
+						BOOL repeat = TRUE;
+						makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+						g_LED_enunciating = TRUE;
+					}
+					else if(g_config_error == WAITING_FOR_START)
+					{
+						BOOL repeat = TRUE;
+						makeMorse(WAITING_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
+						g_LED_enunciating = TRUE;
+					}
+					else if((g_config_error == SCHEDULED_EVENT_WILL_NEVER_RUN) || (g_config_error == SCHEDULED_EVENT_DID_NOT_START))
+					{
+						BOOL repeat = TRUE;
+						makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+						g_LED_enunciating = TRUE;
+					}
+					else
+					{
+						g_LED_enunciating = FALSE;
+						digitalWrite(PIN_LED, OFF);    /* ensure LED is off */
+					}
 				}
 			}
 		}
@@ -1440,6 +1451,8 @@ void handleLinkBusMsgs()
 	while((lb_buff = nextFullRxBuffer()))
 	{
 		LBMessageID msg_id = lb_buff->id;
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 		switch(msg_id)
 		{
@@ -1877,6 +1890,8 @@ void handleLinkBusMsgs()
 		static int stringLength;
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 		if(key == 'D')
 		{
