@@ -432,22 +432,29 @@ ISR(PCINT2_vect)
 
 	if(pinVal)  /* Sync is high = button released */
 	{
-		if(g_transmissions_disabled)
+		if(g_LED_timeout_countdown)
 		{
-			if(g_sync_pin_stable == STABLE_LOW)
+			if(g_transmissions_disabled)
 			{
-				g_sync_pin_stable = UNSTABLE;
-				digitalWrite(PIN_LED, OFF);    /*  LED */
-				startEventNow(PUSHBUTTON);
+				if(g_sync_pin_stable == STABLE_LOW)
+				{
+					g_sync_pin_stable = UNSTABLE;
+					digitalWrite(PIN_LED, OFF);    /*  LED */
+					startEventNow(PUSHBUTTON);
+				}
+			}
+			else
+			{
+				if(g_sync_pin_stable == STABLE_LOW)
+				{
+					g_sync_pin_stable = UNSTABLE;
+					stopEventNow(PUSHBUTTON);
+				}
 			}
 		}
 		else
 		{
-			if(g_sync_pin_stable == STABLE_LOW)
-			{
-				g_sync_pin_stable = UNSTABLE;
-				stopEventNow(PUSHBUTTON);
-			}
+			g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 		}
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
@@ -1378,6 +1385,10 @@ void loop()
 					}
 				}
 			}
+			else
+			{
+				g_LED_enunciating = FALSE;
+			}
 		}
 	}
 }
@@ -1446,13 +1457,10 @@ void playStartingTone(uint8_t toneFreq)
 void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
-	BOOL send_ack = TRUE;
 
 	while((lb_buff = nextFullRxBuffer()))
 	{
 		LBMessageID msg_id = lb_buff->id;
-
-		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 		switch(msg_id)
 		{
@@ -1858,10 +1866,10 @@ void handleLinkBusMsgs()
 		}
 
 		lb_buff->id = (LBMessageID)MESSAGE_EMPTY;
-		if(send_ack)
-		{
-			lb_send_NewPrompt();
-		}
+		lb_send_NewPrompt();
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
+		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 	}
 }
 
@@ -1892,6 +1900,7 @@ void handleLinkBusMsgs()
 		static BOOL setPasswordEnabled = FALSE;
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
+		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 
 		if(key == 'D')
 		{
