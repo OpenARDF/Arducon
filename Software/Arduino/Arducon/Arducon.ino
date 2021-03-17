@@ -99,14 +99,16 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
-int8_t g_temperature = 0;
-uint16_t g_voltage = 0;
+volatile int8_t g_temperature = 0;
+volatile uint16_t g_voltage = 0;
 volatile ConfigurationState_t g_config_error = NULL_CONFIG;
 volatile BOOL g_use_rtc_for_startstop = FALSE;
 
 volatile BOOL g_DTMF_unlocked = TRUE;
 volatile BOOL g_reset_button_held = FALSE;
 volatile BOOL g_perform_EEPROM_reset = FALSE;
+
+volatile uint16_t g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 #ifndef ATMEL_STUDIO_7
 	Fox_t operator++(volatile Fox_t &orig, int)
@@ -415,23 +417,32 @@ ISR(PCINT2_vect)
 
 	if(pinVal)  /* Sync is high = button released */
 	{
-		if(g_transmissions_disabled)
+		if(g_LED_timeout_countdown)
 		{
-			if(g_sync_pin_stable == STABLE_LOW)
+			if(g_transmissions_disabled)
 			{
-				g_sync_pin_stable = UNSTABLE;
-				digitalWrite(PIN_LED2, OFF);    /*  LED */
-				startEventNow(PUSHBUTTON);
+				if(g_sync_pin_stable == STABLE_LOW)
+				{
+					g_sync_pin_stable = UNSTABLE;
+					digitalWrite(PIN_LED2, OFF);    /*  LED */
+					startEventNow(PUSHBUTTON);
+				}
+			}
+			else
+			{
+				if(g_sync_pin_stable == STABLE_LOW)
+				{
+					g_sync_pin_stable = UNSTABLE;
+					stopEventNow(PUSHBUTTON);
+				}
 			}
 		}
 		else
 		{
-			if(g_sync_pin_stable == STABLE_LOW)
-			{
-				g_sync_pin_stable = UNSTABLE;
-				stopEventNow(PUSHBUTTON);
-			}
+			g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 		}
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 	}
 }
 
@@ -870,6 +881,11 @@ ISR( TIMER2_COMPB_vect )
 			g_temperature_check_countdown--;
 		}
 
+		if(g_LED_timeout_countdown)
+		{
+			g_LED_timeout_countdown--;
+		}
+
 		if(g_voltage_check_countdown)
 		{
 			g_voltage_check_countdown--;
@@ -1145,7 +1161,6 @@ void loop()
 
 			if(!g_temperature_check_countdown)
 			{
-
 				setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 				int8_t temp = (int8_t)getTemp();
 				if(temp != g_temperature)
@@ -1318,37 +1333,44 @@ void loop()
 		}
 		else if(g_transmissions_disabled)
 		{
-			ConfigurationState_t hold_config_err = g_config_error;
-			g_config_error = clockConfigurationCheck();
-
-			if(g_config_error != hold_config_err)
+			if(g_LED_timeout_countdown)
 			{
-				if(g_config_error == CONFIGURATION_ERROR)
+				ConfigurationState_t hold_config_err = g_config_error;
+				g_config_error = clockConfigurationCheck();
+
+				if(g_config_error != hold_config_err)
 				{
-					BOOL repeat = TRUE;
-					makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
-					g_LED_enunciating = TRUE;
+					if(g_config_error == CONFIGURATION_ERROR)
+					{
+						BOOL repeat = TRUE;
+						makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+						g_LED_enunciating = TRUE;
+					}
+					else if(g_config_error == WAITING_FOR_START)
+					{
+						BOOL repeat = TRUE;
+						makeMorse(WAITING_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
+						g_LED_enunciating = TRUE;
+					}
+					else if((g_config_error == SCHEDULED_EVENT_WILL_NEVER_RUN) || (g_config_error == SCHEDULED_EVENT_DID_NOT_START))
+					{
+						BOOL repeat = TRUE;
+						makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
+						g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
+						g_LED_enunciating = TRUE;
+					}
+					else
+					{
+						g_LED_enunciating = FALSE;
+						digitalWrite(PIN_LED2, OFF);    /* ensure LED is off */
+					}
 				}
-				else if(g_config_error == WAITING_FOR_START)
-				{
-					BOOL repeat = TRUE;
-					makeMorse(WAITING_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(20);
-					g_LED_enunciating = TRUE;
-				}
-				else if((g_config_error == SCHEDULED_EVENT_WILL_NEVER_RUN) || (g_config_error == SCHEDULED_EVENT_DID_NOT_START))
-				{
-					BOOL repeat = TRUE;
-					makeMorse(ERROR_BLINK_PATTERN, &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
-					g_LED_enunciating = TRUE;
-				}
-				else
-				{
-					g_LED_enunciating = FALSE;
-					digitalWrite(PIN_LED2, OFF);    /* ensure LED is off */
-				}
+			}
+			else
+			{
+				g_LED_enunciating = FALSE;
 			}
 		}
 	}
@@ -1418,7 +1440,6 @@ void playStartingTone(uint8_t toneFreq)
 void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
-	BOOL send_ack = TRUE;
 
 	while((lb_buff = nextFullRxBuffer()))
 	{
@@ -1826,10 +1847,10 @@ void handleLinkBusMsgs()
 		}
 
 		lb_buff->id = (LBMessageID)MESSAGE_EMPTY;
-		if(send_ack)
-		{
-			lb_send_NewPrompt();
-		}
+		lb_send_NewPrompt();
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
+		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 	}
 }
 
@@ -1858,6 +1879,9 @@ void handleLinkBusMsgs()
 		static int stringLength;
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
+		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 
 		if(key == 'D')
 		{
@@ -2314,13 +2338,11 @@ void handleLinkBusMsgs()
 					if(value == 0)
 					{
 						setAtten(0);
-						/* TIMSK1 |= (1 << OCIE1A); / * start timer 1 interrupts * / */
 						g_sendAMmodulationConstantly = TRUE;
 					}
 					else if(value > 315)
 					{
 						g_sendAMmodulationConstantly = FALSE;
-						/* TIMSK1 &= ~(1 << OCIE1A); / * stop timer 1 interrupts * / */
 						setAtten(315);
 					}
 					else
@@ -2750,7 +2772,7 @@ void reportConfigErrors(void)
 	}
 	else if(g_event_start_epoch < g_current_epoch)  /* Event has already started */
 	{
-		if(g_event_start_epoch < MINIMUM_EPOCH)   /* Event has already started */
+		if(g_event_start_epoch < MINIMUM_EPOCH)   /* Start in invalid */
 		{
 			ee_mgr.sendEEPROMString(TextSetStart);
 		}
