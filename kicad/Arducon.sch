@@ -562,8 +562,6 @@ Wire Wire Line
 Wire Wire Line
 	6550 6000 6400 6000
 Wire Wire Line
-	6550 6100 6400 6100
-Wire Wire Line
 	6550 5000 6400 5000
 Wire Wire Line
 	6550 7000 6400 7000
@@ -2468,7 +2466,6 @@ Wire Wire Line
 	6400 6900 6550 6900
 NoConn ~ 6550 5900
 NoConn ~ 6550 6000
-NoConn ~ 6550 6100
 Wire Wire Line
 	6400 6200 7150 6200
 Wire Wire Line
@@ -2603,6 +2600,126 @@ Wire Wire Line
 Connection ~ 2350 3000
 Text GLabel 2650 6250 0    39   Input ~ 0
 Power_In
+$Comp
+L Connector_Generic:Conn_01x06 J112
+U 1 1 604658B7
+P 8200 8450
+F 0 "J112" H 8118 7925 50  0000 C CNN
+F 1 "Conn_01x06" H 8118 8016 50  0000 C CNN
+F 2 "Pin_Headers:Pin_Header_Angled_1x06" H 8200 8450 50  0001 C CNN
+F 3 "" H 8200 8450 50  0001 C CNN
+F 4 "929550-01-06-ND" H 8200 8450 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=929550-01-06-ND\">Link</a>" H 8200 8450 50  0001 C CNN "Link"
+	1    8200 8450
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector:DB9_Male J111
+U 1 1 60486C18
+P 9150 8400
+F 0 "J111" H 9330 8446 50  0000 L CNN
+F 1 "DB9_Male" H 9330 8355 50  0000 L CNN
+F 2 "Connect:DB9F_CI" H 9150 8400 50  0001 C CNN
+F 3 "" H 9150 8400 50  0001 C CNN
+F 4 "609-5908-ND" H 9150 8400 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=609-5908-ND\">Link</a>" H 9150 8400 50  0001 C CNN "Link"
+	1    9150 8400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8400 8650 8450 8650
+Wire Wire Line
+	8600 8650 8600 8700
+Wire Wire Line
+	8600 8700 8850 8700
+Wire Wire Line
+	8400 8450 8700 8450
+Wire Wire Line
+	8700 8450 8700 8500
+Wire Wire Line
+	8700 8500 8850 8500
+Wire Wire Line
+	8400 8350 8650 8350
+Wire Wire Line
+	8400 8250 8700 8250
+Wire Wire Line
+	8400 8150 8550 8150
+Wire Wire Line
+	8550 8150 8550 8600
+Wire Wire Line
+	8550 8600 8850 8600
+Wire Wire Line
+	8400 8550 8450 8550
+Wire Wire Line
+	8450 8550 8450 8650
+Connection ~ 8450 8650
+Wire Wire Line
+	8450 8650 8600 8650
+NoConn ~ 8850 8000
+NoConn ~ 8850 8200
+NoConn ~ 8850 8400
+NoConn ~ 8850 8800
+Text Notes 7800 7750 0    79   ~ 16
+FTDI PROGRAMMING ADAPTER
+Wire Notes Line
+	7800 7800 9550 7800
+Wire Notes Line
+	9550 7800 9550 9000
+Wire Notes Line
+	9550 9000 7800 9000
+Wire Notes Line
+	7800 9000 7800 7800
+Wire Wire Line
+	8650 8350 8650 8300
+Wire Wire Line
+	8650 8300 8850 8300
+Wire Wire Line
+	8700 8250 8700 8100
+Wire Wire Line
+	8700 8100 8850 8100
+$Comp
+L Device:LED_ALT D102
+U 1 1 604C2CC2
+P 7400 5950
+F 0 "D102" H 7400 6050 50  0000 C CNN
+F 1 "LED" H 7400 5850 50  0000 C CNN
+F 2 "LEDs:LED_0805" H 7400 5950 50  0001 C CNN
+F 3 "" H 7400 5950 50  0001 C CNN
+F 4 "732-4984-1-ND" H 7400 5950 50  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=732-4984-1-ND\">Link</a>" H 7400 5950 50  0001 C CNN "Link"
+	1    7400 5950
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GNDD #PWR0158
+U 1 1 604C760D
+P 7550 5950
+F 0 "#PWR0158" H 7550 5700 50  0001 C CNN
+F 1 "GNDD" H 7550 5800 50  0000 C CNN
+F 2 "" H 7550 5950 50  0000 C CNN
+F 3 "" H 7550 5950 50  0000 C CNN
+	1    7550 5950
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	6800 6100 6800 5950
+Wire Wire Line
+	6400 6100 6800 6100
+$Comp
+L Device:R R114
+U 1 1 605220BB
+P 7100 5950
+F 0 "R114" V 7200 5950 50  0000 C CNN
+F 1 "470" V 7000 5950 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 7030 5950 50  0001 C CNN
+F 3 "" H 7100 5950 50  0001 C CNN
+F 4 "311-470CRCT-ND" H 7100 5950 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-470CRCT-ND\">Link</a>" H 7100 5950 60  0001 C CNN "Link"
+	1    7100 5950
+	0    -1   1    0   
+$EndComp
+Wire Wire Line
+	6800 5950 6950 5950
 Wire Bus Line
 	6300 4600 6300 7300
 $EndSCHEMATC

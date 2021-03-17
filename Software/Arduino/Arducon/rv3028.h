@@ -78,22 +78,22 @@
 /**
  *  Turn on 1-second square wave on the INT/SQW pin.
  */
-		BOOL rv3028_1s_sqw(void);
+		BOOL rv3028_1s_sqw(BOOL onOff);
 
 /**
- *  Turn on 32kHz square wave on the INT/SQW pin.
- */
-		void rv3028_32kHz_sqw(void);
-
-/**
- *
+ *  Read current setting of temperature offset RAM
  */
 		int16_t rv3028_get_offset_RAM(void);
 
 /**
- *
+ *  Set RAM value of temperature offset
  */
 		void rv3028_set_offset_RAM(uint16_t val);
+
+/**
+ *  Returns current state of 1-Hz clock pin
+ */
+		BOOL rv3028_1Hz_enabled(void);
 
 
 #endif  /* #ifdef INCLUDE_RV3028_SUPPORT */

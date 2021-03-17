@@ -24,6 +24,7 @@
 
 #include "morse.h"
 #include <stddef.h>
+#include <ctype.h>
 
 MorseCharacter getMorseChar(char c);
 
@@ -246,6 +247,8 @@ uint16_t timeRequiredToSendStrAtWPM(char* str, uint16_t spd)
 MorseCharacter getMorseChar(char c)
 {
 	MorseCharacter morse;
+
+	c = toupper(c);
 
 	switch( c )
 	{
