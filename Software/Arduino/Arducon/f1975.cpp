@@ -22,6 +22,8 @@
  *  SOFTWARE.
  */
 
+#include "defs.h"
+#if !SUPPORT_ONLY_80M
 #include "f1975.h"
 #include "linkbus.h"
 
@@ -63,3 +65,4 @@ void setupPortsForF1975(void)
 
 //	setAtten(0);
 }
+#endif // #if !SUPPORT_ONLY_80M
