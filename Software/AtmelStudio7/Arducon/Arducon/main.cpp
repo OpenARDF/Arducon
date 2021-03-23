@@ -281,7 +281,12 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
 	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
 
+#if F_CPU == 16000000UL
 	OCR2A = 0x0C;                                       /* set frequency to ~300 Hz (0x0c) */
+#else
+	OCR2A = 0x06;                                       /* set frequency to ~300 Hz (0x0c) */
+#endif
+
 	OCR2B = 0x00;
 	/* Use system clock for Timer/Counter2 */
 	ASSR &= ~(1 << AS2);
@@ -1728,6 +1733,7 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
+						g_current_epoch = rv3028_get_epoch();
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
 						sprintf(g_tempStr, "UNIX Time:%lu\n", g_current_epoch);
 					}
@@ -2590,19 +2596,35 @@ void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
 		/* Sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
 		 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
 
-#if SAMPLE_RATE == 154080
-			ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
-#elif SAMPLE_RATE == 77040
-			ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
-#elif SAMPLE_RATE == 38520
-			ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
-#elif SAMPLE_RATE == 19260
-			ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
-#elif SAMPLE_RATE == 9630
-			ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
+#if F_CPU == 16000000UL
+	#if SAMPLE_RATE == 154080
+		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
+	#elif SAMPLE_RATE == 77040
+		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
+	#elif SAMPLE_RATE == 38520
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
+	#elif SAMPLE_RATE == 19260
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
+	#elif SAMPLE_RATE == 9630
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
+	#else
+		#error "Select a valid sample rate."
+	#endif
 #else
-#error "Select a valid sample rate."
-#endif
+	#if SAMPLE_RATE == 154080
+		ADCSRA |= (1 << ADPS1);									/* 4 prescaler for 153800 sps */
+	#elif SAMPLE_RATE == 77040
+		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 76900 sps */
+	#elif SAMPLE_RATE == 38520
+		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 38500 sps */
+	#elif SAMPLE_RATE == 19260
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 19260 sps */
+	#elif SAMPLE_RATE == 9630
+		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);					/* 64 prescaler for 9630 sps */
+	#else
+		#error "Select a valid sample rate."
+	#endif
+#endif // F_CPU == 16000000
 
 		ADCSRA |= (1 << ADATE);     /* enable auto trigger */
 		ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
@@ -2942,37 +2964,61 @@ void setAMToneFrequency(uint8_t value)
 	{
 		case 2:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 556;    /* For ~900 Hz tone output */
+#else
+			OCR1A = 278;
+#endif
 		}
 		break;
 
 		case 3:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 625;    /* For ~800 Hz tone output */
+#else
+			OCR1A = 312;
+#endif
 		}
 		break;
 
 		case 4:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 714;    /* For ~700 Hz tone output */
+#else
+			OCR1A = 357;
+#endif
 		}
 		break;
 
 		case 5:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 833;    /* For ~600 Hz tone output */
+#else
+			OCR1A = 416;
+#endif
 		}
 		break;
 
 		case 6:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 1000;   /* For ~500 Hz tone output */
+#else
+			OCR1A = 500;
+#endif
 		}
 		break;
 
 		default:
 		{
+#if F_CPU == 16000000UL
 			OCR1A = 500;    /* For ~1000 Hz tone output */
+#else
+			OCR1A = 250;
+#endif
 		}
 		break;
 	}

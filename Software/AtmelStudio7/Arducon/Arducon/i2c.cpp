@@ -23,11 +23,12 @@
  * i2c.c
  */
 
+#include "defs.h"
 #include <util/twi.h>
 #include <avr/power.h>
 #include <avr/io.h>
 #include <avr/sfr_defs.h>
-#include <util/delay.h>
+//#include <util/delay.h>
 
 #include "i2c.h"
 
