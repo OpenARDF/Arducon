@@ -43,9 +43,23 @@
 #define INIT_EEPROM_ONLY FALSE
 /***********************************************************/
 
+
+/***********************************************************
+ * Uncomment the correct frequency for the Arduino Pro Mini *
+ * you will be using                                        */
+/***********************************************************/
+//#define PROCESSOR_FREQ_HERTZ 16000000UL
+#define PROCESSOR_FREQ_HERTZ 8000000UL
+/***********************************************************/
+
+#ifdef F_CPU
+ #undef F_CPU
+#endif
+
+#define F_CPU PROCESSOR_FREQ_HERTZ
+
 #ifdef ATMEL_STUDIO_7
 	#include <avr/io.h>
-	#include <util/delay.h>
 	#include <avr/interrupt.h>
 	#define USE_WDT_RESET TRUE
 #else
@@ -80,8 +94,6 @@
 #ifndef INPUT_PULLUP
 #define INPUT_PULLUP 0x3
 #endif
-
-/* #define F_CPU 16000000UL / * gets declared in makefile * / */
 
 #define MAX_PATTERN_TEXT_LENGTH 20
 #define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 20)
@@ -378,10 +390,17 @@ typedef enum
 #define BLINK_LONG 500
 
 /* TIMER0 tone frequencies */
-#define DEFAULT_TONE_FREQUENCY 0x2F
-#define TONE_600Hz 0x1F
-#define TONE_500Hz 0x3F
-#define TONE_400Hz 0x4F
+#if F_CPU == 16000000UL
+	#define DEFAULT_TONE_FREQUENCY 0x2F
+	#define TONE_600Hz 0x1F
+	#define TONE_500Hz 0x3F
+	#define TONE_400Hz 0x4F
+#else
+	#define DEFAULT_TONE_FREQUENCY 0x18
+	#define TONE_600Hz 0x0F
+	#define TONE_500Hz 0x1F
+	#define TONE_400Hz 0x27
+#endif
 
 #define ADC_REF_VOLTAGE_mV 1100L
 #define VOLTAGE_MAX_MV 15000L

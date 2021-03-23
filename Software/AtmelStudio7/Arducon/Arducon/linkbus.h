@@ -44,9 +44,8 @@
 
 #define LINKBUS_MIN_TX_INTERVAL_MS 100
 
-#define FOSC 16000000   /* Clock Speed */
 #define BAUD 57600
-#define MYUBRR(b) (FOSC / 16 / (b) - 1)
+#define MYUBRR(b) ((F_CPU + b * 8L) / (b * 16L) - 1)
 
 typedef enum
 {

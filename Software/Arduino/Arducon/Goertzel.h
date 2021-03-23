@@ -37,6 +37,7 @@
 
 #ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
+#include <math.h>
 #include <stdlib.h>
 #else
 #include "Arduino.h"
