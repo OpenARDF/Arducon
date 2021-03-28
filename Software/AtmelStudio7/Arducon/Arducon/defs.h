@@ -48,8 +48,8 @@
  * Uncomment the correct frequency for the Arduino Pro Mini *
  * you will be using                                        */
 /***********************************************************/
-//#define PROCESSOR_FREQ_HERTZ 16000000UL
-#define PROCESSOR_FREQ_HERTZ 8000000UL
+#define PROCESSOR_FREQ_HERTZ 16000000UL
+// #define PROCESSOR_FREQ_HERTZ 8000000UL
 /***********************************************************/
 
 

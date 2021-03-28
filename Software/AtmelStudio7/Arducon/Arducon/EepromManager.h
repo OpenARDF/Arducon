@@ -34,7 +34,7 @@
 #include <time.h>
 
 /* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.41 ***\n"
+#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.42 ***\n"
 #if SUPPORT_ONLY_80M
 #define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
 #else

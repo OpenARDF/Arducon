@@ -220,7 +220,7 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
-	
+
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
 
@@ -1115,7 +1115,6 @@ ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 		if(g_AM_enabled)
 		{
 			static uint8_t index = 0;
-			uint8_t port;
 			static uint8_t controlPins = 0;
 
 			if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
@@ -1127,22 +1126,13 @@ ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 					index = 0;
 				}
 
-				port = PORTC & 0xF0;
-				PORTC = port | dB_low(controlPins);
-
-				port = PORTD & 0xFC;
-				PORTD = port | dB_high(controlPins);
+				PORTB = controlPins;
 				controlPins = 0;
 			}
 			else if(controlPins != MAX_ATTEN_SETTING)
 			{
 				controlPins = MAX_ATTEN_SETTING;
-
-				port = PORTC & 0xF0;
-				PORTC = port | dB_low(controlPins);
-
-				port = PORTD & 0xFC;
-				PORTD = port | dB_high(controlPins);
+				PORTB = controlPins;
 			}
 		}
 #endif  /* INIT_EEPROM_ONLY */
