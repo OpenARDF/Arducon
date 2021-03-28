@@ -222,15 +222,15 @@
 	#define PIN_UNUSED_5 D11        /* Arduino Pro Mini pin# 14 = PB3 */
 	#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
 	#define PIN_UNUSED_6 D12        /* Arduino Pro Mini pin# 15 = PB4 */
-	#define PIN_LED D13             /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+	#define PIN_LED D13             /* Arduino Pro Mini pin# 16 = PB5 = SCK Use LED on Pro Mini */
 	#define PIN_UNUSED_7 A0         /* Arduino Pro Mini pin# 17 = PC0 */
 	#define PIN_UNUSED_8 A1         /* Arduino Pro Mini pin# 18 = PC1 */
 	#define PIN_UNUSED_9 A2         /* Arduino Pro Mini pin# 19 = PC2 */
 	#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
-	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
-	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 	#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
 	#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
+	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
+	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 #else
 	#define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
 	#define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
@@ -248,15 +248,15 @@
 	#define PIN_D3 D11              /* Arduino Pro Mini pin# 14 = PB3 */
 	#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
 	#define PIN_D4 D12              /* Arduino Pro Mini pin# 15 = PB4 */
-	#define PIN_D5 D13              /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+	#define PIN_D5 D13              /* Arduino Pro Mini pin# 16 = PB5 = SCK Use LED on Arducon PCB */
 	#define PIN_UNUSED_2 A0         /* Arduino Pro Mini pin# 17 = PC0 */
 	#define PIN_UNUSED_3 A1         /* Arduino Pro Mini pin# 18 = PC1 */
 	#define PIN_LED A2              /* Arduino Pro Mini pin# 19 = PC2 */
 	#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
-	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
-	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 	#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
 	#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
+	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
+	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 #endif /* SUPPORT_ONLY_80M */
 
 typedef enum

@@ -220,6 +220,9 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
+	
+	pinMode(PIN_SCL, INPUT_PULLUP);
+	pinMode(PIN_SDA, INPUT_PULLUP);
 
 	linkbus_disable();
 
