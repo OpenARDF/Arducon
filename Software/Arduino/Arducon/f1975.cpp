@@ -53,7 +53,6 @@ void setAtten(tenthDB_t att)
 
 void setupPortsForF1975(void)
 {
-	linkbus_disable();
 	pinMode(PIN_D0, OUTPUT);
 	pinMode(PIN_D1, OUTPUT);
 	pinMode(PIN_D2, OUTPUT);
