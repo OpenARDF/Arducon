@@ -177,16 +177,16 @@ Text Label 6400 5800 0    39   ~ 0
 Text GLabel 6600 5800 2    39   Input ~ 0
 ~RESET~
 $Comp
-L Arducon-rescue:CONN_02X03 P101
+L Connector_Generic:Conn_02x03_Odd_Even P101
 U 1 1 57AD5B1A
-P 5250 7800
-F 0 "P101" H 5250 8000 50  0000 C CNN
-F 1 "ISP/PDI" H 5250 7600 50  0000 C CNN
-F 2 "Pin_Headers:SM_Pin_Header_Straight_2x03" H 5250 6600 50  0001 C CNN
-F 3 "http://katalog.we-online.de/em/datasheet/6100xx21121.pdf" H 5250 6600 50  0001 C CNN
-F 4 "609-3487-1-ND" H 5250 7800 60  0001 C CNN "Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=609-3487-1-ND\">Link</a>" H 5250 7800 60  0001 C CNN "Link"
-	1    5250 7800
+P 5300 7800
+F 0 "P101" H 5300 8000 50  0000 C CNN
+F 1 "ISP/PDI" H 5300 7600 50  0000 C CNN
+F 2 "Pin_Headers:SM_Pin_Header_Straight_2x03" H 5300 6600 50  0001 C CNN
+F 3 "http://katalog.we-online.de/em/datasheet/6100xx21121.pdf" H 5300 6600 50  0001 C CNN
+F 4 "609-3487-1-ND" H 5300 7800 60  0001 C CNN "Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=609-3487-1-ND\">Link</a>" H 5300 7800 60  0001 C CNN "Link"
+	1    5300 7800
 	-1   0    0    1   
 $EndComp
 Text GLabel 4900 8000 0    39   Output ~ 0
@@ -330,7 +330,7 @@ F 3 "" H 11550 10300 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0127
+L power:Vproc #PWR0127
 U 1 1 591CAC09
 P 3950 4300
 F 0 "#PWR0127" H 3950 4150 50  0001 C CNN
@@ -358,7 +358,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link
 	-1   0    0    1   
 $EndComp
 $Comp
-L Arducon-rescue:CONN_01X01 W101
+L Connector_Generic:Conn_01x01 W101
 U 1 1 59FF6C44
 P 11800 9850
 F 0 "W101" H 11800 9950 50  0000 C CNN
@@ -371,7 +371,7 @@ F 5 "np" H 11800 9850 60  0001 C CNN "Link"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CONN_01X01 W102
+L Connector_Generic:Conn_01x01 W102
 U 1 1 59FF6D51
 P 11800 10050
 F 0 "W102" H 11800 10150 50  0000 C CNN
@@ -384,7 +384,7 @@ F 5 "np" H 11800 10050 60  0001 C CNN "Link"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CONN_01X03 TP101
+L Connector_Generic:Conn_01x03 TP101
 U 1 1 5A0894A0
 P 7350 5100
 F 0 "TP101" V 7350 5400 50  0000 C CNN
@@ -408,7 +408,7 @@ F 3 "" H 7450 5300 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0107
+L power:Vproc #PWR0107
 U 1 1 5AB7DABB
 P 7350 2300
 F 0 "#PWR0107" H 7350 2150 50  0001 C CNN
@@ -419,7 +419,7 @@ F 3 "" H 7350 2300 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:Battery_Single_Cell BT101
+L Device:Battery_Single_Cell BT101
 U 1 1 5BCD438E
 P 5500 2700
 F 0 "BT101" V 5650 2600 50  0000 L CNN
@@ -432,7 +432,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=BC501SM-ND\">Link</a
 	0    1    -1   0   
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0144
+L power:Vproc #PWR0144
 U 1 1 5C60DF91
 P 5600 7650
 F 0 "#PWR0144" H 5600 7500 50  0001 C CNN
@@ -447,7 +447,7 @@ SCL
 Text GLabel 6950 3350 0    39   Input ~ 0
 SDA
 $Comp
-L Arducon-rescue:RV-3028-C7-special U103
+L Timer_RTC:RV-3028-C7 U103
 U 1 1 5F9A0888
 P 7350 3450
 F 0 "U103" H 7900 4000 61  0000 C CNB
@@ -604,17 +604,17 @@ TONE_LOGIC
 Text GLabel 4450 1550 2    39   Input ~ 0
 TONE_LOGIC
 $Comp
-L Arducon-rescue:POT RV101
+L Device:R_POT RV101
 U 1 1 5F9CC9A1
 P 4300 2250
-F 0 "RV101" H 4300 2170 50  0000 C CNN
-F 1 "10k" H 4300 2250 50  0000 C CNN
+F 0 "RV101" H 4100 2150 50  0000 C CNN
+F 1 "10k" H 4150 2250 50  0000 C CNN
 F 2 "Potentiometers:Potentiometer_ST32ET_Handsolder" H 4300 2250 50  0001 C CNN
 F 3 "" H 4300 2250 50  0000 C CNN
 F 4 "TC33X-103ECT-ND" H 4300 2250 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND\">Link</a>" H 4300 2250 50  0001 C CNN "Link"
 	1    4300 2250
-	0    -1   -1   0   
+	-1   0    0    1   
 $EndComp
 $Comp
 L power:GNDD #PWR0110
@@ -674,7 +674,7 @@ F 5 "<a href=\"\">Link</a>" H 1800 2800 60  0001 C CNN "Link"
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Arducon-rescue:SPST_small SW101
+L Switch:SPST_small SW101
 U 1 1 5F9DCC49
 P 7400 6200
 F 0 "SW101" H 7400 6100 50  0000 C CNN
@@ -800,7 +800,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-100KCRCT-ND\">Li
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:Arduino_Pro_Mini-MCU_Module MOD101
+L MCU_Module:Arduino_Pro_Mini-MCU_Module MOD101
 U 1 1 5FC82DF4
 P 5100 5900
 F 0 "MOD101" H 5150 7267 61  0000 C CNB
@@ -809,6 +809,9 @@ F 2 "Modules:Arduino_Pro_Mini" H 5150 7175 50  0001 C CIN
 F 3 "" H 5100 5900 50  0001 C CNN
 F 4 "1568-1055-ND" H 5100 5900 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=1568-1055-ND\">Link</a>" H 5100 5900 50  0001 C CNN "Link"
+F 6 "AdaFruit Industries" H 5100 5900 50  0001 C CNN "Manufacturer"
+F 7 "2378" H 5100 5900 50  0001 C CNN "Manufacturer PN"
+F 8 "Arduino Pro Mini 328 - 5V/16 MHz" H 5100 5900 50  0001 C CNN "Description"
 	1    5100 5900
 	1    0    0    -1  
 $EndComp
@@ -839,7 +842,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link
 	0    -1   1    0   
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0134
+L power:Vproc #PWR0134
 U 1 1 5FF2E22F
 P 3100 4400
 F 0 "#PWR0134" H 3100 4250 50  0001 C CNN
@@ -875,7 +878,7 @@ EXT_BATTERY
 Wire Wire Line
 	3850 7100 3900 7100
 $Comp
-L Arducon-rescue:F1975-RF U104
+L RF:F1975NCGI U104
 U 1 1 5FF7DEC4
 P 14100 2800
 F 0 "U104" H 14000 2900 61  0000 L CNB
@@ -888,7 +891,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=800-3576-ND\">Link</
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 1 1 5FFA3B6A
 P 10350 5250
 F 0 "U102" H 10500 5400 50  0000 C CNB
@@ -901,7 +904,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 2 1 5FFA7F9B
 P 10350 4700
 F 0 "U102" H 10450 4850 50  0000 C CNB
@@ -914,7 +917,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 3 1 5FFA8DF3
 P 10350 4150
 F 0 "U102" H 10450 4300 50  0000 C CNB
@@ -927,7 +930,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 4 1 5FFA9DCC
 P 10350 3700
 F 0 "U102" H 10450 3850 50  0000 C CNB
@@ -940,7 +943,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 5 1 5FFAB336
 P 10350 3200
 F 0 "U102" H 10450 3350 50  0000 C CNB
@@ -953,7 +956,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Arducon-rescue:CD74HC4050M96-74xx U102
+L Logic_LevelTranslator:CD74HC4050M96-74xx U102
 U 6 1 5FFAC3C8
 P 10350 2700
 F 0 "U102" H 10500 2850 50  0000 C CNB
@@ -1218,7 +1221,7 @@ $EndComp
 Wire Wire Line
 	4000 3200 4000 3100
 $Comp
-L Arducon-rescue:LMN200B01-Two-band-Tx Q102
+L Power_Protection:LMN200B01 Q102
 U 1 1 5FC59E4B
 P 13550 7600
 F 0 "Q102" H 13550 8200 61  0000 C CNB
@@ -1989,7 +1992,7 @@ F 5 "np" H 14950 8300 50  0001 C CNN "Link"
 	1    0    0    1   
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0113
+L power:Vproc #PWR0113
 U 1 1 5FFE7858
 P 9750 1450
 F 0 "#PWR0113" H 9750 1300 50  0001 C CNN
@@ -2174,7 +2177,7 @@ $EndComp
 NoConn ~ 4200 5500
 NoConn ~ 4200 5600
 $Comp
-L Arducon-rescue:Vproc #PWR0156
+L power:Vproc #PWR0156
 U 1 1 5FDC95A5
 P 2900 2550
 F 0 "#PWR0156" H 2900 2400 50  0001 C CNN
@@ -2265,6 +2268,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-23" H 4300 3325 50  0001 L CIN
 F 3 "" H 4100 3400 50  0001 L CNN
 F 4 "MMBT2222ATPMSCT-ND" H 4100 3400 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 4100 3400 50  0001 C CNN "Link"
+F 6 "" H 4100 3400 50  0001 C CNN "Manufacturer"
+F 7 "" H 4100 3400 50  0001 C CNN "Manufacturer PN"
+F 8 "" H 4100 3400 50  0001 C CNN "Description"
 	1    4100 3400
 	-1   0    0    -1  
 $EndComp
@@ -2352,6 +2358,7 @@ F 2 "TO_SOT_Packages_SMD:SOT-23" H 2250 5825 50  0001 L CIN
 F 3 "" H 2050 5900 50  0001 L CNN
 F 4 "MMBT2222ATPMSCT-ND" H 2050 5900 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 2050 5900 50  0001 C CNN "Link"
+F 6 "" H 2050 5900 50  0001 C CNN "Manufacturer"
 	1    2050 5900
 	-1   0    0    -1  
 $EndComp
@@ -2536,7 +2543,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-210KCRCT-ND\">Li
 	0    1    1    0   
 $EndComp
 $Comp
-L Arducon-rescue:Vproc #PWR0146
+L power:Vproc #PWR0146
 U 1 1 605016E9
 P 6350 2950
 F 0 "#PWR0146" H 6350 2800 50  0001 C CNN
