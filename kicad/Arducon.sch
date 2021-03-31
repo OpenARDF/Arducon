@@ -456,6 +456,9 @@ F 2 "Oddities:RV-3028-C7" H 7350 3450 60  0001 C CNN
 F 3 "https://www.microcrystal.com/fileadmin/Media/Products/RTC/Datasheet/RV-3028-C7.pdf" H 7350 3450 60  0001 C CNN
 F 4 "2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND" H 7350 3450 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND\">Link</a>" H 7350 3450 50  0001 C CNN "Link"
+F 6 "" H 7350 3450 50  0001 C CNN "Manufacturer"
+F 7 "" H 7350 3450 50  0001 C CNN "Manufacturer PN"
+F 8 "" H 7350 3450 50  0001 C CNN "Description"
 	1    7350 3450
 	1    0    0    -1  
 $EndComp
@@ -613,6 +616,9 @@ F 2 "Potentiometers:Potentiometer_ST32ET_Handsolder" H 4300 2250 50  0001 C CNN
 F 3 "" H 4300 2250 50  0000 C CNN
 F 4 "TC33X-103ECT-ND" H 4300 2250 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND\">Link</a>" H 4300 2250 50  0001 C CNN "Link"
+F 6 "TBD" H 4300 2250 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 4300 2250 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 4300 2250 50  0001 C CNN "Description"
 	1    4300 2250
 	-1   0    0    1   
 $EndComp
@@ -728,6 +734,9 @@ F 2 "Resistors_SMD:R_0805" V 2830 6250 50  0001 C CNN
 F 3 "" H 2900 6250 50  0001 C CNN
 F 4 "311-162KCRCT-ND" H 2900 6250 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-162KCRCT-ND\">Link</a>" H 2900 6250 50  0001 C CNN "Link"
+F 6 "TBD" V 2900 6250 50  0001 C CNN "Manufacturer"
+F 7 "TBD" V 2900 6250 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" V 2900 6250 50  0001 C CNN "Description"
 	1    2900 6250
 	0    1    1    0   
 $EndComp
@@ -887,6 +896,9 @@ F 2 "Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm" H 14200 3550 50  0001 C CNN
 F 3 "" H 14170 2705 50  0001 C CNN
 F 4 "800-3576-ND" H 14100 2800 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=800-3576-ND\">Link</a>" H 14100 2800 50  0001 C CNN "Link"
+F 6 "TBD" H 14100 2800 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 14100 2800 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 14100 2800 50  0001 C CNN "Description"
 	1    14100 2800
 	1    0    0    -1  
 $EndComp
@@ -939,6 +951,9 @@ F 2 "Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm" H 10600 3050 50  0001 C CNN
 F 3 "" H 10350 3700 50  0001 C CNN
 F 4 "296-14529-1-ND" H 10350 3700 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Link</a>" H 10350 3700 50  0001 C CNN "Link"
+F 6 "TBD" H 10350 3700 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 10350 3700 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 10350 3700 50  0001 C CNN "Description"
 	4    10350 3700
 	1    0    0    -1  
 $EndComp
@@ -989,6 +1004,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-23-5" H 10350 2025 50  0001 C CNN
 F 3 "" H 10350 1700 50  0001 C CNN
 F 4 "576-1281-1-ND " H 10350 1700 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=576-1281-1-ND \">Link</a>" H 10350 1700 50  0001 C CNN "Link"
+F 6 "TBD" H 10350 1700 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 10350 1700 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 10350 1700 50  0001 C CNN "Description"
 	1    10350 1700
 	1    0    0    -1  
 $EndComp
@@ -1230,6 +1248,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-363-0.65" H 13565 7400 50  0001 L CNN
 F 3 "" H 13565 7400 50  0001 L CNN
 F 4 "LMN400E01DICT-ND" H 13550 7600 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND\">Link</a>" H 13550 7600 50  0001 C CNN "Link"
+F 6 "TBD" H 13550 7600 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 13550 7600 50  0001 C CNN "Manufacturer PN"
+F 8 "" H 13550 7600 50  0001 C CNN "Description"
 	1    13550 7600
 	1    0    0    -1  
 $EndComp
@@ -1365,6 +1386,9 @@ F 2 "Resistors_SMD:R_0805" V 3030 4550 50  0001 C CNN
 F 3 "" H 3100 4550 50  0001 C CNN
 F 4 "RMCF0805FT1M00CT-ND" H 3100 4550 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=RMCF0805FT1M00CT-ND\">Link</a>" H 3100 4550 60  0001 C CNN "Link"
+F 6 "TBD" V 3100 4550 50  0001 C CNN "Manufacturer"
+F 7 "TBD" V 3100 4550 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" V 3100 4550 50  0001 C CNN "Description"
 	1    3100 4550
 	1    0    0    -1  
 $EndComp
@@ -1745,6 +1769,9 @@ F 2 "Diodes_SMD:DO-219AD" H 3700 6925 50  0001 C CNN
 F 3 "" H 3700 7100 50  0001 C CNN
 F 4 "MSS1P4-M3/89AGICT-ND" H 3700 7100 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 3700 7100 50  0001 C CNN "Link"
+F 6 "TBD" H 3700 7100 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 3700 7100 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 3700 7100 50  0001 C CNN "Description"
 	1    3700 7100
 	-1   0    0    -1  
 $EndComp
@@ -2030,6 +2057,9 @@ F 2 "Resistors_SMD:R_0603" H 2150 8200 50  0001 C CNN
 F 3 "" H 2150 8200 50  0001 C CNN
 F 4 "CG0603MLC-05LECT-ND" H 2150 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND\">Link</a>" H 2150 8200 50  0001 C CNN "Link"
+F 6 "TBD" H 2150 8200 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 2150 8200 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 2150 8200 50  0001 C CNN "Description"
 	1    2150 8200
 	0    -1   -1   0   
 $EndComp
@@ -2108,6 +2138,9 @@ F 2 "Resistors_SMD:R_0603" H 2400 8200 50  0001 C CNN
 F 3 "" H 2400 8200 50  0001 C CNN
 F 4 "CG0603MLC-05LECT-ND" H 2400 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND\">Link</a>" H 2400 8200 50  0001 C CNN "Link"
+F 6 "TBD" H 2400 8200 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 2400 8200 50  0001 C CNN "Manufacturer PN"
+F 8 "" H 2400 8200 50  0001 C CNN "Description"
 	1    2400 8200
 	0    -1   -1   0   
 $EndComp
@@ -2121,6 +2154,9 @@ F 2 "Resistors_SMD:R_0603" H 2650 8200 50  0001 C CNN
 F 3 "" H 2650 8200 50  0001 C CNN
 F 4 "CG0603MLC-05LECT-ND" H 2650 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND\">Link</a>" H 2650 8200 50  0001 C CNN "Link"
+F 6 "TBD" H 2650 8200 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 2650 8200 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 2650 8200 50  0001 C CNN "Description"
 	1    2650 8200
 	0    -1   -1   0   
 $EndComp
@@ -2134,6 +2170,9 @@ F 2 "Resistors_SMD:R_0603" H 2900 8200 50  0001 C CNN
 F 3 "" H 2900 8200 50  0001 C CNN
 F 4 "CG0603MLC-05LECT-ND" H 2900 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND\">Link</a>" H 2900 8200 50  0001 C CNN "Link"
+F 6 "TBD" H 2900 8200 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 2900 8200 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 2900 8200 50  0001 C CNN "Description"
 	1    2900 8200
 	0    -1   -1   0   
 $EndComp
@@ -2147,6 +2186,9 @@ F 2 "Resistors_SMD:R_0603" H 3150 8200 50  0001 C CNN
 F 3 "" H 3150 8200 50  0001 C CNN
 F 4 "CG0603MLC-05LECT-ND" H 3150 8200 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND\">Link</a>" H 3150 8200 50  0001 C CNN "Link"
+F 6 "TBD" H 3150 8200 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 3150 8200 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 3150 8200 50  0001 C CNN "Description"
 	1    3150 8200
 	0    -1   -1   0   
 $EndComp
@@ -2160,6 +2202,9 @@ F 2 "Resistors_SMD:R_0805" H 7080 6500 50  0001 C CNN
 F 3 "" H 7150 6500 50  0001 C CNN
 F 4 "311-10.0CRCT-ND" H 7150 6500 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND\">Link</a>" H 7150 6500 60  0001 C CNN "Link"
+F 6 "TBD" V 7150 6500 50  0001 C CNN "Manufacturer"
+F 7 "TBD" V 7150 6500 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" V 7150 6500 50  0001 C CNN "Description"
 	1    7150 6500
 	0    -1   1    0   
 $EndComp
@@ -2197,6 +2242,9 @@ F 2 "Resistors_SMD:R_0805" H 3480 6450 50  0001 C CNN
 F 3 "" H 3550 6450 50  0001 C CNN
 F 4 "311-10.0KCRCT-ND" H 3550 6450 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 3550 6450 60  0001 C CNN "Link"
+F 6 "TBD" V 3550 6450 50  0001 C CNN "Manufacturer"
+F 7 "TBD" V 3550 6450 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" V 3550 6450 50  0001 C CNN "Description"
 	1    3550 6450
 	-1   0    0    1   
 $EndComp
@@ -2268,9 +2316,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-23" H 4300 3325 50  0001 L CIN
 F 3 "" H 4100 3400 50  0001 L CNN
 F 4 "MMBT2222ATPMSCT-ND" H 4100 3400 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 4100 3400 50  0001 C CNN "Link"
-F 6 "" H 4100 3400 50  0001 C CNN "Manufacturer"
-F 7 "" H 4100 3400 50  0001 C CNN "Manufacturer PN"
-F 8 "" H 4100 3400 50  0001 C CNN "Description"
+F 6 "TBD" H 4100 3400 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 4100 3400 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 4100 3400 50  0001 C CNN "Description"
 	1    4100 3400
 	-1   0    0    -1  
 $EndComp
@@ -2284,6 +2332,9 @@ F 2 "Diodes_SMD:DO-219AD" H 6000 2525 50  0001 C CNN
 F 3 "" H 6000 2700 50  0001 C CNN
 F 4 "MSS1P4-M3/89AGICT-ND" H 6000 2700 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND\">Link</a>" H 6000 2700 50  0001 C CNN "Link"
+F 6 "TBD" H 6000 2700 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 6000 2700 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 6000 2700 50  0001 C CNN "Description"
 	1    6000 2700
 	-1   0    0    -1  
 $EndComp
@@ -2358,7 +2409,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-23" H 2250 5825 50  0001 L CIN
 F 3 "" H 2050 5900 50  0001 L CNN
 F 4 "MMBT2222ATPMSCT-ND" H 2050 5900 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 2050 5900 50  0001 C CNN "Link"
-F 6 "" H 2050 5900 50  0001 C CNN "Manufacturer"
+F 6 "TBD" H 2050 5900 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 2050 5900 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 2050 5900 50  0001 C CNN "Description"
 	1    2050 5900
 	-1   0    0    -1  
 $EndComp
@@ -2487,6 +2540,9 @@ F 2 "TO_SOT_Packages_SMD:SOT-23" H 6650 3475 50  0001 L CIN
 F 3 "" H 6450 3550 50  0001 L CNN
 F 4 "MMBT2222ATPMSCT-ND" H 6450 3550 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 6450 3550 50  0001 C CNN "Link"
+F 6 "TBD" H 6450 3550 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 6450 3550 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 6450 3550 50  0001 C CNN "Description"
 	1    6450 3550
 	-1   0    0    -1  
 $EndComp
@@ -2526,6 +2582,9 @@ F 2 "Resistors_SMD:R_0805" H 6280 3100 50  0001 C CNN
 F 3 "" H 6350 3100 50  0001 C CNN
 F 4 "311-10.0KCRCT-ND" H 6350 3100 60  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 6350 3100 60  0001 C CNN "Link"
+F 6 "TBD" H 6350 3100 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 6350 3100 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 6350 3100 50  0001 C CNN "Description"
 	1    6350 3100
 	1    0    0    -1  
 $EndComp
@@ -2694,6 +2753,9 @@ F 2 "LEDs:LED_0805" H 7400 5950 50  0001 C CNN
 F 3 "" H 7400 5950 50  0001 C CNN
 F 4 "732-4984-1-ND" H 7400 5950 50  0001 C CNN "Part No."
 F 5 "<a href=\"https://www.digikey.com/products/en?keywords=732-4984-1-ND\">Link</a>" H 7400 5950 50  0001 C CNN "Link"
+F 6 "TBD" H 7400 5950 50  0001 C CNN "Manufacturer"
+F 7 "TBD" H 7400 5950 50  0001 C CNN "Manufacturer PN"
+F 8 "TBD" H 7400 5950 50  0001 C CNN "Description"
 	1    7400 5950
 	-1   0    0    1   
 $EndComp

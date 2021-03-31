@@ -1,41 +1,44 @@
 Ref,Value,QTY PER,Footprint,Description,Link,Manufacturer,Manufacturer PN,Part No.,
-BT101 ,CR1220,1,Oddities:BC501SM_CR1220_BAT_Handsolder,, ,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>, , ,BC501SM-ND
-C106 C101 C102 C104 ,10uF,4,Capacitors_SMD:C_0805,, ,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>, , ,490-5523-1-ND
-C108 C107 C103 C109 C110 ,100nF,5,Capacitors_SMD:C_0805,, ,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>, , ,478-1395-1-ND
-D101 D108 D109 ,MSS1P4-M3_89A,3,Diodes_SMD:DO-219AD,, ,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>, , ,MSS1P4-M3/89AGICT-ND
-D103 D104 D105 D106 D107 ,CG0603MLC-05LECT-ND,5,Resistors_SMD:R_0603,, ,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>, , ,CG0603MLC-05LECT-ND
-D102 ,LED,1,LEDs:LED_0805,, ,<a href="https://www.digikey.com/products/en?keywords=732-4984-1-ND">Link</a>, , ,732-4984-1-ND
-J102 ,DB9 Female,1,Connect:DB9F_CI,, ,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>, , ,609-1525-ND
-J103 ,To Antenna,1,Connect:CON-SMA-EDGE-S,, ,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>, , ,CON-SMA-EDGE-S-ND
-J101 ,To Radio,1,Connect:CON-SMA-EDGE-S,, ,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>, , ,CON-SMA-EDGE-S-ND
-J108 ,Controlled Power,1,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,, ,np, , ,np
-J104 J105 ,Conn_01x08,2,Pin_Headers:Pin_Header_Straight_1x08,, ,np, , ,np
-J109 J110 ,Conn_01x01,2,Pin_Headers:Pin_Header_Straight_1x01,, ,np, , ,np
-J107 ,External Power Source,1,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized,, ,np, , ,np
-J106 ,Logic Level,1,Pin_Headers:Pin_Header_Straight_1x04,, ,np, , ,np
-J112 ,Conn_01x06,1,Pin_Headers:Pin_Header_Angled_1x06,, ,<a href="https://www.digikey.com/products/en?keywords=929550-01-06-ND">Link</a>, , ,929550-01-06-ND
-J111 ,DB9_Male,1,Connect:DB9F_CI,, ,<a href="https://www.digikey.com/products/en?keywords=609-5908-ND">Link</a>, , ,609-5908-ND
-MOD101 ,Arduino Pro Mini (5V Version),1,Modules:Arduino_Pro_Mini,,Arduino Pro Mini 328 - 5V/16 MHz,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,AdaFruit Industries,2378,1568-1055-ND
-P101 ,ISP/PDI,1,Pin_Headers:SM_Pin_Header_Straight_2x03,, ,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>, , ,609-3487-1-ND
-PCB201 ,Printed Circuit Board,1,Oddities:Dummy_Empty,, ,np, , ,np
-Q102 ,LMN400E01,1,TO_SOT_Packages_SMD:SOT-363-0.65,, ,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>, , ,LMN400E01DICT-ND
-Q101 Q103 Q104 ,PN2222A,3,TO_SOT_Packages_SMD:SOT-23,, ,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>, , ,MMBT2222ATPMSCT-ND
-R103 R104 R108 R111 R109 R112 ,10k,6,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>, , ,311-10.0KCRCT-ND
-R107 ,162k,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>, , ,311-162KCRCT-ND
-R101 R106 ,100k,2,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>, , ,311-100KCRCT-ND
-R105 ,1M,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=RMCF0805FT1M00CT-ND">Link</a>, , ,RMCF0805FT1M00CT-ND
-R102 ,2.2k,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND">Link</a>, , ,311-2.20KCRCT-ND
-R110 ,10,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND">Link</a>, , ,311-10.0CRCT-ND
-R113 ,210k,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-210KCRCT-ND">Link</a>, , ,311-210KCRCT-ND
-R114 ,470,1,Resistors_SMD:R_0805,, ,<a href="https://www.digikey.com/products/en?keywords=311-470CRCT-ND">Link</a>, , ,311-470CRCT-ND
-RV101 ,10k,1,Potentiometers:Potentiometer_ST32ET_Handsolder,, ,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>, , ,TC33X-103ECT-ND
-SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,SolderJumper_2_Open,8,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small,, ,np, , ,np
-SJ110 ,SolderJumper_3_Bridged12,1,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small,, ,np, , ,np
-SW101 ,SPST_small,1,Buttons_Switches_SMD:PTS645SL50SMTR92,, ,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>, , ,CKN9088CT-ND
-SW102 ,5V/12V,1,Buttons_Switches_SMD:SW_SPDT_PCM12,, ,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>, , ,401-2016-1-ND
-TP101 ,I2C,1,Pin_Headers:Pin_Header_Straight_1x03,, ,np, , ,np
-U103 ,RV-3028-C7,1,Oddities:RV-3028-C7,, ,<a href="https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND">Link</a>, , ,2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND
-U104 ,F1975,1,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,, ,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>, , ,800-3576-ND
-U102 ,CD74HC4050M96,1,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm,, ,<a href="https://www.digikey.com/products/en?keywords=296-14529-1-ND">Link</a>, , ,296-14529-1-ND
-U101 ,MIC5219-3.3YM5,1,TO_SOT_Packages_SMD:SOT-23-5,, ,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND ">Link</a>, , ,576-1281-1-ND 
-W101 W102 ,CONN_01X01,2,Pin_Headers:Pin_Header_Straight_1x01,, ,np, , ,np
+BT101 ,CR1220,1,Oddities:BC501SM_CR1220_BAT_Handsolder, ,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>, , ,BC501SM-ND
+C106 C101 C102 C104 ,10uF,4,Capacitors_SMD:C_0805, ,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>, , ,490-5523-1-ND
+C108 C107 C103 C109 C110 ,100nF,5,Capacitors_SMD:C_0805, ,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>, , ,478-1395-1-ND
+D101 D109 ,MSS1P4-M3_89A,2,Diodes_SMD:DO-219AD,TBD,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>,TBD,TBD,MSS1P4-M3/89AGICT-ND
+D103 D105 D106 D107 ,CG0603MLC-05LECT-ND,4,Resistors_SMD:R_0603,TBD,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,TBD,TBD,CG0603MLC-05LECT-ND
+D104 ,CG0603MLC-05LECT-ND,1,Resistors_SMD:R_0603, ,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,TBD,TBD,CG0603MLC-05LECT-ND
+D108 ,MSS1P4-M3_89A,1,Diodes_SMD:DO-219AD, ,<a href="https://www.digikey.com/products/en?keywords=MSS1P4-M3/89AGICT-ND">Link</a>, , ,MSS1P4-M3/89AGICT-ND
+D102 ,LED,1,LEDs:LED_0805,TBD,<a href="https://www.digikey.com/products/en?keywords=732-4984-1-ND">Link</a>,TBD,TBD,732-4984-1-ND
+J102 ,DB9 Female,1,Connect:DB9F_CI, ,<a href="https://www.digikey.com/products/en?keywords=609-1525-ND">Link</a>, , ,609-1525-ND
+J103 ,To Antenna,1,Connect:CON-SMA-EDGE-S, ,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>, , ,CON-SMA-EDGE-S-ND
+J101 ,To Radio,1,Connect:CON-SMA-EDGE-S, ,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>, , ,CON-SMA-EDGE-S-ND
+J108 ,Controlled Power,1,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized, ,np, , ,np
+J104 J105 ,Conn_01x08,2,Pin_Headers:Pin_Header_Straight_1x08, ,np, , ,np
+J109 J110 ,Conn_01x01,2,Pin_Headers:Pin_Header_Straight_1x01, ,np, , ,np
+J107 ,External Power Source,1,Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized, ,np, , ,np
+J106 ,Logic Level,1,Pin_Headers:Pin_Header_Straight_1x04, ,np, , ,np
+J112 ,Conn_01x06,1,Pin_Headers:Pin_Header_Angled_1x06, ,<a href="https://www.digikey.com/products/en?keywords=929550-01-06-ND">Link</a>, , ,929550-01-06-ND
+J111 ,DB9_Male,1,Connect:DB9F_CI, ,<a href="https://www.digikey.com/products/en?keywords=609-5908-ND">Link</a>, , ,609-5908-ND
+MOD101 ,Arduino Pro Mini (5V Version),1,Modules:Arduino_Pro_Mini,Arduino Pro Mini 328 - 5V/16 MHz,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,AdaFruit Industries,2378,1568-1055-ND
+P101 ,ISP/PDI,1,Pin_Headers:SM_Pin_Header_Straight_2x03, ,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>, , ,609-3487-1-ND
+PCB201 ,Printed Circuit Board,1,Oddities:Dummy_Empty, ,np, , ,np
+Q102 ,LMN400E01,1,TO_SOT_Packages_SMD:SOT-363-0.65, ,<a href="https://www.digikey.com/products/en?keywords=LMN400E01DICT-ND">Link</a>,TBD,TBD,LMN400E01DICT-ND
+Q101 Q103 Q104 ,PN2222A,3,TO_SOT_Packages_SMD:SOT-23,TBD,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>,TBD,TBD,MMBT2222ATPMSCT-ND
+R103 R104 R111 R109 ,10k,4,Resistors_SMD:R_0805, ,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>, , ,311-10.0KCRCT-ND
+R107 ,162k,1,Resistors_SMD:R_0805,TBD,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>,TBD,TBD,311-162KCRCT-ND
+R101 R106 ,100k,2,Resistors_SMD:R_0805, ,<a href="https://www.digikey.com/products/en?keywords=311-100KCRCT-ND">Link</a>, , ,311-100KCRCT-ND
+R105 ,1M,1,Resistors_SMD:R_0805,TBD,<a href="https://www.digikey.com/products/en?keywords=RMCF0805FT1M00CT-ND">Link</a>,TBD,TBD,RMCF0805FT1M00CT-ND
+R102 ,2.2k,1,Resistors_SMD:R_0805, ,<a href="https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND">Link</a>, , ,311-2.20KCRCT-ND
+R110 ,10,1,Resistors_SMD:R_0805,TBD,<a href="https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND">Link</a>,TBD,TBD,311-10.0CRCT-ND
+R108 R112 ,10k,2,Resistors_SMD:R_0805,TBD,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,TBD,TBD,311-10.0KCRCT-ND
+R113 ,210k,1,Resistors_SMD:R_0805, ,<a href="https://www.digikey.com/products/en?keywords=311-210KCRCT-ND">Link</a>, , ,311-210KCRCT-ND
+R114 ,470,1,Resistors_SMD:R_0805, ,<a href="https://www.digikey.com/products/en?keywords=311-470CRCT-ND">Link</a>, , ,311-470CRCT-ND
+RV101 ,10k,1,Potentiometers:Potentiometer_ST32ET_Handsolder,TBD,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,TBD,TBD,TC33X-103ECT-ND
+SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,SolderJumper_2_Open,8,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small, ,np, , ,np
+SJ110 ,SolderJumper_3_Bridged12,1,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small, ,np, , ,np
+SW101 ,SPST_small,1,Buttons_Switches_SMD:PTS645SL50SMTR92, ,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>, , ,CKN9088CT-ND
+SW102 ,5V/12V,1,Buttons_Switches_SMD:SW_SPDT_PCM12, ,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>, , ,401-2016-1-ND
+TP101 ,I2C,1,Pin_Headers:Pin_Header_Straight_1x03, ,np, , ,np
+U103 ,RV-3028-C7,1,Oddities:RV-3028-C7, ,<a href="https://www.digikey.com/products/en?keywords=2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND">Link</a>, , ,2195-RV-3028-C732.768KHZ1PPM-TA-QCCT-ND
+U104 ,F1975,1,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,TBD,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>,TBD,TBD,800-3576-ND
+U102 ,CD74HC4050M96,1,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm,TBD,<a href="https://www.digikey.com/products/en?keywords=296-14529-1-ND">Link</a>,TBD,TBD,296-14529-1-ND
+U101 ,MIC5219-3.3YM5,1,TO_SOT_Packages_SMD:SOT-23-5,TBD,<a href="https://www.digikey.com/products/en?keywords=576-1281-1-ND ">Link</a>,TBD,TBD,576-1281-1-ND 
+W101 W102 ,CONN_01X01,2,Pin_Headers:Pin_Header_Straight_1x01, ,np, , ,np
