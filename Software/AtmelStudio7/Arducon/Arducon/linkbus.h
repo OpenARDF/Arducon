@@ -30,6 +30,10 @@
 
 #include "defs.h"
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
 #define LINKBUS_MAX_MSG_FIELD_LENGTH 20
@@ -191,5 +195,9 @@ void lb_send_value(uint16_t value, char* label);
 /**
  */
 BOOL lb_enabled(void);
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif  /* LINKBUS_H_ */

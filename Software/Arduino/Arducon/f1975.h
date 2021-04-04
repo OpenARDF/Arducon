@@ -29,6 +29,12 @@
 #if !SUPPORT_ONLY_80M
 #include "defs.h"
 
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+
 typedef uint16_t tenthDB_t;
 
 /*
@@ -107,6 +113,10 @@ typedef enum{
 
 void setAtten(tenthDB_t att);
 void setupPortsForF1975(void);
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif // !SUPPORT_ONLY_80M
 #endif //__f1975_H__

@@ -27,6 +27,10 @@
 
 #include "defs.h"
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 #define PROCESSSOR_CLOCK_HZ			(16000000L)
 #define WPM_TO_MS_PER_DOT(w)		(1200/(w))
 #define THROTTLE_VAL_FROM_WPM(w)	(PROCESSSOR_CLOCK_HZ / 8000000L) * ((7042 / (w)) / 10)
@@ -51,5 +55,9 @@ Returns the number of milliseconds required to send the string pointed to by the
 passed in the second argument.
 */
 uint16_t timeRequiredToSendStrAtWPM(char* str, uint16_t spd);
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif /* MORSE_H_ */

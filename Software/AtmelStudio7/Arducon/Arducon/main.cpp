@@ -1723,6 +1723,7 @@ void handleLinkBusMsgs()
 						rv3028_set_epoch(t);
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
+						setupForFox(NULL, START_NOTHING); /* Avoid timing problems if an event is already active */
 					}
 					else
 					{
@@ -2192,6 +2193,7 @@ void handleLinkBusMsgs()
 					{
 						rv3028_set_epoch(t);
 						g_current_epoch = t;
+						setupForFox(NULL, START_NOTHING); /* Avoid timing problems if an event is already active */
 					}
 
 					state = STATE_SHUTDOWN;
