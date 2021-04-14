@@ -44,6 +44,8 @@
 #include "ardooweeno.h"
 #endif  /* ATMEL_STUDIO_7 */
 
+#include <avr/wdt.h>
+
 EepromManager ee_mgr;
 
 /*#define SAMPLE_RATE 9630 */
@@ -109,6 +111,8 @@ volatile BOOL g_reset_button_held = FALSE;
 volatile BOOL g_perform_EEPROM_reset = FALSE;
 
 volatile uint16_t g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
+static volatile BOOL g_enableHardwareWDResets = FALSE;
+extern BOOL g_i2c_not_timed_out;
 
 #ifndef ATMEL_STUDIO_7
 	Fox_t operator++(volatile Fox_t &orig, int)
@@ -188,6 +192,7 @@ void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
+void wdt_init(WDReset resetType);
 
 #if !INIT_EEPROM_ONLY
 	void processKey(char key);
@@ -334,6 +339,11 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 
 	linkbus_init(BAUD);     /* Start the Link Bus serial comms */
 
+#ifndef TRANQUILIZE_WATCHDOG
+	wdt_init(WD_SW_RESETS);
+	wdt_reset();    /* HW watchdog */
+#endif /* TRANQUILIZE_WATCHDOG */
+
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
 #if INIT_EEPROM_ONLY
@@ -409,6 +419,85 @@ time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 		}
 #endif  /* ATMEL_STUDIO_7 */
 }
+
+
+/***********************************************************************
+ * Watchdog Timeout ISR
+ *
+ * The Watchdog timer helps prevent lockups due to hardware problems.
+ * It is especially helpful in this application for preventing I2C bus
+ * errors from locking up the foreground process.
+ ************************************************************************/
+ISR(WDT_vect)
+{
+	static uint8_t limit = 10;
+
+	g_i2c_not_timed_out = FALSE;    /* unstick I2C */
+
+	/* Don't allow an unlimited number of WD interrupts to occur without enabling
+	 * hardware resets. But a limited number might be required during hardware
+	 * initialization. */
+	if(!g_enableHardwareWDResets && limit)
+	{
+		WDTCSR |= (1 << WDIE);  /* this prevents hardware resets from occurring */
+	}
+
+	if(limit)
+	{
+		limit--;
+	}
+}
+
+/***********************************************************************
+ * Notice: Optimization must be enabled before watchdog can be set
+ * in C (WDCE). Use __attribute__ to enforce optimization level.
+ ************************************************************************/
+void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
+{
+	wdt_reset();
+
+	if(MCUSR & (1 << WDRF))     /* If a reset was caused by the Watchdog Timer perform any special operations */
+	{
+		MCUSR &= (1 << WDRF);   /* Clear the WDT reset flag */
+	}
+
+	if(resetType == WD_DISABLE)
+	{
+		/* Clear WDRF in MCUSR */
+		MCUSR &= ~(1 << WDRF);
+		/* Write logical one to WDCE and WDE */
+		/* Keep old prescaler setting to prevent unintentional
+		 *  time-out */
+		WDTCSR |= (1 << WDCE) | (1 << WDE);
+		/* Turn off WDT */
+		WDTCSR = 0x00;
+		g_enableHardwareWDResets = FALSE;
+	}
+	else
+	{
+		if(resetType == WD_HW_RESETS)
+		{
+			WDTCSR |= (1 << WDCE) | (1 << WDE);
+			WDTCSR = (1 << WDP3) | (1 << WDIE) | (1 << WDE);    /* Enable WD interrupt every 4 seconds, and hardware resets */
+			/*	WDTCSR = (1 << WDP3) | (1 << WDP0) | (1 << WDIE) | (1 << WDE); // Enable WD interrupt every 8 seconds, and hardware resets */
+		}
+		else if(resetType == WD_SW_RESETS)
+		{
+			WDTCSR |= (1 << WDCE) | (1 << WDE);
+			/*	WDTCSR = (1 << WDP3) | (1 << WDIE); // Enable WD interrupt every 4 seconds (no HW reset)
+			 *	WDTCSR = (1 << WDP3) | (1 << WDP0)  | (1 << WDIE); // Enable WD interrupt every 8 seconds (no HW reset) */
+			WDTCSR = (1 << WDP1) | (1 << WDP2)  | (1 << WDIE);  /* Enable WD interrupt every 1 seconds (no HW reset) */
+		}
+		else
+		{
+			WDTCSR |= (1 << WDCE) | (1 << WDE);
+			WDTCSR = (1 << WDIE) | (1 << WDE);  /* Enable WD interrupt in 16ms, and hardware reset */
+		}
+
+		g_enableHardwareWDResets = (resetType != WD_SW_RESETS);
+	}
+}
+
 
 /***********************************************************************
  * ADC Conversion Complete ISR
@@ -1088,14 +1177,7 @@ ISR(TIMER0_COMPA_vect)
 
 	if(g_audio_tone_state)
 	{
-		if(toggle)
-		{
-			digitalWrite(PIN_CW_TONE_LOGIC, ON);
-		}
-		else
-		{
-			digitalWrite(PIN_CW_TONE_LOGIC, OFF);
-		}
+		digitalWrite(PIN_CW_TONE_LOGIC, toggle);
 	}
 	else
 	{
@@ -1159,6 +1241,11 @@ void loop()
 
 	handleLinkBusMsgs();
 
+#ifndef TRANQUILIZE_WATCHDOG
+	wdt_reset();    /* HW watchdog */
+#endif /* TRANQUILIZE_WATCHDOG */
+
+
 #if !INIT_EEPROM_ONLY
 		if(g_goertzel.SamplesReady())
 		{
@@ -1170,7 +1257,7 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;                                         /* Set above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;      /* Initialize to a value above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
 
@@ -1257,9 +1344,11 @@ void loop()
 				{
 					char newKey = key[4 * y + x];
 
+					/* If the same key is detected three times in a row with no silent periods between them then
+					register a new keypress */
 					if(lastKey == newKey)
 					{
-						checkCount++;
+						if(checkCount < 10) checkCount++;
 
 						if(checkCount == 3)
 						{
@@ -1320,7 +1409,7 @@ void loop()
 						digitalWrite(PIN_LED, OFF);
 					}
 
-					if(delta < 1500)
+					if(delta < TIMER2_SECONDS_1)
 					{
 						checkCount = 0;
 					}

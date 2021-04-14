@@ -420,7 +420,7 @@ typedef enum
 	})
 
 #define MAX_TIME 4294967295L
-#define MAX_UINT16 65535
+#define MAX_UINT16 65535U
 #define MAX_INT16 32767
 #define MIN_INT16 -32768
 
