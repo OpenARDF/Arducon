@@ -1,25 +1,25 @@
 /*
- *  MIT License
+ *   MIT License
  *
- *  Copyright (c) 2021 DigitalConfections
+ *   Copyright (c) 2021 DigitalConfections
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *   of this software and associated documentation files (the "Software"), to deal
+ *   in the Software without restriction, including without limitation the rights
+ *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *   copies of the Software, and to permit persons to whom the Software is
+ *   furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in all
- *  copies or substantial portions of the Software.
+ *   The above copyright notice and this permission notice shall be included in all
+ *   copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *  SOFTWARE.
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *   SOFTWARE.
  */
 
 #include "defs.h"
@@ -51,8 +51,8 @@ EepromManager ee_mgr;
 /*#define SAMPLE_RATE 9630 */
 #define SAMPLE_RATE 19260
 /*#define SAMPLE_RATE 38520
- *#define SAMPLE_RATE 77040
- *#define SAMPLE_RATE 154080 */
+ #define SAMPLE_RATE 77040
+ #define SAMPLE_RATE 154080 */
 
 volatile int32_t g_seconds_since_sync = 0;  /* Total number of seconds since an active event was synchronized (started) */
 volatile int32_t g_seconds_since_powerup = 0;
@@ -130,7 +130,7 @@ extern BOOL g_i2c_not_timed_out;
 		a = static_cast < Fox_t > (a + b);  /* static_cast required because enum + int -> int */
 		return( a);
 	}
- #endif  /* ATMEL_STUDIO_7 */
+#endif  /* ATMEL_STUDIO_7 */
 
 char g_messages_text[2][MAX_PATTERN_TEXT_LENGTH + 1] = { "\0", "\0" };
 volatile uint8_t g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
@@ -149,18 +149,17 @@ volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 	const float sampling_freq = SAMPLE_RATE;
 	const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 	const float y_frequencies[4] = { 697., 770., 852., 941. };
-	const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
+#ifdef DEBUG_DTMF
+		const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
+#endif  /* DEBUG_DTMF */
 	const char key[16] = { '1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D' };
 	const int numKeys = sizeof(key) / sizeof(key[0]);
-	const char keyMorse[39] = { ' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-								'V', 'W', 'X', 'Y', 'Z', '<', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-	const int numMorseChars = sizeof(keyMorse) / sizeof(keyMorse[0]);
 #endif  /* !INIT_EEPROM_ONLY */
 
 
 char g_lastKey = '\0';
-unsigned long g_last = 0;
 unsigned long g_tick_count = 0;
+unsigned int g_tone_duration_seconds = 0;
 
 #if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
@@ -169,7 +168,7 @@ unsigned long g_tick_count = 0;
 char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
 /*
- * Local function prototypes
+ *  Local function prototypes
  */
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
@@ -177,8 +176,8 @@ void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
 #if !SUPPORT_ONLY_80M
-void setAMToneFrequency(uint8_t value);
-#endif // !SUPPORT_ONLY_80M
+	void setAMToneFrequency(uint8_t value);
+#endif  /* !SUPPORT_ONLY_80M */
 
 uint16_t readADC();
 float getTemp(void);
@@ -193,6 +192,7 @@ void reportConfigErrors(void);
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
+char value2Morse(char value);
 
 #if !INIT_EEPROM_ONLY
 	void processKey(char key);
@@ -208,7 +208,7 @@ void wdt_init(WDReset resetType);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED, OUTPUT);           /* This is the enunciator LED */
+	pinMode(PIN_LED, OUTPUT);             /* This is the enunciator LED */
 	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
@@ -232,48 +232,48 @@ void wdt_init(WDReset resetType);
 	linkbus_disable();
 
 #if SUPPORT_ONLY_80M
-/*	Set unused port pins */
-	pinMode(PIN_UNUSED_1, OUTPUT);
-	digitalWrite(PIN_UNUSED_1, OFF);
+		/*	Set unused port pins */
+		pinMode(PIN_UNUSED_1, OUTPUT);
+		digitalWrite(PIN_UNUSED_1, OFF);
 
-	pinMode(PIN_UNUSED_2, OUTPUT);
-	digitalWrite(PIN_UNUSED_2, OFF);
+		pinMode(PIN_UNUSED_2, OUTPUT);
+		digitalWrite(PIN_UNUSED_2, OFF);
 
-	pinMode(PIN_UNUSED_3, OUTPUT);
-	digitalWrite(PIN_UNUSED_3, OFF);
+		pinMode(PIN_UNUSED_3, OUTPUT);
+		digitalWrite(PIN_UNUSED_3, OFF);
 
-	pinMode(PIN_UNUSED_4, OUTPUT);
-	digitalWrite(PIN_UNUSED_4, OFF);
+		pinMode(PIN_UNUSED_4, OUTPUT);
+		digitalWrite(PIN_UNUSED_4, OFF);
 
-	pinMode(PIN_UNUSED_5, OUTPUT);
-	digitalWrite(PIN_UNUSED_5, OFF);
+		pinMode(PIN_UNUSED_5, OUTPUT);
+		digitalWrite(PIN_UNUSED_5, OFF);
 
-	pinMode(PIN_UNUSED_6, OUTPUT);
-	digitalWrite(PIN_UNUSED_6, OFF);
+		pinMode(PIN_UNUSED_6, OUTPUT);
+		digitalWrite(PIN_UNUSED_6, OFF);
 
-	pinMode(PIN_UNUSED_7, OUTPUT);
-	digitalWrite(PIN_UNUSED_7, OFF);
+		pinMode(PIN_UNUSED_7, OUTPUT);
+		digitalWrite(PIN_UNUSED_7, OFF);
 
-	pinMode(PIN_UNUSED_8, OUTPUT);
-	digitalWrite(PIN_UNUSED_8, OFF);
+		pinMode(PIN_UNUSED_8, OUTPUT);
+		digitalWrite(PIN_UNUSED_8, OFF);
 #else
-	/*	Set unused port pins */
-	pinMode(PIN_UNUSED_1, OUTPUT);
-	digitalWrite(PIN_UNUSED_1, OFF);
+		/*	Set unused port pins */
+		pinMode(PIN_UNUSED_1, OUTPUT);
+		digitalWrite(PIN_UNUSED_1, OFF);
 
-	pinMode(PIN_UNUSED_2, OUTPUT);
-	digitalWrite(PIN_UNUSED_2, OFF);
+		pinMode(PIN_UNUSED_2, OUTPUT);
+		digitalWrite(PIN_UNUSED_2, OFF);
 
-	pinMode(PIN_UNUSED_3, OUTPUT);
-	digitalWrite(PIN_UNUSED_3, OFF);
+		pinMode(PIN_UNUSED_3, OUTPUT);
+		digitalWrite(PIN_UNUSED_3, OFF);
 
-	/*	Set attenuator control port pins */
-	DDRB |= 0x3F;
-	PORTB &= 0xC0;
-#endif // !SUPPORT_ONLY_80M
+		/*	Set attenuator control port pins */
+		DDRB |= 0x3F;
+		PORTB &= 0xC0;
+#endif  /* !SUPPORT_ONLY_80M */
 
 #if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars(); /* Must happen after pins are configured due to I2C access */
+		BOOL eepromErr = ee_mgr.initializeEEPROMVars();         /* Must happen after pins are configured due to I2C access */
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
@@ -282,17 +282,17 @@ void wdt_init(WDReset resetType);
 
 	cli();
 	/*******************************************************************
-	 * TIMER2 is for periodic interrupts to drive Morse code generation
-	 * Reset control registers */
+	 *  TIMER2 is for periodic interrupts to drive Morse code generation
+	 *  Reset control registers */
 	TCCR2A = 0;
 	TCCR2B = 0;
 	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
 	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
 
 #if F_CPU == 16000000UL
-	OCR2A = 0x0C;                                       /* set frequency to ~300 Hz (0x0c) */
+		OCR2A = 0x0C;                                   /* set frequency to ~300 Hz (0x0c) */
 #else
-	OCR2A = 0x06;                                       /* set frequency to ~300 Hz (0x0c) */
+		OCR2A = 0x06;                                   /* set frequency to ~300 Hz (0x0c) */
 #endif
 
 	OCR2B = 0x00;
@@ -300,27 +300,27 @@ void wdt_init(WDReset resetType);
 	ASSR &= ~(1 << AS2);
 	/* Reset Timer/Counter2 Interrupt Mask Register */
 	TIMSK2 = 0;
-	TIMSK2 |= (1 << OCIE2B);                    /* Output Compare Match B Interrupt Enable */
+	TIMSK2 |= (1 << OCIE2B);                        /* Output Compare Match B Interrupt Enable */
 
 	/*******************************************************************
-	 * Timer 1 is used for controlling the attenuator for AM generation
-	 * set timer1 interrupt at 16 kHz */
+	 *  Timer 1 is used for controlling the attenuator for AM generation
+	 *  set timer1 interrupt at 16 kHz */
 
-	TCCR1A = 0;                                 /* set entire TCCR1A register to 0 */
-	TCCR1B = 0;                                 /* same for TCCR1B */
-	TCNT1 = 0;                                  /* initialize counter value to 0 */
+	TCCR1A = 0;                                     /* set entire TCCR1A register to 0 */
+	TCCR1B = 0;                                     /* same for TCCR1B */
+	TCNT1 = 0;                                      /* initialize counter value to 0 */
 #if !SUPPORT_ONLY_80M
-	setAMToneFrequency(g_AM_audio_frequency);   /* For attenuator tone output */
-/* turn on CTC mode */
-	TCCR1B |= (1 << WGM12);
-/* Set CS10 bit for no prescaling */
-	TCCR1B |= (1 << CS10);
-#endif // !SUPPORT_ONLY_80M
+		setAMToneFrequency(g_AM_audio_frequency);   /* For attenuator tone output */
+		/* turn on CTC mode */
+		TCCR1B |= (1 << WGM12);
+		/* Set CS10 bit for no prescaling */
+		TCCR1B |= (1 << CS10);
+#endif  /* !SUPPORT_ONLY_80M */
 
 
 	/********************************************************************/
 	/* Timer 0 is for audio Start tone generation and control
-	 * Note: Do not use millis() or DELAY() after TIMER0 has been reconfigured here! */
+	 *  Note: Do not use millis() or DELAY() after TIMER0 has been reconfigured here! */
 	TCCR0A = 0x00;
 	TCCR0A |= (1 << WGM01); /* Set CTC mode */
 	TCCR0B = 0x00;
@@ -330,18 +330,18 @@ void wdt_init(WDReset resetType);
 	TIMSK0 |= (1 << OCIE0A);
 
 	/*******************************************************************
-	 * Sync button pin change interrupt */
+	 *  Sync button pin change interrupt */
 	PCMSK2 = 0x00;
 	PCMSK2 = (1 << PCINT20);    /* Enable PCINT20 */
 	PCICR = 0x00;
 	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
 	sei();                      /* Enable interrupts */
 
-	linkbus_init(BAUD);     /* Start the Link Bus serial comms */
+	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
 
 #ifndef TRANQUILIZE_WATCHDOG
-	wdt_init(WD_SW_RESETS);
-	wdt_reset();    /* HW watchdog */
+		wdt_init(WD_SW_RESETS);
+		wdt_reset();            /* HW watchdog */
 #endif /* TRANQUILIZE_WATCHDOG */
 
 	g_reset_button_held = !digitalRead(PIN_SYNC);
@@ -400,15 +400,15 @@ void wdt_init(WDReset resetType);
 		reportConfigErrors();
 		lb_send_NewPrompt();
 #if !SUPPORT_ONLY_80M
-		TIMSK1 |= (1 << OCIE1A);    /* start timer 1 interrupts */
-#endif // !SUPPORT_ONLY_80M
+			TIMSK1 |= (1 << OCIE1A);    /* start timer 1 interrupts */
+#endif /* !SUPPORT_ONLY_80M */
 
 #endif  /* #if INIT_EEPROM_ONLY */
 
 	startEventNow(POWER_UP);
 
 	/*******************************************************************
-	 * INT0 is for external 1-second interrupts                         */
+	 *  INT0 is for external 1-second interrupts                         */
 	EICRA  |= (1 << ISC01); /* Configure INT0 falling edge for RTC 1-second interrupts */
 	EIMSK |= (1 << INT0);   /* Enable INT0 interrupts */
 
@@ -422,11 +422,11 @@ void wdt_init(WDReset resetType);
 
 
 /***********************************************************************
- * Watchdog Timeout ISR
+ *  Watchdog Timeout ISR
  *
- * The Watchdog timer helps prevent lockups due to hardware problems.
- * It is especially helpful in this application for preventing I2C bus
- * errors from locking up the foreground process.
+ *  The Watchdog timer helps prevent lockups due to hardware problems.
+ *  It is especially helpful in this application for preventing I2C bus
+ *  errors from locking up the foreground process.
  ************************************************************************/
 ISR(WDT_vect)
 {
@@ -435,8 +435,8 @@ ISR(WDT_vect)
 	g_i2c_not_timed_out = FALSE;    /* unstick I2C */
 
 	/* Don't allow an unlimited number of WD interrupts to occur without enabling
-	 * hardware resets. But a limited number might be required during hardware
-	 * initialization. */
+	 *  hardware resets. But a limited number might be required during hardware
+	 *  initialization. */
 	if(!g_enableHardwareWDResets && limit)
 	{
 		WDTCSR |= (1 << WDIE);  /* this prevents hardware resets from occurring */
@@ -449,8 +449,8 @@ ISR(WDT_vect)
 }
 
 /***********************************************************************
- * Notice: Optimization must be enabled before watchdog can be set
- * in C (WDCE). Use __attribute__ to enforce optimization level.
+ *  Notice: Optimization must be enabled before watchdog can be set
+ *  in C (WDCE). Use __attribute__ to enforce optimization level.
  ************************************************************************/
 void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 {
@@ -467,7 +467,7 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 		MCUSR &= ~(1 << WDRF);
 		/* Write logical one to WDCE and WDE */
 		/* Keep old prescaler setting to prevent unintentional
-		 *  time-out */
+		 *   time-out */
 		WDTCSR |= (1 << WDCE) | (1 << WDE);
 		/* Turn off WDT */
 		WDTCSR = 0x00;
@@ -485,7 +485,7 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 		{
 			WDTCSR |= (1 << WDCE) | (1 << WDE);
 			/*	WDTCSR = (1 << WDP3) | (1 << WDIE); // Enable WD interrupt every 4 seconds (no HW reset)
-			 *	WDTCSR = (1 << WDP3) | (1 << WDP0)  | (1 << WDIE); // Enable WD interrupt every 8 seconds (no HW reset) */
+			 *  WDTCSR = (1 << WDP3) | (1 << WDP0)  | (1 << WDIE); // Enable WD interrupt every 8 seconds (no HW reset) */
 			WDTCSR = (1 << WDP1) | (1 << WDP2)  | (1 << WDIE);  /* Enable WD interrupt every 1 seconds (no HW reset) */
 		}
 		else
@@ -500,7 +500,7 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 
 
 /***********************************************************************
- * ADC Conversion Complete ISR
+ *  ADC Conversion Complete ISR
  ************************************************************************/
 ISR(ADC_vect)
 {
@@ -516,9 +516,9 @@ ISR(ADC_vect)
 
 
 /***********************************************************************
- * Pin Change Interrupt 2 ISR
+ *  Pin Change Interrupt 2 ISR
  *
- * Handles pushbutton presses
+ *  Handles pushbutton presses
  *
  ************************************************************************/
 ISR(PCINT2_vect)
@@ -536,7 +536,7 @@ ISR(PCINT2_vect)
 				if(g_sync_pin_stable == STABLE_LOW)
 				{
 					g_sync_pin_stable = UNSTABLE;
-					digitalWrite(PIN_LED, OFF);    /*  LED */
+					digitalWrite(PIN_LED, OFF); /*  LED */
 					startEventNow(PUSHBUTTON);
 				}
 			}
@@ -560,17 +560,17 @@ ISR(PCINT2_vect)
 
 
 /***********************************************************************
- * USART Rx Interrupt ISR
+ *  USART Rx Interrupt ISR
  *
- * This ISR is responsible for reading characters from the USART
- * receive buffer to implement the Linkbus.
+ *  This ISR is responsible for reading characters from the USART
+ *  receive buffer to implement the Linkbus.
  *
- *      Message format:
- *              $id,f1,f2... fn;
- *              where
- *                      id = Linkbus MessageID
- *                      fn = variable length fields
- *                      ; = end of message flag
+ *       Message format:
+ *               $id,f1,f2... fn;
+ *               where
+ *                       id = Linkbus MessageID
+ *                       fn = variable length fields
+ *                       ; = end of message flag
  *
  ************************************************************************/
 ISR(USART_RX_vect)
@@ -765,10 +765,10 @@ ISR(USART_RX_vect)
 
 
 /***********************************************************************
- * USART Tx UDRE ISR
+ *  USART Tx UDRE ISR
  *
- * This ISR is responsible for filling the USART transmit buffer. It
- * implements the transmit function of the Linkbus.
+ *  This ISR is responsible for filling the USART transmit buffer. It
+ *  implements the transmit function of the Linkbus.
  *
  ************************************************************************/
 ISR(USART_UDRE_vect)
@@ -800,9 +800,9 @@ ISR(USART_UDRE_vect)
 
 
 /***********************************************************************
- * Timer/Counter2 Compare Match B ISR
+ *  Timer/Counter2 Compare Match B ISR
  *
- * Handles periodic tasks not requiring precise timing.
+ *  Handles periodic tasks not requiring precise timing.
  ************************************************************************/
 ISR( TIMER2_COMPB_vect )
 {
@@ -887,7 +887,7 @@ ISR( TIMER2_COMPB_vect )
 						}
 					}
 
-					digitalWrite(PIN_LED, key);            /*  LED */
+					digitalWrite(PIN_LED, key);             /*  LED */
 					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
 					g_sendAMmodulation = key;
 					sendMorseTone(key);
@@ -897,7 +897,7 @@ ISR( TIMER2_COMPB_vect )
 			{
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED, key);        /*  LED */
+					digitalWrite(PIN_LED, key);         /*  LED */
 				}
 
 				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
@@ -944,7 +944,7 @@ ISR( TIMER2_COMPB_vect )
 				if(!codeInc)
 				{
 					key = makeMorse(NULL, &repeat, &finished);
-					digitalWrite(PIN_LED, key);    /*  LED */
+					digitalWrite(PIN_LED, key); /*  LED */
 					codeInc = g_code_throttle;
 				}
 			}
@@ -960,7 +960,7 @@ ISR( TIMER2_COMPB_vect )
 				key = OFF;
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED, OFF);    /*  LED Off */
+					digitalWrite(PIN_LED, OFF); /*  LED Off */
 				}
 			}
 		}
@@ -974,7 +974,7 @@ ISR( TIMER2_COMPB_vect )
 
 #if !INIT_EEPROM_ONLY
 /***********************************************************************
- * Handle RTC 1-second interrupts
+ *  Handle RTC 1-second interrupts
  **********************************************************************/
 	ISR( INT0_vect )
 	{
@@ -985,6 +985,7 @@ ISR( TIMER2_COMPB_vect )
 		BOOL energizeTx = FALSE;
 
 		g_current_epoch++;
+		g_tone_duration_seconds++;
 
 		g_seconds_since_powerup++;
 
@@ -1047,7 +1048,7 @@ ISR( TIMER2_COMPB_vect )
 				{
 					seconds_into_cycle = g_seconds_since_sync % g_cycle_period_seconds;
 
-					if(g_id_interval_seconds) /* This condition must be met or there will be no IDs sent */
+					if(g_id_interval_seconds)   /* This condition must be met or there will be no IDs sent */
 					{
 						if(g_initialize_fox_transmissions == INIT_EVENT_STARTING_NOW)
 						{
@@ -1057,7 +1058,7 @@ ISR( TIMER2_COMPB_vect )
 						}
 						else if(g_initialize_fox_transmissions == INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES)
 						{
-							if(((g_fox - g_fox_id_offset) == g_fox_counter) || (g_number_of_foxes == 1)) /* This transmitter is on-the-air now */
+							if(((g_fox - g_fox_id_offset) == g_fox_counter) || (g_number_of_foxes == 1))    /* This transmitter is on-the-air now */
 							{
 								int secondsLeftOfXmsn = g_on_air_interval_seconds - (seconds_into_cycle % g_on_air_interval_seconds);
 
@@ -1079,7 +1080,10 @@ ISR( TIMER2_COMPB_vect )
 							else
 							{
 								post_sync_seconds_to_send_ID = g_seconds_since_sync - seconds_into_cycle + ((g_fox - g_fox_id_offset) * g_on_air_interval_seconds) - secondsForID;
-								if(post_sync_seconds_to_send_ID < g_seconds_since_sync) post_sync_seconds_to_send_ID += g_id_interval_seconds;
+								if(post_sync_seconds_to_send_ID < g_seconds_since_sync)
+								{
+									post_sync_seconds_to_send_ID += g_id_interval_seconds;
+								}
 								send_ID_now = FALSE;
 							}
 						}
@@ -1167,7 +1171,7 @@ ISR( TIMER2_COMPB_vect )
 #endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
- * Timer0 interrupt generates an audio tone on the audio out pin.
+ *  Timer0 interrupt generates an audio tone on the audio out pin.
  ************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
@@ -1187,42 +1191,42 @@ ISR(TIMER0_COMPA_vect)
 
 #if !SUPPORT_ONLY_80M
 /***********************************************************************
- * Timer/Counter1 Compare Match A ISR
+ *  Timer/Counter1 Compare Match A ISR
  *
- * Handles AM modulation tasks
+ *  Handles AM modulation tasks
  ************************************************************************/
-ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
-{
+	ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
+	{
 #if !INIT_EEPROM_ONLY
-		if(g_AM_enabled)
-		{
-			static uint8_t index = 0;
-			static uint8_t controlPins = 0;
-
-			if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
+			if(g_AM_enabled)
 			{
-/*		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]); */
-				controlPins = g_dataModulation[index++];
-				if(index >= SIZE_OF_DATA_MODULATION)
+				static uint8_t index = 0;
+				static uint8_t controlPins = 0;
+
+				if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 				{
-					index = 0;
-				}
+					/*		controlPins = eeprom_read_byte((uint8_t*)&ee_dataModulation[index++]); */
+					controlPins = g_dataModulation[index++];
+					if(index >= SIZE_OF_DATA_MODULATION)
+					{
+						index = 0;
+					}
 
-				PORTB = controlPins;
-				controlPins = 0;
+					PORTB = controlPins;
+					controlPins = 0;
+				}
+				else if(controlPins != MAX_ATTEN_SETTING)
+				{
+					controlPins = MAX_ATTEN_SETTING;
+					PORTB = controlPins;
+				}
 			}
-			else if(controlPins != MAX_ATTEN_SETTING)
-			{
-				controlPins = MAX_ATTEN_SETTING;
-				PORTB = controlPins;
-			}
-		}
 #endif  /* INIT_EEPROM_ONLY */
-}
-#endif // !SUPPORT_ONLY_80M
+	}
+#endif  /* !SUPPORT_ONLY_80M */
 
 /***********************************************************************
- *  Here is the main loop
+ *   Here is the main loop
  ************************************************************************/
 void loop()
 {
@@ -1234,7 +1238,7 @@ void loop()
 			linkbus_init(BAUD);
 			while(g_reset_button_held)
 			{
-				digitalWrite(PIN_LED, OFF);    /*  LED */
+				digitalWrite(PIN_LED, OFF); /*  LED */
 			}
 		}
 #endif  /* !INIT_EEPROM_ONLY */
@@ -1242,7 +1246,7 @@ void loop()
 	handleLinkBusMsgs();
 
 #ifndef TRANQUILIZE_WATCHDOG
-	wdt_reset();    /* HW watchdog */
+		wdt_reset();    /* HW watchdog */
 #endif /* TRANQUILIZE_WATCHDOG */
 
 
@@ -1257,9 +1261,10 @@ void loop()
 			float largestX = 0;
 			float largestY = 0;
 			static char lastKey = '\0';
-			static int checkCount = 10;      /* Initialize to a value above the threshold to prevent an initial false key detect */
+			static int checkCount = 10;             /* Initialize to a value above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 			int x = -1, y = -1;
+			BOOL dtmfDetected = FALSE;
 
 			if(!g_temperature_check_countdown)
 			{
@@ -1286,13 +1291,13 @@ void loop()
 
 			for(int i = 0; i < 4; i++)
 			{
-				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2();               /*check them for target_freq */
+				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+				magnitudeY = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
 
-				if(magnitudeY > largestY)                           /*if you're getting false hits or no hits adjust the threshold */
+				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 				{
 					largestY = magnitudeY;
-					if(magnitudeY > threshold)
+					if(magnitudeY > threshold)                      /* Only consider Y above a certain threshold */
 					{
 						y = i;
 					}
@@ -1315,13 +1320,13 @@ void loop()
 			{
 				for(int i = 0; i < 4; i++)
 				{
-					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /*initialize library function with the given sampling frequency no of samples and target freq */
-					magnitudeX = g_goertzel.Magnitude2();               /*check them for target_freq */
+					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+					magnitudeX = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
 
-					if(magnitudeX > largestX)                           /*if you're getting false hits or no hits adjust the threshold */
+					if(magnitudeX > largestX)                           /* Use only the greatest X value */
 					{
 						largestX = magnitudeX;
-						if(magnitudeX > threshold)
+						if(magnitudeX > threshold)                      /* Only consider X above a certain threshold */
 						{
 							x = i;
 						}
@@ -1343,12 +1348,16 @@ void loop()
 				if(x >= 0)
 				{
 					char newKey = key[4 * y + x];
+					dtmfDetected = TRUE;
 
 					/* If the same key is detected three times in a row with no silent periods between them then
-					register a new keypress */
+					 *  register a new keypress */
 					if(lastKey == newKey)
 					{
-						if(checkCount < 10) checkCount++;
+						if(checkCount < 10)
+						{
+							checkCount++;
+						}
 
 						if(checkCount == 3)
 						{
@@ -1356,13 +1365,13 @@ void loop()
 							quietCount = 0;
 							g_lastKey = newKey;
 
-#ifdef DEBUG_DTMF
-								if(lb_enabled())
-								{
-									sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
-									lb_send_string(g_tempStr, TRUE);
-								}
-#endif  /* DEBUG_DTMF */
+							/*#ifdef DEBUG_DTMF */
+							if(lb_enabled())
+							{
+								sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
+								lb_send_string(g_tempStr, TRUE);
+							}
+							/*#endif  / * DEBUG_DTMF * / */
 
 							processKey(newKey);
 
@@ -1379,8 +1388,8 @@ void loop()
 
 									for(int i = 0; i < 7; i++)
 									{
-										g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /*initialize library function with the given sampling frequency no of samples and target freq */
-										magnitudeM = g_goertzel.Magnitude2();               /*check them for target_freq */
+										g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
+										magnitudeM = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
 										dtostrf((double)mid_frequencies[i], 4, 0, s);
 										sprintf(g_tempStr, "%s=", s);
 										lb_send_string(g_tempStr, TRUE);
@@ -1396,11 +1405,13 @@ void loop()
 					lastKey = newKey;
 				}
 			}
-			else    /* Quiet detected */
-			{
-				unsigned long delta = g_tick_count - g_last;
 
-				/* Quieting must be detected at least 3 times in less than 5 seconds before another key can be accepted */
+			if(!dtmfDetected)   /* Quiet detected */
+			{
+				static unsigned long lastQuiet = 0;
+				unsigned long delta = g_tick_count - lastQuiet;
+
+				/* Quieting must be detected at least 3 times in less than 2 second before another key can be accepted */
 				if(quietCount++ > 2)
 				{
 					g_dtmf_detected = FALSE;
@@ -1409,15 +1420,27 @@ void loop()
 						digitalWrite(PIN_LED, OFF);
 					}
 
-					if(delta < TIMER2_SECONDS_1)
+					if(delta < TIMER2_SECONDS_2)
 					{
 						checkCount = 0;
 					}
 
 					quietCount = 0;
-					g_last = g_tick_count;
+					lastQuiet = g_tick_count;
 					lastKey = '\0';
 				}
+
+				g_tone_duration_seconds = 0;
+			}
+			else if(g_tone_duration_seconds >= 6)   /* Most likely cause of such a long tone is loud noise */
+			{
+				g_dtmf_detected = FALSE;
+				if(g_transmissions_disabled && !g_LED_enunciating)
+				{
+					digitalWrite(PIN_LED, OFF);
+				}
+
+				lastKey = '\0';
 			}
 
 			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
@@ -1468,7 +1491,7 @@ void loop()
 					else
 					{
 						g_LED_enunciating = FALSE;
-						digitalWrite(PIN_LED, OFF);    /* ensure LED is off */
+						digitalWrite(PIN_LED, OFF); /* ensure LED is off */
 					}
 				}
 			}
@@ -1539,8 +1562,8 @@ void playStartingTone(uint8_t toneFreq)
 }
 
 
-/* The compiler does not seem to always optimize large switch statements correctly */
-//void __attribute__((optimize("O3"))) handleLinkBusMsgs()
+/* The compiler does not seem to always optimize large switch statements correctly
+ *void __attribute__((optimize("O3"))) handleLinkBusMsgs() */
 void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
@@ -1655,21 +1678,21 @@ void handleLinkBusMsgs()
 			break;
 
 #if !SUPPORT_ONLY_80M
-			case MESSAGE_SET_AM_TONE:
-			{
-				if(lb_buff->fields[FIELD1][0])
-				{
-					uint8_t toneVal = atol(lb_buff->fields[FIELD1]);
-					g_AM_audio_frequency = CLAMP(MIN_AM_TONE_FREQUENCY, toneVal, MAX_AM_TONE_FREQUENCY);
-					ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
-					setAMToneFrequency(g_AM_audio_frequency);
-				}
+					case MESSAGE_SET_AM_TONE:
+					{
+						if(lb_buff->fields[FIELD1][0])
+						{
+							uint8_t toneVal = atol(lb_buff->fields[FIELD1]);
+							g_AM_audio_frequency = CLAMP(MIN_AM_TONE_FREQUENCY, toneVal, MAX_AM_TONE_FREQUENCY);
+							ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
+							setAMToneFrequency(g_AM_audio_frequency);
+						}
 
-				sprintf(g_tempStr, "AM:%d\n", g_AM_audio_frequency);
-				lb_send_string(g_tempStr, FALSE);
-			}
-			break;
-#endif // !SUPPORT_ONLY_80M
+						sprintf(g_tempStr, "AM:%d\n", g_AM_audio_frequency);
+						lb_send_string(g_tempStr, FALSE);
+					}
+					break;
+#endif  /* !SUPPORT_ONLY_80M */
 
 			case MESSAGE_SYNC:
 			{
@@ -1812,7 +1835,7 @@ void handleLinkBusMsgs()
 						rv3028_set_epoch(t);
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
-						setupForFox(NULL, START_NOTHING); /* Avoid timing problems if an event is already active */
+						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
 					else
 					{
@@ -1958,14 +1981,14 @@ void handleLinkBusMsgs()
 		lb_send_NewPrompt();
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
-		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
+		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 	}
 }
 
 #if !INIT_EEPROM_ONLY
 
 /*
- *  Command set:
+ *   Command set:
  *  *C1 c...c # - Set callsign ID to c...c
  *  *C2 n...n # - Set fox ID and format (0 = beacon, 1 = MOE Classic, ... )
  *  *C3 YYMMDDhhmmss # - Synchronize RTC to date/time = YYMMDDhhmmss
@@ -1989,7 +2012,7 @@ void handleLinkBusMsgs()
 		static BOOL setPasswordEnabled = FALSE;
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
-		g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
+		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 
 		if(key == 'D')
 		{
@@ -2038,18 +2061,18 @@ void handleLinkBusMsgs()
 						state = STATE_C;
 					}
 #if !SUPPORT_ONLY_80M
-					else if(key != '*')
-					{
-						value = key - '0';
+						else if(key != '*')
+						{
+							value = key - '0';
 #if !INIT_EEPROM_ONLY
-							if(g_AM_enabled)
-							{
-								setupPortsForF1975();
-							}
+								if(g_AM_enabled)
+								{
+									setupPortsForF1975();
+								}
 #endif  /* !INIT_EEPROM_ONLY */
-						state = STATE_TEST_ATTENUATOR;
-					}
-#endif // !SUPPORT_ONLY_80M
+							state = STATE_TEST_ATTENUATOR;
+						}
+#endif  /* !SUPPORT_ONLY_80M */
 				}
 			}
 			break;
@@ -2171,11 +2194,11 @@ void handleLinkBusMsgs()
 					digits = 1;
 				}
 #if !SUPPORT_ONLY_80M
-				else if(key == '9')
-				{
-					state = STATE_SET_AM_TONE_FREQUENCY;
-				}
-#endif // !SUPPORT_ONLY_80M
+					else if(key == '9')
+					{
+						state = STATE_SET_AM_TONE_FREQUENCY;
+					}
+#endif  /* !SUPPORT_ONLY_80M */
 				else if(key == 'A')
 				{
 					state = STATE_SET_PTT_PERIODIC_RESET;
@@ -2231,9 +2254,9 @@ void handleLinkBusMsgs()
 					if(digits)
 					{
 						value = value * 10 + (key - '0');
-						if((value < numMorseChars) && (stringLength < MAX_PATTERN_TEXT_LENGTH))
+						if((value < value2Morse(0xFF)) && (stringLength < MAX_PATTERN_TEXT_LENGTH))
 						{
-							receivedString[stringLength] = keyMorse[value];
+							receivedString[stringLength] = value2Morse(value);
 							stringLength++;
 							receivedString[stringLength] = '\0';
 						}
@@ -2282,7 +2305,7 @@ void handleLinkBusMsgs()
 					{
 						rv3028_set_epoch(t);
 						g_current_epoch = t;
-						setupForFox(NULL, START_NOTHING); /* Avoid timing problems if an event is already active */
+						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2378,23 +2401,23 @@ void handleLinkBusMsgs()
 			break;
 
 #if !SUPPORT_ONLY_80M
-			case STATE_SET_AM_TONE_FREQUENCY:
-			{
-				if(key == '#')
-				{
-					g_AM_audio_frequency = value;
-					setAMToneFrequency(g_AM_audio_frequency);
-					ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
+					case STATE_SET_AM_TONE_FREQUENCY:
+					{
+						if(key == '#')
+						{
+							g_AM_audio_frequency = value;
+							setAMToneFrequency(g_AM_audio_frequency);
+							ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
 
-					state = STATE_SHUTDOWN;
-				}
-				else if((key >= MIN_AM_TONE_FREQUENCY) && (key <= MAX_AM_TONE_FREQUENCY))
-				{
-					value = key - '0';
-				}
-			}
-			break;
-#endif // !SUPPORT_ONLY_80M
+							state = STATE_SHUTDOWN;
+						}
+						else if((key >= MIN_AM_TONE_FREQUENCY) && (key <= MAX_AM_TONE_FREQUENCY))
+						{
+							value = key - '0';
+						}
+					}
+					break;
+#endif  /* !SUPPORT_ONLY_80M */
 
 			case STATE_SET_PTT_PERIODIC_RESET:
 			{
@@ -2447,35 +2470,35 @@ void handleLinkBusMsgs()
 			break;
 
 #if !SUPPORT_ONLY_80M
-			case STATE_TEST_ATTENUATOR:
-			{
-				if(key == '#')
-				{
-					if(value == 0)
+					case STATE_TEST_ATTENUATOR:
 					{
-						setAtten(0);
-						g_sendAMmodulationConstantly = TRUE;
-					}
-					else if(value > 315)
-					{
-						g_sendAMmodulationConstantly = FALSE;
-						setAtten(315);
-					}
-					else
-					{
-						setAtten(value);
-					}
+						if(key == '#')
+						{
+							if(value == 0)
+							{
+								setAtten(0);
+								g_sendAMmodulationConstantly = TRUE;
+							}
+							else if(value > 315)
+							{
+								g_sendAMmodulationConstantly = FALSE;
+								setAtten(315);
+							}
+							else
+							{
+								setAtten(value);
+							}
 
-					state = STATE_SHUTDOWN;
-				}
-				else if((key >= '0') && (key <= '9'))
-				{
-					value *= 10;
-					value += key - '0';
-				}
-			}
-			break;
-#endif // !SUPPORT_ONLY_80M
+							state = STATE_SHUTDOWN;
+						}
+						else if((key >= '0') && (key <= '9'))
+						{
+							value *= 10;
+							value += key - '0';
+						}
+					}
+					break;
+#endif  /* !SUPPORT_ONLY_80M */
 		}
 	}
 
@@ -2556,8 +2579,8 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		break;
 
 
-/* case BEACON: */
-/* case SPECTATOR: */
+		/* case BEACON:
+		 * case SPECTATOR: */
 		default:
 		{
 			g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
@@ -2579,14 +2602,14 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	else if(action == START_EVENT_NOW)
 	{
 		g_fox_counter = 1;
-		g_seconds_since_sync = 0;                                           /* Total elapsed time since synchronization */
+		g_seconds_since_sync = 0;                                               /* Total elapsed time since synchronization */
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 	}
-	else if(action == START_TRANSMISSIONS_NOW)                              /* Immediately start transmitting, regardless RTC or time slot */
+	else if(action == START_TRANSMISSIONS_NOW)                                  /* Immediately start transmitting, regardless RTC or time slot */
 	{
 		g_fox_counter = MAX(1, g_fox - g_fox_id_offset);
-		g_seconds_since_sync = (g_fox_counter - 1) * g_on_air_interval_seconds;           /* Total elapsed time since start of event */
+		g_seconds_since_sync = (g_fox_counter - 1) * g_on_air_interval_seconds; /* Total elapsed time since start of event */
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 		g_initialize_fox_transmissions = INIT_EVENT_STARTING_NOW;
@@ -2616,7 +2639,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	g_on_the_air       = FALSE;             /* Controls transmitter Morse activity */
 
 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
-	digitalWrite(PIN_LED, OFF);            /*  LED Off - in case it was left on */
+	digitalWrite(PIN_LED, OFF);             /*  LED Off - in case it was left on */
 
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 	g_sendAMmodulation = FALSE;
@@ -2628,7 +2651,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 
 
 /*
- * Read the temperature ADC value
+ *  Read the temperature ADC value
  */
 uint16_t readADC()
 {
@@ -2646,7 +2669,7 @@ uint16_t readADC()
 }
 
 /*
- * Returns the most recent temperature reading
+ *  Returns the most recent temperature reading
  */
 float getTemp(void)
 {
@@ -2678,37 +2701,37 @@ void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
 		ADMUX |= (1 << ADLAR);                  /* left align ADC value to 8 bits from ADCH register */
 
 		/* Sampling rate is [ADC clock] / [prescaler] / [conversion clock cycles]
-		 * for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
+		 *  for Arduino Uno ADC clock is 16 MHz and a conversion takes 13 clock cycles */
 
 #if F_CPU == 16000000UL
-	#if SAMPLE_RATE == 154080
-		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
-	#elif SAMPLE_RATE == 77040
-		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
-	#elif SAMPLE_RATE == 38520
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
-	#elif SAMPLE_RATE == 19260
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
-	#elif SAMPLE_RATE == 9630
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
-	#else
-		#error "Select a valid sample rate."
-	#endif
+#if SAMPLE_RATE == 154080
+				ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 153800 sps */
+#elif SAMPLE_RATE == 77040
+				ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 76900 sps */
+#elif SAMPLE_RATE == 38520
+				ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 38500 sps */
+#elif SAMPLE_RATE == 19260
+				ADCSRA |= (1 << ADPS2) | (1 << ADPS1);                  /* 64 prescaler for 19250 sps */
+#elif SAMPLE_RATE == 9630
+				ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);   /* 128 prescaler for 9630 sps */
 #else
-	#if SAMPLE_RATE == 154080
-		ADCSRA |= (1 << ADPS1);									/* 4 prescaler for 153800 sps */
-	#elif SAMPLE_RATE == 77040
-		ADCSRA |= (1 << ADPS1) | (1 << ADPS0);                  /* 8 prescaler for 76900 sps */
-	#elif SAMPLE_RATE == 38520
-		ADCSRA |= (1 << ADPS2);                                 /* 16 prescaler for 38500 sps */
-	#elif SAMPLE_RATE == 19260
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS0);                  /* 32 prescaler for 19260 sps */
-	#elif SAMPLE_RATE == 9630
-		ADCSRA |= (1 << ADPS2) | (1 << ADPS1);					/* 64 prescaler for 9630 sps */
-	#else
-		#error "Select a valid sample rate."
-	#endif
-#endif // F_CPU == 16000000
+#error "Select a valid sample rate."
+#endif
+#else
+#if SAMPLE_RATE == 154080
+				ADCSRA |= (1 << ADPS1);                 /* 4 prescaler for 153800 sps */
+#elif SAMPLE_RATE == 77040
+				ADCSRA |= (1 << ADPS1) | (1 << ADPS0);  /* 8 prescaler for 76900 sps */
+#elif SAMPLE_RATE == 38520
+				ADCSRA |= (1 << ADPS2);                 /* 16 prescaler for 38500 sps */
+#elif SAMPLE_RATE == 19260
+				ADCSRA |= (1 << ADPS2) | (1 << ADPS0);  /* 32 prescaler for 19260 sps */
+#elif SAMPLE_RATE == 9630
+				ADCSRA |= (1 << ADPS2) | (1 << ADPS1);  /* 64 prescaler for 9630 sps */
+#else
+#error "Select a valid sample rate."
+#endif
+#endif /* F_CPU == 16000000 */
 
 		ADCSRA |= (1 << ADATE);     /* enable auto trigger */
 		ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
@@ -2723,9 +2746,9 @@ void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
 	else
 	{
 		/* The internal temperature has to be used
-		 * with the internal reference of 1.1V.
-		 * Channel 8 can not be selected with
-		 * the analogRead function yet. */
+		 *  with the internal reference of 1.1V.
+		 *  Channel 8 can not be selected with
+		 *  the analogRead function yet. */
 		/* Set the internal reference and mux. */
 		ADMUX |= ((1 << REFS1) | (1 << REFS0));
 
@@ -2739,8 +2762,8 @@ void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
 		}
 
 		/* Slow the ADC clock down to 125 KHz
-		 * by dividing by 128. Assumes that the
-		 * standard Arduino 16 MHz clock is in use. */
+		 *  by dividing by 128. Assumes that the
+		 *  standard Arduino 16 MHz clock is in use. */
 		ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 		ADCSRA |= (1 << ADEN);  /* enable the ADC */
 		ADCSRA |= (1 << ADSC);  /* Start the ADC */
@@ -2819,8 +2842,8 @@ void startEventNow(EventActionSource_t activationSource)
 	g_LED_enunciating = FALSE;
 	sei();
 
-/*	g_current_epoch = rv3028_get_epoch();
- *	lb_send_string((char*)"Sync OK\n", FALSE); */
+	/*	g_current_epoch = rv3028_get_epoch();
+	 *     lb_send_string((char*)"Sync OK\n", FALSE); */
 }
 
 void stopEventNow(EventActionSource_t activationSource)
@@ -2851,7 +2874,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 	if(g_sync_pin_stable == STABLE_LOW)
 	{
-		digitalWrite(PIN_LED, OFF);    /*  LED Off */
+		digitalWrite(PIN_LED, OFF); /*  LED Off */
 	}
 }
 
@@ -2905,7 +2928,7 @@ void reportConfigErrors(void)
 	}
 	else if(g_event_start_epoch < g_current_epoch)  /* Event has already started */
 	{
-		if(g_event_start_epoch < MINIMUM_EPOCH)   /* Start in invalid */
+		if(g_event_start_epoch < MINIMUM_EPOCH)     /* Start in invalid */
 		{
 			ee_mgr.sendEEPROMString(TextSetStart);
 		}
@@ -3040,103 +3063,130 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 }
 
 #if !SUPPORT_ONLY_80M
-void setAMToneFrequency(uint8_t value)
-{
-	BOOL enableAM = TRUE;
-
-	switch(value)
+	void setAMToneFrequency(uint8_t value)
 	{
-		case 2:
-		{
-#if F_CPU == 16000000UL
-			OCR1A = 556;    /* For ~900 Hz tone output */
-#else
-			OCR1A = 278;
-#endif
-		}
-		break;
+		BOOL enableAM = TRUE;
 
-		case 3:
+		switch(value)
 		{
+			case 2:
+			{
 #if F_CPU == 16000000UL
-			OCR1A = 625;    /* For ~800 Hz tone output */
+					OCR1A = 556;    /* For ~900 Hz tone output */
 #else
-			OCR1A = 312;
+					OCR1A = 278;
 #endif
-		}
-		break;
+			}
+			break;
 
-		case 4:
-		{
+			case 3:
+			{
 #if F_CPU == 16000000UL
-			OCR1A = 714;    /* For ~700 Hz tone output */
+					OCR1A = 625;    /* For ~800 Hz tone output */
 #else
-			OCR1A = 357;
+					OCR1A = 312;
 #endif
-		}
-		break;
+			}
+			break;
 
-		case 5:
-		{
+			case 4:
+			{
 #if F_CPU == 16000000UL
-			OCR1A = 833;    /* For ~600 Hz tone output */
+					OCR1A = 714;    /* For ~700 Hz tone output */
 #else
-			OCR1A = 416;
+					OCR1A = 357;
 #endif
-		}
-		break;
+			}
+			break;
 
-		case 6:
-		{
+			case 5:
+			{
 #if F_CPU == 16000000UL
-			OCR1A = 1000;   /* For ~500 Hz tone output */
+					OCR1A = 833;    /* For ~600 Hz tone output */
 #else
-			OCR1A = 500;
+					OCR1A = 416;
 #endif
-		}
-		break;
+			}
+			break;
 
-		default:
-		{
+			case 6:
+			{
 #if F_CPU == 16000000UL
-			OCR1A = 500;    /* For ~1000 Hz tone output */
+					OCR1A = 1000;   /* For ~500 Hz tone output */
 #else
-			OCR1A = 250;
+					OCR1A = 500;
 #endif
+			}
+			break;
+
+			default:
+			{
+#if F_CPU == 16000000UL
+					OCR1A = 500;    /* For ~1000 Hz tone output */
+#else
+					OCR1A = 250;
+#endif
+			}
+			break;
 		}
-		break;
-	}
 
 #if !INIT_EEPROM_ONLY
-		if(enableAM)
-		{
-			setupPortsForF1975();
-		}
+			if(enableAM)
+			{
+				setupPortsForF1975();
+			}
 #endif  /* INIT_EEPROM_ONLY */
 
-	g_AM_enabled = enableAM;
+		g_AM_enabled = enableAM;
+	}
+#endif  /* SUPPORT_ONLY_80M */
+
+
+char value2Morse(char value)
+{
+	char morse = ' ';
+
+	if(value == 0x7F) return 39; /* Return the maximum value that will be accepted + 1 */
+
+	if((value >= 1) && (value <= 26))
+	{
+		morse = 'A' + value - 1;
+	}
+	else if((value >= 29) && (value <= 38))
+	{
+		morse = '0' + value - 29;
+	}
+	else if(value == 27)
+	{
+		morse = '<';
+	}
+	else if(value == 28)
+	{
+		morse = '/';
+	}
+
+	return morse;
 }
-#endif // SUPPORT_ONLY_80M
 
 /**
- *   Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"
+ *    Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"
  *
- *  #define THIRTY_YEARS 946080000
- *  char* convertEpochToTimeString(unsigned long epoch)
- *  {
- *  struct tm  ts;
+ #define THIRTY_YEARS 946080000
+ *   char* convertEpochToTimeString(unsigned long epoch)
+ *   {
+ *   struct tm  ts;
  *
- *  if (epoch < MINIMUM_EPOCH)
- *  {
- *       g_tempStr[0] = '\0';
+ *   if (epoch < MINIMUM_EPOCH)
+ *   {
+ *        g_tempStr[0] = '\0';
+ *    return g_tempStr;
+ *   }
+ *
+ *   time_t e = (time_t)epoch - THIRTY_YEARS;
+ *   // Format time, "ddd yyyy-mm-ddThh:mm:ss"
+ *   ts = *localtime(&e);
+ *   strftime(g_tempStr, sizeof(g_tempStr), "%Y-%m-%dT%H:%M:%SZ", &ts);
+ *
  *   return g_tempStr;
- *  }
- *
- *  time_t e = (time_t)epoch - THIRTY_YEARS;
- *  // Format time, "ddd yyyy-mm-ddThh:mm:ss"
- *  ts = *localtime(&e);
- *  strftime(g_tempStr, sizeof(g_tempStr), "%Y-%m-%dT%H:%M:%SZ", &ts);
- *
- *  return g_tempStr;
- *  }
+ *   }
  */

@@ -53,7 +53,7 @@ void Goertzel::SetTargetFrequency(float target_frequency)
 {
 	float floatN = (float)_N;
 
-	_TARGET_FREQUENCY = target_frequency;   /*should be integer of SAMPLING_RATE/N */
+	_TARGET_FREQUENCY = target_frequency;   /* Ideally, this should be an integer multiple of SAMPLING_RATE/N */
 	int k = (int)(0.5 + ((floatN * _TARGET_FREQUENCY) / _SAMPLING_FREQUENCY));
 	float w = (2.0 * PI * k) / floatN;
 	g_coeff = 2.0 * cos(w);
