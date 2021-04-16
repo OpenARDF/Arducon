@@ -28,12 +28,12 @@
 
 float _SAMPLING_FREQUENCY;
 float _TARGET_FREQUENCY;
-int _N;
+volatile int _N;
 float g_coeff;
 float Q1;
 float Q2;
-int _index = 0;
-bool _samplesReady = false;
+volatile int _index = 0;
+volatile bool _samplesReady = false;
 
 int* testData;
 

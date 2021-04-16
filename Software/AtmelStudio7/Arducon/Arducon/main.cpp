@@ -159,7 +159,7 @@ volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
 char g_lastKey = '\0';
 unsigned long g_tick_count = 0;
-unsigned int g_tone_duration_seconds = 0;
+unsigned int g_tone_duration_ticks = 0;
 
 #if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
@@ -807,6 +807,16 @@ ISR(USART_UDRE_vect)
 ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
+
+	if(g_dtmf_detected)
+	{
+		g_tone_duration_ticks++;
+	}
+	else
+	{
+		g_tone_duration_ticks = 0;
+	}
+
 	static uint16_t codeInc = 0;
 	static uint8_t holdButtonState = HIGH;
 	BOOL repeat = TRUE, finished = FALSE;
@@ -985,7 +995,6 @@ ISR( TIMER2_COMPB_vect )
 		BOOL energizeTx = FALSE;
 
 		g_current_epoch++;
-		g_tone_duration_seconds++;
 
 		g_seconds_since_powerup++;
 
@@ -1225,11 +1234,15 @@ ISR(TIMER0_COMPA_vect)
 	}
 #endif  /* !SUPPORT_ONLY_80M */
 
+
 /***********************************************************************
  *   Here is the main loop
  ************************************************************************/
 void loop()
 {
+	int8_t dtmfX = -1;
+	int8_t dtmfY = -1;
+
 #if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
 		{
@@ -1253,6 +1266,10 @@ void loop()
 #if !INIT_EEPROM_ONLY
 		if(g_goertzel.SamplesReady())
 		{
+			static char lastKey = '\0';
+			static int checkCount = 10;             /* Initialize to a value above the threshold to prevent an initial false key detect */
+			static int quietCount = 0;
+
 			float magnitudeX;
 			float magnitudeY;
 #ifdef DEBUG_DTMF
@@ -1260,10 +1277,9 @@ void loop()
 #endif  /* DEBUG_DTMF */
 			float largestX = 0;
 			float largestY = 0;
-			static char lastKey = '\0';
-			static int checkCount = 10;             /* Initialize to a value above the threshold to prevent an initial false key detect */
-			static int quietCount = 0;
-			int x = -1, y = -1;
+			dtmfX = -1;
+			dtmfY = -1;
+
 			BOOL dtmfDetected = FALSE;
 
 			if(!g_temperature_check_countdown)
@@ -1299,7 +1315,7 @@ void loop()
 					largestY = magnitudeY;
 					if(magnitudeY > threshold)                      /* Only consider Y above a certain threshold */
 					{
-						y = i;
+						dtmfY = i;
 					}
 				}
 
@@ -1316,7 +1332,7 @@ void loop()
 #endif  /* DEBUG_DTMF */
 			}
 
-			if(y >= 0)
+			if(dtmfY >= 0)
 			{
 				for(int i = 0; i < 4; i++)
 				{
@@ -1328,7 +1344,7 @@ void loop()
 						largestX = magnitudeX;
 						if(magnitudeX > threshold)                      /* Only consider X above a certain threshold */
 						{
-							x = i;
+							dtmfX = i;
 						}
 					}
 
@@ -1345,13 +1361,12 @@ void loop()
 #endif  /* DEBUG_DTMF */
 				}
 
-				if(x >= 0)
+				if(dtmfX >= 0)
 				{
-					char newKey = key[4 * y + x];
+					char newKey = key[4 * dtmfY + dtmfX];
 					dtmfDetected = TRUE;
 
-					/* If the same key is detected three times in a row with no silent periods between them then
-					 *  register a new keypress */
+					/* If the same key is detected three times in a row with no silent periods between them then register a new keypress */
 					if(lastKey == newKey)
 					{
 						if(checkCount < 10)
@@ -1411,7 +1426,7 @@ void loop()
 				static unsigned long lastQuiet = 0;
 				unsigned long delta = g_tick_count - lastQuiet;
 
-				/* Quieting must be detected at least 3 times in less than 2 second before another key can be accepted */
+				/* Quieting must be detected at least 3 times in less than 2 seconds before another key can be accepted */
 				if(quietCount++ > 2)
 				{
 					g_dtmf_detected = FALSE;
@@ -1429,12 +1444,12 @@ void loop()
 					lastQuiet = g_tick_count;
 					lastKey = '\0';
 				}
-
-				g_tone_duration_seconds = 0;
 			}
-			else if(g_tone_duration_seconds >= 6)   /* Most likely cause of such a long tone is loud noise */
+			else if(g_tone_duration_ticks >= TIMER2_SECONDS_5)   /* Most likely cause of such a long tone is loud noise */
 			{
 				g_dtmf_detected = FALSE;
+				g_config_error = NULL_CONFIG;
+
 				if(g_transmissions_disabled && !g_LED_enunciating)
 				{
 					digitalWrite(PIN_LED, OFF);

@@ -32,6 +32,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #endif  /* ATMEL_STUDIO_7 */
 
 /* Set Firmware Version Here */
