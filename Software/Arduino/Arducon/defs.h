@@ -290,6 +290,27 @@ typedef enum
 	REPORT_BATTERY
 } Fox_t;
 
+typedef enum
+{
+	NO_KEY = 0,
+	ONE_KEY = '1',
+	TWO_KEY = '2',
+	THREE_KEY = '3',
+	A_KEY = 'A',
+	FOUR_KEY = '4',
+	FIVE_KEY = '5',
+	SIX_KEY = '6',
+	B_KEY = 'B',
+	SEVEN_KEY = '7',
+	EIGHT_KEY = '8',
+	NINE_KEY = '9',
+	C_KEY = 'C',
+	STAR_KEY = '*',
+	ZERO_KEY = '0',
+	POUND_KEY = '#',
+	D_KEY = 'D'
+} DTMF_key_t;
+
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
 #define SPRINT_FAST_CODE_SPEED 15
@@ -388,8 +409,8 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
-#define ERROR_BLINK_PATTERN ((char*)"E")
-#define WAITING_BLINK_PATTERN ((char*)"E        ")
+#define ERROR_BLINK_PATTERN ((char*)"E ")
+#define WAITING_BLINK_PATTERN ((char*)"EE          ")
 #define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL
@@ -429,6 +450,8 @@ typedef enum
 #define TIMER2_20HZ 49
 #define TIMER2_5_8HZ 100
 #define TIMER2_0_5HZ 1000
+#define TIMER2_SECONDS_30 42840
+#define TIMER2_SECONDS_10 14280
 #define TIMER2_SECONDS_6 8566
 #define TIMER2_SECONDS_5 7138
 #define TIMER2_SECONDS_3 4283

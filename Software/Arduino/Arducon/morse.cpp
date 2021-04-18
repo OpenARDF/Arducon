@@ -63,14 +63,18 @@ BOOL makeMorse(char* s, BOOL* repeating, BOOL* finished)
 
 		if(*s)
 		{
-			str = s;
-			c = ' ';
-			morseInProgress = getMorseChar(*str);
-			charIndex = 0;
-			symbolIndex = 0;
-			elementIndex = 0;
-			addedSpace = 0;
-			completedString = FALSE;
+			if(str != s) /* Passing in the same pointer will not change the state of Morse.c */
+			{
+				str = s;
+				c = ' ';
+				morseInProgress = getMorseChar(*str);
+				charIndex = 0;
+				symbolIndex = 0;
+				elementIndex = 0;
+				addedSpace = 0;
+				completedString = FALSE;
+				carrierOn = FALSE;
+			}
 		}
 		else    /* a zero-length string shuts down makeMorse */
 		{
@@ -80,9 +84,10 @@ BOOL makeMorse(char* s, BOOL* repeating, BOOL* finished)
 			{
 				*finished = TRUE;
 			}
+
+			carrierOn = FALSE;
 		}
 
-		carrierOn = OFF;
 		return( OFF);
 	}
 	else if(str)
@@ -133,7 +138,7 @@ BOOL makeMorse(char* s, BOOL* repeating, BOOL* finished)
 					else
 					{
 						str = NULL;
-						carrierOn = OFF;
+						carrierOn = FALSE;
 						completedString = TRUE;
 						if(finished)
 						{
