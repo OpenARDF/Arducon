@@ -333,9 +333,10 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	/*******************************************************************
 	 *  Sync button pin change interrupt */
 	PCMSK2 = 0x00;
-	PCMSK2 = (1 << PCINT20);    /* Enable PCINT20 */
+	PCMSK1 = 0x00;
+	PCMSK1 = (1 << PCINT11);    /* Enable PCINT11 */
 	PCICR = 0x00;
-	PCICR = (1 << PCIE2);       /* Enable pin change interrupt 2 */
+	PCICR = (1 << PCIE1);       /* Enable pin change interrupt 1 */
 	sei();                      /* Enable interrupts */
 
 	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
@@ -522,7 +523,7 @@ ISR(ADC_vect)
  *  Handles pushbutton presses
  *
  ************************************************************************/
-ISR(PCINT2_vect)
+ISR(PCINT1_vect)
 {
 	BOOL pinVal = digitalRead(PIN_SYNC);
 
