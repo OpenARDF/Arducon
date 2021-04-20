@@ -311,6 +311,8 @@ typedef enum
 	D_KEY = 'D'
 } DTMF_key_t;
 
+#define Goertzel_N 201
+
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
 #define SPRINT_FAST_CODE_SPEED 15

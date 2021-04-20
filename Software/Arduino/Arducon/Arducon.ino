@@ -141,11 +141,9 @@ volatile uint8_t g_temperature_check_countdown = 0;
 volatile uint8_t g_voltage_check_countdown = 0;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
-#define _N 201
-
 #if !INIT_EEPROM_ONLY
-	const int N = _N;
-	const float threshold = 500000. * (_N / 100);
+	const int N = Goertzel_N;
+	const float threshold = 500000. * (Goertzel_N / 100);
 	const float sampling_freq = SAMPLE_RATE;
 	const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
 	const float y_frequencies[4] = { 697., 770., 852., 941. };
@@ -159,7 +157,6 @@ volatile unsigned long g_tick_count = 0;
 volatile unsigned int g_tone_duration_ticks = 0;
 volatile unsigned int g_LED_Enunciation_holdoff = 0;
 volatile unsigned int g_DTMF_sentence_in_progress_ticks = 0;
-
 
 #if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
@@ -2092,9 +2089,13 @@ void handleLinkBusMsgs()
 			return state;
 		}
 
-		if((key == NO_KEY) && !g_DTMF_sentence_in_progress_ticks)
+		if(key == NO_KEY)
 		{
-			state = STATE_SHUTDOWN;
+			if(!g_DTMF_sentence_in_progress_ticks)
+			{
+				state = STATE_SHUTDOWN;
+			}
+
 			return state;
 		}
 
@@ -2107,6 +2108,10 @@ void handleLinkBusMsgs()
 			if(key == '*')
 			{
 				state = STATE_SENTENCE_START;
+			}
+			
+			if(state != STATE_SHUTDOWN)
+			{
 				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
 			}
 		}
@@ -2115,7 +2120,6 @@ void handleLinkBusMsgs()
 		{
 			case STATE_SHUTDOWN:
 			{
-				g_DTMF_sentence_in_progress_ticks = 0;
 			}
 			break;
 
@@ -2158,8 +2162,6 @@ void handleLinkBusMsgs()
 
 			case STATE_A:
 			{
-				state = STATE_SHUTDOWN;
-
 				if(key == '0')
 				{
 					state = STATE_PAUSE_TRANSMISSIONS;
@@ -2179,6 +2181,10 @@ void handleLinkBusMsgs()
 				else if((key == '8') && setPasswordEnabled)
 				{
 					state = STATE_SET_PASSWORD;
+				}
+				else
+				{
+					state = STATE_SHUTDOWN;
 				}
 			}
 			break;
