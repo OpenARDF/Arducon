@@ -34,6 +34,7 @@ float Q1;
 float Q2;
 volatile int _index = 0;
 volatile bool _samplesReady = false;
+int highValueCount = 0;
 
 int* testData;
 
@@ -73,6 +74,11 @@ void Goertzel::ProcessSample(int sample)
 {
 	float Q0 = g_coeff * Q1 - Q2 + (float)(sample - ADCCENTER);
 
+	if(sample > 230)
+	{
+		highValueCount++;
+	}
+
 	Q2 = Q1;
 	Q1 = Q0;
 }
@@ -100,15 +106,19 @@ bool Goertzel::SamplesReady(void)
 	return(_samplesReady);
 }
 
-float Goertzel::Magnitude2()
+float Goertzel::Magnitude2(int *highCount)
 {
 	float magnitude2;
+
+	highValueCount = 0;
 
 	/* Process the samples. */
 	for(int index = 0; index < _N; index++)
 	{
 		ProcessSample(testData[index]);
 	}
+
+	if(highCount) *highCount = highValueCount;
 
 	magnitude2 = Q1 * Q1 + Q2 * Q2 - g_coeff * Q1 * Q2;
 

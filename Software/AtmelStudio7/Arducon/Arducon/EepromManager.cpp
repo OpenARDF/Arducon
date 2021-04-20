@@ -406,6 +406,7 @@ BOOL EepromManager::readNonVols(void)
 	void EepromManager::sendSuccessString(void)
 	{
 		sendPROGMEMString((const char*)&TEXT_EEPROM_SUCCESS_MESSAGE);
+//		dumpEEPROMVars();
 	}
 
 	void EepromManager::sendPROGMEMString(const char* fl_addr)
@@ -510,8 +511,7 @@ BOOL EepromManager::readNonVols(void)
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
-			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
-/*			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); / * Set maximum attenuation at index 0 * / */
+			float val = 5.5 * squaref((1.4 + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196))); /* Set maximum attenuation to fall at index 0 */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
@@ -617,8 +617,6 @@ BOOL EepromManager::readNonVols(void)
 		/* Done */
 
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
-
-		lb_send_string((char*)"EEPROM PROGRAMMING FINISHED\n", TRUE);
 
 		return(err);
 	}

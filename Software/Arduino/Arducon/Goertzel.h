@@ -60,7 +60,7 @@ Goertzel(float, float);
 ~Goertzel();
 void SetTargetFrequency(float);
 bool DataPoint(int);
-float Magnitude2();
+float Magnitude2(int *highCount);
 bool SamplesReady(void);
 
 private:

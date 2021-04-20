@@ -1259,12 +1259,15 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 void loop()
 {
+#if !INIT_EEPROM_ONLY
 	int8_t dtmfX = -1;
 	int8_t dtmfY = -1;
 	float largestX;
 	float largestY;
 	BOOL dtmfDetected = FALSE;
 	BOOL noiseDetected = FALSE;
+	int clipCount = 0;
+#endif // !INIT_EEPROM_ONLY
 
 #if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
@@ -1307,6 +1310,7 @@ void loop()
 
 			dtmfDetected = FALSE;
 			noiseDetected = FALSE;
+			clipCount = 0;
 
 			if(!g_temperature_check_countdown)
 			{
@@ -1334,7 +1338,7 @@ void loop()
 			for(int i = 0; i < 4; i++)
 			{
 				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
+				magnitudeY = g_goertzel.Magnitude2(&clipCount);               /* Check samples for presence of the target frequency */
 
 				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 				{
@@ -1363,7 +1367,7 @@ void loop()
 				for(int i = 0; i < 4; i++)
 				{
 					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-					magnitudeX = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
+					magnitudeX = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
 
 					if(magnitudeX > largestX)                           /* Use only the greatest X value */
 					{
@@ -1387,7 +1391,7 @@ void loop()
 #endif  /* DEBUG_DTMF */
 				}
 
-				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || ((largestX < CLIPPING_THRESHOLD) && (largestY < CLIPPING_THRESHOLD)))
+				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount<50))
 				{
 					if(dtmfX >= 0)
 					{
@@ -1432,7 +1436,7 @@ void loop()
 										for(int i = 0; i < 7; i++)
 										{
 											g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
-											magnitudeM = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
+											magnitudeM = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
 											dtostrf((double)mid_frequencies[i], 4, 0, s);
 											sprintf(g_tempStr, "%s=", s);
 											lb_send_string(g_tempStr, TRUE);
@@ -1460,7 +1464,7 @@ void loop()
 					if(lb_enabled())
 					{
 
-						sprintf(g_tempStr, "Clipping!\n");
+						sprintf(g_tempStr, "ClipCount=%d\n", clipCount);
 						lb_send_string(g_tempStr, TRUE);
 
 /*						char s[10]; */

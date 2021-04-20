@@ -152,14 +152,14 @@ volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 #ifdef DEBUG_DTMF
 		const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 #endif  /* DEBUG_DTMF */
-	const char key[16] = { '1', '2', '3', 'A', '4', '5', '6', 'B', '7', '8', '9', 'C', '*', '0', '#', 'D' };
-	const int numKeys = sizeof(key) / sizeof(key[0]);
 #endif  /* !INIT_EEPROM_ONLY */
 
-
 char g_lastKey = '\0';
-unsigned long g_tick_count = 0;
-unsigned int g_tone_duration_ticks = 0;
+volatile unsigned long g_tick_count = 0;
+volatile unsigned int g_tone_duration_ticks = 0;
+volatile unsigned int g_LED_Enunciation_holdoff = 0;
+volatile unsigned int g_DTMF_sentence_in_progress_ticks = 0;
+
 
 #if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
@@ -193,9 +193,10 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
 char value2Morse(char value);
+DTMF_key_t value2DTMFKey(uint8_t value);
 
 #if !INIT_EEPROM_ONLY
-	void processKey(char key);
+	KeyprocessState_t processDTMFdetection(DTMF_key_t key);
 	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
 #endif  /* !INIT_EEPROM_ONLY */
 
@@ -809,13 +810,24 @@ ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
 
+	if(g_LED_Enunciation_holdoff)
+	{
+		g_LED_Enunciation_holdoff--;
+	}
+
 	if(g_dtmf_detected)
 	{
 		g_tone_duration_ticks++;
+		g_LED_Enunciation_holdoff = TIMER2_SECONDS_1;
 	}
 	else
 	{
 		g_tone_duration_ticks = 0;
+	}
+
+	if(g_DTMF_sentence_in_progress_ticks)
+	{
+		g_DTMF_sentence_in_progress_ticks--;
 	}
 
 	static uint16_t codeInc = 0;
@@ -948,20 +960,23 @@ ISR( TIMER2_COMPB_vect )
 
 		if(g_LED_enunciating)
 		{
-			if(codeInc)
+			if(!g_LED_Enunciation_holdoff)
 			{
-				codeInc--;
-
-				if(!codeInc)
+				if(codeInc)
 				{
-					key = makeMorse(NULL, &repeat, &finished);
-					digitalWrite(PIN_LED, key); /*  LED */
+					codeInc--;
+
+					if(!codeInc)
+					{
+						key = makeMorse(NULL, &repeat, &finished);
+						digitalWrite(PIN_LED, key); /*  LED */
+						codeInc = g_code_throttle;
+					}
+				}
+				else
+				{
 					codeInc = g_code_throttle;
 				}
-			}
-			else
-			{
-				codeInc = g_code_throttle;
 			}
 		}
 		else
@@ -1023,6 +1038,7 @@ ISR( TIMER2_COMPB_vect )
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
 					BOOL repeat = TRUE;
+					makeMorse((char*)"\0", NULL, NULL);
 					makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
 					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
 				}
@@ -1165,6 +1181,7 @@ ISR( TIMER2_COMPB_vect )
 						}
 
 						g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
+						makeMorse((char*)"\0", NULL, NULL);
 						makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
 
 						g_on_the_air = TRUE;
@@ -1235,14 +1252,22 @@ ISR(TIMER0_COMPA_vect)
 	}
 #endif  /* !SUPPORT_ONLY_80M */
 
+#define CLIPPING_THRESHOLD 12000000.
 
 /***********************************************************************
  *   Here is the main loop
  ************************************************************************/
 void loop()
 {
+#if !INIT_EEPROM_ONLY
 	int8_t dtmfX = -1;
 	int8_t dtmfY = -1;
+	float largestX;
+	float largestY;
+	BOOL dtmfDetected = FALSE;
+	BOOL noiseDetected = FALSE;
+	int clipCount = 0;
+#endif // !INIT_EEPROM_ONLY
 
 #if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
@@ -1255,6 +1280,8 @@ void loop()
 				digitalWrite(PIN_LED, OFF); /*  LED */
 			}
 		}
+
+		processDTMFdetection(NO_KEY);
 #endif  /* !INIT_EEPROM_ONLY */
 
 	handleLinkBusMsgs();
@@ -1268,7 +1295,7 @@ void loop()
 		if(g_goertzel.SamplesReady())
 		{
 			static char lastKey = '\0';
-			static int checkCount = 10;             /* Initialize to a value above the threshold to prevent an initial false key detect */
+			static int checkCount = 10; /* Initialize to a value above the threshold to prevent an initial false key detect */
 			static int quietCount = 0;
 
 			float magnitudeX;
@@ -1276,12 +1303,14 @@ void loop()
 #ifdef DEBUG_DTMF
 				float magnitudeM;
 #endif  /* DEBUG_DTMF */
-			float largestX = 0;
-			float largestY = 0;
+			largestX = 0;
+			largestY = 0;
 			dtmfX = -1;
 			dtmfY = -1;
 
-			BOOL dtmfDetected = FALSE;
+			dtmfDetected = FALSE;
+			noiseDetected = FALSE;
+			clipCount = 0;
 
 			if(!g_temperature_check_countdown)
 			{
@@ -1309,7 +1338,7 @@ void loop()
 			for(int i = 0; i < 4; i++)
 			{
 				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
+				magnitudeY = g_goertzel.Magnitude2(&clipCount);               /* Check samples for presence of the target frequency */
 
 				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 				{
@@ -1338,7 +1367,7 @@ void loop()
 				for(int i = 0; i < 4; i++)
 				{
 					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-					magnitudeX = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
+					magnitudeX = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
 
 					if(magnitudeX > largestX)                           /* Use only the greatest X value */
 					{
@@ -1362,67 +1391,96 @@ void loop()
 #endif  /* DEBUG_DTMF */
 				}
 
-				if(dtmfX >= 0)
+				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount<50))
 				{
-					char newKey = key[4 * dtmfY + dtmfX];
-					dtmfDetected = TRUE;
-
-					/* If the same key is detected three times in a row with no silent periods between them then register a new keypress */
-					if(lastKey == newKey)
+					if(dtmfX >= 0)
 					{
-						if(checkCount < 10)
-						{
-							checkCount++;
-						}
+						DTMF_key_t newKey = value2DTMFKey(4 * dtmfY + dtmfX);
+						dtmfDetected = TRUE;
 
-						if(checkCount == 3)
+						/* If the same key is detected three times in a row with no silent periods between them then register a new keypress */
+						if(lastKey == newKey)
 						{
-							g_dtmf_detected = TRUE;
-							quietCount = 0;
-							g_lastKey = newKey;
-
-							/*#ifdef DEBUG_DTMF */
-							if(lb_enabled())
+							if(checkCount < 10)
 							{
-								sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
-								lb_send_string(g_tempStr, TRUE);
+								checkCount++;
 							}
-							/*#endif  / * DEBUG_DTMF * / */
 
-							processKey(newKey);
+							if(checkCount == 3)
+							{
+								g_dtmf_detected = TRUE;
+								quietCount = 0;
+								g_lastKey = newKey;
 
-#ifdef DEBUG_DTMF
+/*#ifdef DEBUG_DTMF */
 								if(lb_enabled())
 								{
-									lb_send_string((char*)"Mag X/Y=", TRUE);
-									dtostrf((double)largestX, 4, 0, s);
-									sprintf(g_tempStr, "%s / ", s);
+									sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
 									lb_send_string(g_tempStr, TRUE);
-									dtostrf((double)largestY, 4, 0, s);
-									sprintf(g_tempStr, "%s\n", s);
-									lb_send_string(g_tempStr, TRUE);
+								}
+/*#endif  / * DEBUG_DTMF * / */
 
-									for(int i = 0; i < 7; i++)
+								processDTMFdetection(newKey);
+
+#ifdef DEBUG_DTMF
+									if(lb_enabled())
 									{
-										g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
-										magnitudeM = g_goertzel.Magnitude2();               /* Check samples for presence of the target frequency */
-										dtostrf((double)mid_frequencies[i], 4, 0, s);
-										sprintf(g_tempStr, "%s=", s);
+										lb_send_string((char*)"Mag X/Y=", TRUE);
+										dtostrf((double)largestX, 4, 0, s);
+										sprintf(g_tempStr, "%s / ", s);
 										lb_send_string(g_tempStr, TRUE);
-										dtostrf((double)magnitudeM, 4, 0, s);
+										dtostrf((double)largestY, 4, 0, s);
 										sprintf(g_tempStr, "%s\n", s);
 										lb_send_string(g_tempStr, TRUE);
-									}
-								}
-#endif  /* DEBUG_DTMF */
-						}
-					}
 
-					lastKey = newKey;
+										for(int i = 0; i < 7; i++)
+										{
+											g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
+											magnitudeM = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
+											dtostrf((double)mid_frequencies[i], 4, 0, s);
+											sprintf(g_tempStr, "%s=", s);
+											lb_send_string(g_tempStr, TRUE);
+											dtostrf((double)magnitudeM, 4, 0, s);
+											sprintf(g_tempStr, "%s\n", s);
+											lb_send_string(g_tempStr, TRUE);
+										}
+									}
+#endif  /* DEBUG_DTMF */
+							}
+						}
+
+						lastKey = newKey;
+					}
+				}
+				else
+				{
+					noiseDetected = TRUE;
+					g_dtmf_detected = TRUE;
+
+					digitalWrite(PIN_LED, ON);
+//					g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
+
+					/*#ifdef DEBUG_DTMF */
+					if(lb_enabled())
+					{
+
+						sprintf(g_tempStr, "ClipCount=%d\n", clipCount);
+						lb_send_string(g_tempStr, TRUE);
+
+/*						char s[10]; */
+/*						lb_send_string((char*)"Mag X/Y=", TRUE); */
+/*						dtostrf((double)largestX, 4, 0, s); */
+/*						sprintf(g_tempStr, "%s / ", s); */
+/*						lb_send_string(g_tempStr, TRUE); */
+/*						dtostrf((double)largestY, 4, 0, s); */
+/*						sprintf(g_tempStr, "%s\n", s); */
+/*						lb_send_string(g_tempStr, TRUE); */
+					}
+					/*#endif  / * DEBUG_DTMF * / */
 				}
 			}
 
-			if(!dtmfDetected)   /* Quiet detected */
+			if(!dtmfDetected && !noiseDetected) /* Quiet detected */
 			{
 				static unsigned long lastQuiet = 0;
 				unsigned long delta = g_tick_count - lastQuiet;
@@ -1446,7 +1504,7 @@ void loop()
 					lastKey = '\0';
 				}
 			}
-			else if(g_tone_duration_ticks >= TIMER2_SECONDS_5)   /* Most likely cause of such a long tone is loud noise */
+			else if(g_tone_duration_ticks >= TIMER2_SECONDS_5)  /* The most likely cause of such a long tone is loud noise */
 			{
 				g_dtmf_detected = FALSE;
 				g_config_error = NULL_CONFIG;
@@ -1468,15 +1526,12 @@ void loop()
 	{
 		if(g_dtmf_detected)
 		{
-			BOOL repeat = FALSE;
-			makeMorse(DTMF_DETECTED_BLINK_PATTERN, &repeat, NULL);
-			g_code_throttle = THROTTLE_VAL_FROM_WPM(10);
-			g_LED_enunciating = TRUE;
+			digitalWrite(PIN_LED, ON);
 			g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 		}
 		else if(g_transmissions_disabled)
 		{
-			if(g_LED_timeout_countdown)
+			if(g_LED_timeout_countdown && !g_LED_Enunciation_holdoff)
 			{
 				ConfigurationState_t hold_config_err = g_config_error;
 				g_config_error = clockConfigurationCheck();
@@ -1579,7 +1634,7 @@ void playStartingTone(uint8_t toneFreq)
 
 
 /* The compiler does not seem to always optimize large switch statements correctly
- *void __attribute__((optimize("O3"))) handleLinkBusMsgs() */
+ * void __attribute__((optimize("O3"))) handleLinkBusMsgs() */
 void handleLinkBusMsgs()
 {
 	LinkbusRxBuffer* lb_buff;
@@ -2018,9 +2073,9 @@ void handleLinkBusMsgs()
  *  *D c...c # - Unlock Arducon (re-enable DTMF commands) where c...c is the password
  *  *D# - Lock Arducon (disables all DTMF commands except *Dc...c#)
  */
-	void processKey(char key)
+	KeyprocessState_t processDTMFdetection(DTMF_key_t key)
 	{
-		static int state = STATE_SENTENCE_START;
+		static KeyprocessState_t state = STATE_SHUTDOWN;
 		static int digits;
 		static int value;
 		static int stringLength;
@@ -2034,7 +2089,13 @@ void handleLinkBusMsgs()
 		{
 			g_DTMF_unlocked = FALSE;
 			state = STATE_SHUTDOWN;
-			return;
+			return state;
+		}
+
+		if((key == NO_KEY) && !g_DTMF_sentence_in_progress_ticks)
+		{
+			state = STATE_SHUTDOWN;
+			return state;
 		}
 
 		if(!g_DTMF_unlocked)
@@ -2046,6 +2107,7 @@ void handleLinkBusMsgs()
 			if(key == '*')
 			{
 				state = STATE_SENTENCE_START;
+				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
 			}
 		}
 
@@ -2053,6 +2115,7 @@ void handleLinkBusMsgs()
 		{
 			case STATE_SHUTDOWN:
 			{
+				g_DTMF_sentence_in_progress_ticks = 0;
 			}
 			break;
 
@@ -2512,10 +2575,16 @@ void handleLinkBusMsgs()
 							value *= 10;
 							value += key - '0';
 						}
+						else
+						{
+							state = STATE_SHUTDOWN;
+						}
 					}
 					break;
 #endif  /* !SUPPORT_ONLY_80M */
 		}
+
+		return(state);
 	}
 
 #endif  /* #if !INIT_EEPROM_ONLY */
@@ -3162,7 +3231,11 @@ char value2Morse(char value)
 {
 	char morse = ' ';
 
-	if(value == 0x7F) return 39; /* Return the maximum value that will be accepted + 1 */
+	if(value == 0x7F)
+	{
+		return( 39);    /* Return the maximum value that will be accepted + 1 */
+
+	}
 
 	if((value >= 1) && (value <= 26))
 	{
@@ -3181,7 +3254,55 @@ char value2Morse(char value)
 		morse = '/';
 	}
 
-	return morse;
+	return( morse);
+}
+
+DTMF_key_t value2DTMFKey(uint8_t value)
+{
+	DTMF_key_t key = NO_KEY;
+
+	if(value <= 2)
+	{
+		key = (DTMF_key_t)('1' + value);
+	}
+	else if((value >= 4) && (value <= 6))
+	{
+		key = (DTMF_key_t)('0' + value);
+	}
+	else if((value >= 8) && (value <= 10))
+	{
+		key = (DTMF_key_t)('/' + value);
+	}
+	else if(value == 3)
+	{
+		key = A_KEY;
+	}
+	else if(value == 7)
+	{
+		key = B_KEY;
+	}
+	else if(value == 11)
+	{
+		key = C_KEY;
+	}
+	else if(value == 12)
+	{
+		key = STAR_KEY;
+	}
+	else if(value == 13)
+	{
+		key = ZERO_KEY;
+	}
+	else if(value == 14)
+	{
+		key = POUND_KEY;
+	}
+	else if(value == 15)
+	{
+		key = D_KEY;
+	}
+
+	return( key);
 }
 
 /**
