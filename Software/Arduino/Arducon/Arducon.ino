@@ -1201,15 +1201,18 @@ ISR(TIMER0_COMPA_vect)
 {
 	static BOOL toggle = 0;
 
-	toggle = !toggle;
+	if(!g_AM_enabled)
+	{
+		toggle = !toggle;
 
-	if(g_audio_tone_state)
-	{
-		digitalWrite(PIN_CW_TONE_LOGIC, toggle);
-	}
-	else
-	{
-		digitalWrite(PIN_CW_TONE_LOGIC, OFF);
+		if(g_audio_tone_state)
+		{
+			digitalWrite(PIN_CW_TONE_LOGIC, toggle);
+		}
+		else
+		{
+			digitalWrite(PIN_CW_TONE_LOGIC, OFF);
+		}
 	}
 }
 
@@ -2029,6 +2032,13 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
+				else if(lb_buff->fields[FIELD1][0] == 'Z')
+				{
+					cli();
+					g_AM_enabled = FALSE;
+					setAtten(0);
+					sei();
+				}
 
 				sprintf(g_tempStr, "T=%dC\n", g_temperature);
 				lb_send_string(g_tempStr, TRUE);
@@ -2109,7 +2119,7 @@ void handleLinkBusMsgs()
 			{
 				state = STATE_SENTENCE_START;
 			}
-			
+
 			if(state != STATE_SHUTDOWN)
 			{
 				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
@@ -3160,6 +3170,12 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 
 		switch(value)
 		{
+			case 0:
+			{
+				enableAM = FALSE;
+			}
+			break;
+
 			case 2:
 			{
 #if F_CPU == 16000000UL
@@ -3210,6 +3226,7 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 			}
 			break;
 
+			case 1:
 			default:
 			{
 #if F_CPU == 16000000UL

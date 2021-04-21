@@ -31,9 +31,6 @@
 #include "ardooweeno.h"
 #endif  /* ATMEL_STUDIO_7 */
 
-	static uint8_t lower4;
-	static uint8_t upper2;
-
 void setAtten(tenthDB_t att)
 {
 	uint8_t pattern;
@@ -41,14 +38,8 @@ void setAtten(tenthDB_t att)
 	att -= (att % 5); /* set to nearest multiple of 5 */
 	att /= 5;
 
-	lower4 = dB_low(att);
-	upper2 = dB_high(att);
-
-	pattern = PORTC & 0xF0;
-	PORTC = pattern | lower4;
-
-	pattern = PORTD & 0xFC;
-	PORTD = pattern | upper2;
+	pattern = (uint8_t)att;
+	PORTB = pattern;
 }
 
 void setupPortsForF1975(void)
@@ -61,7 +52,5 @@ void setupPortsForF1975(void)
 	pinMode(PIN_D5, OUTPUT);  /* Also TXD */
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
-
-//	setAtten(0);
 }
 #endif // #if !SUPPORT_ONLY_80M

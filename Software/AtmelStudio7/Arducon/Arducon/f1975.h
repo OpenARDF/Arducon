@@ -106,8 +106,6 @@ typedef enum{
 	} dB_t;
 */
 
-#define dB_low(d) (d & 0x0F)
-#define dB_high(d) ((d & 0x30) >> 4)
 #define MAX_ATTEN_TENTHS_DB (uint16_t)315
 #define MAX_ATTEN_SETTING 0x3F
 
