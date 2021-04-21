@@ -2032,6 +2032,7 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
+#if !INIT_EEPROM_ONLY
 				else if(lb_buff->fields[FIELD1][0] == 'Z')
 				{
 					cli();
@@ -2039,6 +2040,7 @@ void handleLinkBusMsgs()
 					setAtten(0);
 					sei();
 				}
+#endif // INIT_EEPROM_ONLY
 
 				sprintf(g_tempStr, "T=%dC\n", g_temperature);
 				lb_send_string(g_tempStr, TRUE);
