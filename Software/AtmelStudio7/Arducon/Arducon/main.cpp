@@ -2092,7 +2092,6 @@ void handleLinkBusMsgs()
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
 
-		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 
 		if(key == 'D')
@@ -2111,6 +2110,8 @@ void handleLinkBusMsgs()
 
 			return( state);
 		}
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 		if(!g_DTMF_unlocked)
 		{

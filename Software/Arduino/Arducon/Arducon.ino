@@ -1338,7 +1338,7 @@ void loop()
 			for(int i = 0; i < 4; i++)
 			{
 				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2(&clipCount);               /* Check samples for presence of the target frequency */
+				magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
 
 				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 				{
@@ -2092,7 +2092,6 @@ void handleLinkBusMsgs()
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
 
-		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 
 		if(key == 'D')
@@ -2111,6 +2110,8 @@ void handleLinkBusMsgs()
 
 			return( state);
 		}
+
+		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 
 		if(!g_DTMF_unlocked)
 		{
