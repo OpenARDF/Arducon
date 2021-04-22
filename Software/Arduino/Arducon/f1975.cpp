@@ -23,7 +23,6 @@
  */
 
 #include "defs.h"
-#if !SUPPORT_ONLY_80M
 #include "f1975.h"
 #include "linkbus.h"
 
@@ -44,6 +43,7 @@ void setAtten(tenthDB_t att)
 
 void setupPortsForF1975(void)
 {
+#if !SUPPORT_ONLY_80M
 	pinMode(PIN_D0, OUTPUT);
 	pinMode(PIN_D1, OUTPUT);
 	pinMode(PIN_D2, OUTPUT);
@@ -52,5 +52,5 @@ void setupPortsForF1975(void)
 	pinMode(PIN_D5, OUTPUT);  /* Also TXD */
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
+#endif // !SUPPORT_ONLY_80M
 }
-#endif // #if !SUPPORT_ONLY_80M

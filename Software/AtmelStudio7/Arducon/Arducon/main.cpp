@@ -78,7 +78,7 @@ volatile int8_t g_utc_offset = 0;
 volatile BOOL g_ptt_periodic_reset_enabled;
 
 volatile BOOL g_sendAMmodulation = FALSE;
-volatile uint8_t g_AM_audio_frequency;
+volatile AM_Tone_Freq_t g_AM_audio_frequency;
 volatile BOOL g_AM_enabled = TRUE;
 volatile BOOL g_sendAMmodulationConstantly = FALSE;
 uint8_t g_dataModulation[SIZE_OF_DATA_MODULATION];
@@ -92,7 +92,6 @@ volatile int g_number_of_foxes = 0;
 volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Sprint without unnecessary software complexity */
 volatile int g_id_interval_seconds = 0;
 volatile InitializeAction_t g_initialize_fox_transmissions = INIT_NOT_SPECIFIED;
-volatile int g_fox_tone_offset = 1; /* Used to provide slightly different audio tones for different foxes for playback through the speaker */
 volatile BOOL g_use_ptt_periodic_reset = FALSE;
 
 volatile BOOL g_audio_tone_state = FALSE;
@@ -172,9 +171,7 @@ void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
-#if !SUPPORT_ONLY_80M
-	void setAMToneFrequency(uint8_t value);
-#endif  /* !SUPPORT_ONLY_80M */
+void setAMToneFrequency(AM_Tone_Freq_t value);
 
 uint16_t readADC();
 float getTemp(void);
@@ -206,7 +203,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED, OUTPUT);             /* This is the enunciator LED */
+	pinMode(PIN_LED, OUTPUT);                     /* This is the enunciator LED */
 	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
@@ -271,7 +268,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 #endif  /* !SUPPORT_ONLY_80M */
 
 #if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars();         /* Must happen after pins are configured due to I2C access */
+		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                 /* Must happen after pins are configured due to I2C access */
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
@@ -279,6 +276,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 #endif
 
 	cli();
+
 	/*******************************************************************
 	 *  TIMER2 is for periodic interrupts to drive Morse code generation
 	 *  Reset control registers */
@@ -298,26 +296,24 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	ASSR &= ~(1 << AS2);
 	/* Reset Timer/Counter2 Interrupt Mask Register */
 	TIMSK2 = 0;
-	TIMSK2 |= (1 << OCIE2B);                        /* Output Compare Match B Interrupt Enable */
+	TIMSK2 |= (1 << OCIE2B);    /* Output Compare Match B Interrupt Enable */
 
 	/*******************************************************************
 	 *  Timer 1 is used for controlling the attenuator for AM generation
 	 *  set timer1 interrupt at 16 kHz */
 
-	TCCR1A = 0;                                     /* set entire TCCR1A register to 0 */
-	TCCR1B = 0;                                     /* same for TCCR1B */
-	TCNT1 = 0;                                      /* initialize counter value to 0 */
+	TCCR1A = 0;                 /* set entire TCCR1A register to 0 */
+	TCCR1B = 0;                 /* same for TCCR1B */
+	TCNT1 = 0;                  /* initialize counter value to 0 */
 #if !SUPPORT_ONLY_80M
-		setAMToneFrequency(g_AM_audio_frequency);   /* For attenuator tone output */
 		/* turn on CTC mode */
 		TCCR1B |= (1 << WGM12);
 		/* Set CS10 bit for no prescaling */
 		TCCR1B |= (1 << CS10);
 #endif  /* !SUPPORT_ONLY_80M */
 
-
 	/********************************************************************/
-	/* Timer 0 is for audio Start tone generation and control
+	/* Timer 0 is for FM audio tone generation and control
 	 *  Note: Do not use millis() or DELAY() after TIMER0 has been reconfigured here! */
 	TCCR0A = 0x00;
 	TCCR0A |= (1 << WGM01); /* Set CTC mode */
@@ -325,7 +321,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	TCCR0B |= (1 << CS02);  /* Prescale 256 */
 	OCR0A = DEFAULT_TONE_FREQUENCY;
 	TIMSK0 = 0x00;
-	TIMSK0 |= (1 << OCIE0A);
 
 	/*******************************************************************
 	 *  Sync button pin change interrupt */
@@ -334,13 +329,22 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	PCMSK1 = (1 << PCINT11);    /* Enable PCINT11 */
 	PCICR = 0x00;
 	PCICR = (1 << PCIE1);       /* Enable pin change interrupt 1 */
-	sei();                      /* Enable interrupts */
 
-	linkbus_init(BAUD);         /* Start the Link Bus serial comms */
+#if SUPPORT_ONLY_80M
+		setAMToneFrequency(AM_DISABLED);
+#else
+		/*******************************************************************
+		*  AM attenuator initialization (also affects FM tone enable)     */
+		setAMToneFrequency(g_AM_audio_frequency);   /* For attenuator tone output */
+#endif /* !SUPPORT_ONLY_80M */
+
+	sei();                                          /* Enable interrupts */
+
+	linkbus_init(BAUD);                             /* Start the Link Bus serial comms */
 
 #ifndef TRANQUILIZE_WATCHDOG
 		wdt_init(WD_SW_RESETS);
-		wdt_reset();            /* HW watchdog */
+		wdt_reset();                                /* HW watchdog */
 #endif /* TRANQUILIZE_WATCHDOG */
 
 	g_reset_button_held = !digitalRead(PIN_SYNC);
@@ -398,9 +402,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
-#if !SUPPORT_ONLY_80M
-			TIMSK1 |= (1 << OCIE1A);    /* start timer 1 interrupts */
-#endif /* !SUPPORT_ONLY_80M */
 
 #endif  /* #if INIT_EEPROM_ONLY */
 
@@ -1182,7 +1183,6 @@ ISR( TIMER2_COMPB_vect )
 						makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
 
 						g_on_the_air = TRUE;
-						g_fox_tone_offset = g_fox_counter;
 					}
 				}
 
@@ -1338,7 +1338,7 @@ void loop()
 			for(int i = 0; i < 4; i++)
 			{
 				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2(&clipCount);               /* Check samples for presence of the target frequency */
+				magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
 
 				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 				{
@@ -1367,7 +1367,7 @@ void loop()
 				for(int i = 0; i < 4; i++)
 				{
 					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-					magnitudeX = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
+					magnitudeX = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
 
 					if(magnitudeX > largestX)                           /* Use only the greatest X value */
 					{
@@ -1391,7 +1391,7 @@ void loop()
 #endif  /* DEBUG_DTMF */
 				}
 
-				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount<50))
+				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount < 50))
 				{
 					if(dtmfX >= 0)
 					{
@@ -1436,7 +1436,7 @@ void loop()
 										for(int i = 0; i < 7; i++)
 										{
 											g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
-											magnitudeM = g_goertzel.Magnitude2(NULL);               /* Check samples for presence of the target frequency */
+											magnitudeM = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
 											dtostrf((double)mid_frequencies[i], 4, 0, s);
 											sprintf(g_tempStr, "%s=", s);
 											lb_send_string(g_tempStr, TRUE);
@@ -1458,7 +1458,7 @@ void loop()
 					g_dtmf_detected = TRUE;
 
 					digitalWrite(PIN_LED, ON);
-//					g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
+/*					g_config_error = NULL_CONFIG;   / * Trigger a new configuration enunciation * / */
 
 					/*#ifdef DEBUG_DTMF */
 					if(lb_enabled())
@@ -1467,14 +1467,14 @@ void loop()
 						sprintf(g_tempStr, "ClipCount=%d\n", clipCount);
 						lb_send_string(g_tempStr, TRUE);
 
-/*						char s[10]; */
-/*						lb_send_string((char*)"Mag X/Y=", TRUE); */
-/*						dtostrf((double)largestX, 4, 0, s); */
-/*						sprintf(g_tempStr, "%s / ", s); */
-/*						lb_send_string(g_tempStr, TRUE); */
-/*						dtostrf((double)largestY, 4, 0, s); */
-/*						sprintf(g_tempStr, "%s\n", s); */
-/*						lb_send_string(g_tempStr, TRUE); */
+/*						char s[10];
+ *						lb_send_string((char*)"Mag X/Y=", TRUE);
+ *						dtostrf((double)largestX, 4, 0, s);
+ *						sprintf(g_tempStr, "%s / ", s);
+ *						lb_send_string(g_tempStr, TRUE);
+ *						dtostrf((double)largestY, 4, 0, s);
+ *						sprintf(g_tempStr, "%s\n", s);
+ *						lb_send_string(g_tempStr, TRUE); */
 					}
 					/*#endif  / * DEBUG_DTMF * / */
 				}
@@ -1531,7 +1531,7 @@ void loop()
 		}
 		else if(g_transmissions_disabled)
 		{
-			if(g_LED_timeout_countdown && !g_LED_Enunciation_holdoff)
+			if(g_LED_timeout_countdown && !g_LED_Enunciation_holdoff && !g_DTMF_sentence_in_progress_ticks)
 			{
 				ConfigurationState_t hold_config_err = g_config_error;
 				g_config_error = clockConfigurationCheck();
@@ -1614,7 +1614,7 @@ ConfigurationState_t clockConfigurationCheck(void)
 
 void sendMorseTone(BOOL onOff)
 {
-	OCR0A = DEFAULT_TONE_FREQUENCY - g_fox_tone_offset;
+	OCR0A = DEFAULT_TONE_FREQUENCY;
 	g_audio_tone_state = onOff;
 }
 
@@ -1754,12 +1754,12 @@ void handleLinkBusMsgs()
 						if(lb_buff->fields[FIELD1][0])
 						{
 							uint8_t toneVal = atol(lb_buff->fields[FIELD1]);
-							g_AM_audio_frequency = CLAMP(MIN_AM_TONE_FREQUENCY, toneVal, MAX_AM_TONE_FREQUENCY);
+							g_AM_audio_frequency = (AM_Tone_Freq_t)CLAMP(MIN_AM_TONE_FREQUENCY, toneVal, MAX_AM_TONE_FREQUENCY);
 							ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
 							setAMToneFrequency(g_AM_audio_frequency);
 						}
 
-						sprintf(g_tempStr, "AM:%d\n", g_AM_audio_frequency);
+						sprintf(g_tempStr, "AM:%d\n", (uint8_t)g_AM_audio_frequency);
 						lb_send_string(g_tempStr, FALSE);
 					}
 					break;
@@ -2032,15 +2032,16 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
-#if !INIT_EEPROM_ONLY
-				else if(lb_buff->fields[FIELD1][0] == 'Z')
-				{
-					cli();
-					g_AM_enabled = FALSE;
-					setAtten(0);
-					sei();
-				}
-#endif // INIT_EEPROM_ONLY
+#if !INIT_EEPROM_ONLY && !SUPPORT_ONLY_80M
+					else if(lb_buff->fields[FIELD1][0] == 'Z')
+					{
+						cli();
+						g_AM_enabled = FALSE;
+						TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+						setAtten(0);
+						sei();
+					}
+#endif /* INIT_EEPROM_ONLY */
 
 				sprintf(g_tempStr, "T=%dC\n", g_temperature);
 				lb_send_string(g_tempStr, TRUE);
@@ -2098,7 +2099,7 @@ void handleLinkBusMsgs()
 		{
 			g_DTMF_unlocked = FALSE;
 			state = STATE_SHUTDOWN;
-			return state;
+			return( state);
 		}
 
 		if(key == NO_KEY)
@@ -2108,7 +2109,7 @@ void handleLinkBusMsgs()
 				state = STATE_SHUTDOWN;
 			}
 
-			return state;
+			return( state);
 		}
 
 		if(!g_DTMF_unlocked)
@@ -2120,9 +2121,15 @@ void handleLinkBusMsgs()
 			if(key == '*')
 			{
 				state = STATE_SENTENCE_START;
+				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
+				return(state);
 			}
 
-			if(state != STATE_SHUTDOWN)
+			if(key == '#')
+			{
+				g_DTMF_sentence_in_progress_ticks = 0;
+			}
+			else if(state != STATE_SHUTDOWN)
 			{
 				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
 			}
@@ -2155,19 +2162,11 @@ void handleLinkBusMsgs()
 					{
 						state = STATE_C;
 					}
-#if !SUPPORT_ONLY_80M
-						else if(key != '*')
-						{
-							value = key - '0';
-#if !INIT_EEPROM_ONLY
-								if(g_AM_enabled)
-								{
-									setupPortsForF1975();
-								}
-#endif  /* !INIT_EEPROM_ONLY */
-							state = STATE_TEST_ATTENUATOR;
-						}
-#endif  /* !SUPPORT_ONLY_80M */
+					else
+					{
+						g_DTMF_sentence_in_progress_ticks = 0;
+						state = STATE_SHUTDOWN;
+					}
 				}
 			}
 			break;
@@ -2196,6 +2195,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
+					g_DTMF_sentence_in_progress_ticks = 0;
 					state = STATE_SHUTDOWN;
 				}
 			}
@@ -2306,6 +2306,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
+					g_DTMF_sentence_in_progress_ticks = 0;
 					state = STATE_SHUTDOWN;
 				}
 			}
@@ -2502,7 +2503,7 @@ void handleLinkBusMsgs()
 					{
 						if(key == '#')
 						{
-							g_AM_audio_frequency = value;
+							g_AM_audio_frequency = (AM_Tone_Freq_t)value;
 							setAMToneFrequency(g_AM_audio_frequency);
 							ee_mgr.updateEEPROMVar(Am_audio_frequency, (void*)&g_AM_audio_frequency);
 
@@ -2560,6 +2561,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
+					g_DTMF_sentence_in_progress_ticks = 0;
 					digits = 0;
 					state = STATE_SHUTDOWN;
 				}
@@ -2595,6 +2597,7 @@ void handleLinkBusMsgs()
 						}
 						else
 						{
+							g_DTMF_sentence_in_progress_ticks = 0;
 							state = STATE_SHUTDOWN;
 						}
 					}
@@ -2734,8 +2737,6 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		g_use_rtc_for_startstop = TRUE;
 		g_transmissions_disabled = TRUE;
 	}
-
-	g_fox_tone_offset = g_fox_counter;
 
 	sendMorseTone(OFF);
 	g_code_throttle    = 0;                 /* Adjusts Morse code speed */
@@ -3165,91 +3166,107 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 	return(valid);
 }
 
-#if !SUPPORT_ONLY_80M
-	void setAMToneFrequency(uint8_t value)
+void setAMToneFrequency(AM_Tone_Freq_t value)
+{
+	BOOL enableAM = TRUE;
+
+	switch(value)
 	{
-		BOOL enableAM = TRUE;
-
-		switch(value)
+		case AM_DISABLED:
 		{
-			case 0:
-			{
-				enableAM = FALSE;
-			}
-			break;
-
-			case 2:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 556;    /* For ~900 Hz tone output */
-#else
-					OCR1A = 278;
-#endif
-			}
-			break;
-
-			case 3:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 625;    /* For ~800 Hz tone output */
-#else
-					OCR1A = 312;
-#endif
-			}
-			break;
-
-			case 4:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 714;    /* For ~700 Hz tone output */
-#else
-					OCR1A = 357;
-#endif
-			}
-			break;
-
-			case 5:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 833;    /* For ~600 Hz tone output */
-#else
-					OCR1A = 416;
-#endif
-			}
-			break;
-
-			case 6:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 1000;   /* For ~500 Hz tone output */
-#else
-					OCR1A = 500;
-#endif
-			}
-			break;
-
-			case 1:
-			default:
-			{
-#if F_CPU == 16000000UL
-					OCR1A = 500;    /* For ~1000 Hz tone output */
-#else
-					OCR1A = 250;
-#endif
-			}
-			break;
+			enableAM = FALSE;
 		}
+		break;
+
+		case AM_900Hz:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 556;    /* For ~900 Hz tone output */
+#else
+				OCR1A = 278;
+#endif
+		}
+		break;
+
+		case AM_800Hz:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 625;    /* For ~800 Hz tone output */
+#else
+				OCR1A = 312;
+#endif
+		}
+		break;
+
+		case AM_700Hz:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 714;    /* For ~700 Hz tone output */
+#else
+				OCR1A = 357;
+#endif
+		}
+		break;
+
+		case AM_600Hz:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 833;    /* For ~600 Hz tone output */
+#else
+				OCR1A = 416;
+#endif
+		}
+		break;
+
+		case AM_500Hz:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 1000;   /* For ~500 Hz tone output */
+#else
+				OCR1A = 500;
+#endif
+		}
+		break;
+
+		case AM_1000Hz:
+		default:
+		{
+#if F_CPU == 16000000UL
+				OCR1A = 500;    /* For ~1000 Hz tone output */
+#else
+				OCR1A = 250;
+#endif
+		}
+		break;
+	}
 
 #if !INIT_EEPROM_ONLY
-			if(enableAM)
-			{
-				setupPortsForF1975();
-			}
+		if(!OCR0A)
+		{
+			OCR0A = DEFAULT_TONE_FREQUENCY; /* Ensure that FM tone setting is initialized - even if it won't be used */
+
+		}
+
+		if(!OCR1A)
+		{
+
+		}
+
+		if(enableAM)
+		{
+			setupPortsForF1975();
+			TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
+			TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
+		}
+		else
+		{
+			TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
+			TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+		}
 #endif  /* INIT_EEPROM_ONLY */
 
-		g_AM_enabled = enableAM;
-	}
-#endif  /* SUPPORT_ONLY_80M */
+	g_AM_enabled = enableAM;
+}
 
 
 char value2Morse(char value)

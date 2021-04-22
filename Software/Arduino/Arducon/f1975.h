@@ -26,7 +26,6 @@
 #ifndef __f1975_H__
 #define __f1975_H__
 
-#if !SUPPORT_ONLY_80M
 #include "defs.h"
 
 
@@ -116,5 +115,4 @@ void setupPortsForF1975(void);
 	}
 #endif
 
-#endif // !SUPPORT_ONLY_80M
 #endif //__f1975_H__
