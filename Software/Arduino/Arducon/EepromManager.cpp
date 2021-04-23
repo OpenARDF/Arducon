@@ -734,6 +734,9 @@ void EepromManager::resetEEPROMValues(void)
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
 	g_unlockCode[i] = '\0';
 
+	g_messages_text[STATION_ID][0] = '\0';
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[0]), 0);
+
 	g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), (uint8_t)g_AM_audio_frequency);
 

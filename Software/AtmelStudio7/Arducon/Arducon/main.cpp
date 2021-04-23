@@ -203,7 +203,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED, OUTPUT);                     /* This is the enunciator LED */
+	pinMode(PIN_LED, OUTPUT);                         /* This is the enunciator LED */
 	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
@@ -268,7 +268,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 #endif  /* !SUPPORT_ONLY_80M */
 
 #if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                 /* Must happen after pins are configured due to I2C access */
+		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                         /* Must happen after pins are configured due to I2C access */
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
@@ -523,29 +523,33 @@ ISR(ADC_vect)
  ************************************************************************/
 ISR(PCINT1_vect)
 {
+	static BOOL holdPinVal = OFF;
 	BOOL pinVal = digitalRead(PIN_SYNC);
 
 	g_sync_pin_timer = 0;
 
-	if(pinVal)  /* Sync is high = button released */
+	if(pinVal && !holdPinVal)   /* Sync is high = button released, and was low previously */
 	{
 		if(g_LED_timeout_countdown)
 		{
-			if(g_transmissions_disabled)
+			if(!g_perform_EEPROM_reset)
 			{
-				if(g_sync_pin_stable == STABLE_LOW)
+				if(g_transmissions_disabled)
 				{
-					g_sync_pin_stable = UNSTABLE;
-					digitalWrite(PIN_LED, OFF); /*  LED */
-					startEventNow(PUSHBUTTON);
+					if(g_sync_pin_stable == STABLE_LOW)
+					{
+						g_sync_pin_stable = UNSTABLE;
+						digitalWrite(PIN_LED, OFF); /*  LED */
+						startEventNow(PUSHBUTTON);
+					}
 				}
-			}
-			else
-			{
-				if(g_sync_pin_stable == STABLE_LOW)
+				else
 				{
-					g_sync_pin_stable = UNSTABLE;
-					stopEventNow(PUSHBUTTON);
+					if(g_sync_pin_stable == STABLE_LOW)
+					{
+						g_sync_pin_stable = UNSTABLE;
+						stopEventNow(PUSHBUTTON);
+					}
 				}
 			}
 		}
@@ -556,6 +560,8 @@ ISR(PCINT1_vect)
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 	}
+
+	holdPinVal = pinVal;
 }
 
 
@@ -836,9 +842,13 @@ ISR( TIMER2_COMPB_vect )
 
 	if(g_reset_button_held && !button)
 	{
-		if(g_seconds_since_powerup == 3)
+		if(g_seconds_since_powerup < 5)
 		{
-			g_seconds_since_powerup = 4;
+			digitalWrite(PIN_LED, ON);  /* hold the LED on until the sync button is released */
+		}
+		else if(g_seconds_since_powerup == 5)
+		{
+			g_seconds_since_powerup = 6;
 			g_perform_EEPROM_reset = TRUE;
 		}
 	}
@@ -1260,25 +1270,26 @@ ISR(TIMER0_COMPA_vect)
 void loop()
 {
 #if !INIT_EEPROM_ONLY
-	int8_t dtmfX = -1;
-	int8_t dtmfY = -1;
-	float largestX;
-	float largestY;
-	BOOL dtmfDetected = FALSE;
-	BOOL noiseDetected = FALSE;
-	int clipCount = 0;
-#endif // !INIT_EEPROM_ONLY
+		int8_t dtmfX = -1;
+		int8_t dtmfY = -1;
+		float largestX;
+		float largestY;
+		BOOL dtmfDetected = FALSE;
+		BOOL noiseDetected = FALSE;
+		int clipCount = 0;
+#endif  /* !INIT_EEPROM_ONLY */
 
 #if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
 		{
-			g_perform_EEPROM_reset = FALSE;
 			ee_mgr.resetEEPROMValues();
 			linkbus_init(BAUD);
 			while(g_reset_button_held)
 			{
 				digitalWrite(PIN_LED, OFF); /*  LED */
 			}
+
+			g_perform_EEPROM_reset = FALSE;
 		}
 
 		processDTMFdetection(NO_KEY);
