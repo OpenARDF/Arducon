@@ -424,6 +424,7 @@ typedef enum
 
 #define ERROR_BLINK_PATTERN ((char*)"E ")
 #define WAITING_BLINK_PATTERN ((char*)"EE          ")
+#define DTMF_ERROR_BLINK_PATTERN ((char*)"EEEEEEEE")
 #define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL

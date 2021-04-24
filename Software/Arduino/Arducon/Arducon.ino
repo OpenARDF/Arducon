@@ -62,9 +62,11 @@ volatile int g_active           = 0;        /* Disable active. set and clear in 
 volatile BOOL g_on_the_air       = 0;       /* Used to indicate and control transmissions */
 volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
+volatile int g_dtmf_error_countdown = 0;
+
 #if !INIT_EEPROM_ONLY
 	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
-#endif /* !INIT_EEPROM_ONLY */
+#endif  /* !INIT_EEPROM_ONLY */
 
 volatile BOOL g_callsign_sent = TRUE;
 
@@ -190,7 +192,7 @@ char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
 
 #if !INIT_EEPROM_ONLY
-	KeyprocessState_t processDTMFdetection(DTMF_key_t key);
+	BOOL processDTMFdetection(DTMF_key_t key);
 	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
 #endif  /* !INIT_EEPROM_ONLY */
 
@@ -203,7 +205,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 {
 	pinMode(PIN_SYNC, INPUT_PULLUP);
 
-	pinMode(PIN_LED, OUTPUT);                         /* This is the enunciator LED */
+	pinMode(PIN_LED, OUTPUT);                             /* This is the enunciator LED */
 	digitalWrite(PIN_LED, OFF);
 
 	pinMode(PIN_CW_KEY_LOGIC, OUTPUT);  /* This pin is used to control the KEY line to the transmitter only active on cycle. */
@@ -268,7 +270,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 #endif  /* !SUPPORT_ONLY_80M */
 
 #if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                         /* Must happen after pins are configured due to I2C access */
+		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                                 /* Must happen after pins are configured due to I2C access */
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
@@ -814,6 +816,11 @@ ISR( TIMER2_COMPB_vect )
 {
 	g_tick_count++;
 
+	if(g_dtmf_error_countdown)
+	{
+		g_dtmf_error_countdown--;
+	}
+
 	if(g_LED_Enunciation_holdoff)
 	{
 		g_LED_Enunciation_holdoff--;
@@ -1277,6 +1284,7 @@ void loop()
 		BOOL dtmfDetected = FALSE;
 		BOOL noiseDetected = FALSE;
 		int clipCount = 0;
+		BOOL dtmfEntryError = FALSE;
 #endif  /* !INIT_EEPROM_ONLY */
 
 #if !INIT_EEPROM_ONLY
@@ -1292,7 +1300,7 @@ void loop()
 			g_perform_EEPROM_reset = FALSE;
 		}
 
-		processDTMFdetection(NO_KEY);
+		dtmfEntryError = processDTMFdetection(NO_KEY);
 #endif  /* !INIT_EEPROM_ONLY */
 
 	handleLinkBusMsgs();
@@ -1303,180 +1311,182 @@ void loop()
 
 
 #if !INIT_EEPROM_ONLY
-		if(g_goertzel.SamplesReady())
+		if(!dtmfEntryError)
 		{
-			static char lastKey = '\0';
-			static int checkCount = 10; /* Initialize to a value above the threshold to prevent an initial false key detect */
-			static int quietCount = 0;
-
-			float magnitudeX;
-			float magnitudeY;
-#ifdef DEBUG_DTMF
-				float magnitudeM;
-#endif  /* DEBUG_DTMF */
-			largestX = 0;
-			largestY = 0;
-			dtmfX = -1;
-			dtmfY = -1;
-
-			dtmfDetected = FALSE;
-			noiseDetected = FALSE;
-			clipCount = 0;
-
-			if(!g_temperature_check_countdown)
+			if(g_goertzel.SamplesReady())
 			{
-				setUpSampling(TEMPERATURE_SAMPLING, FALSE);
-				int8_t temp = (int8_t)getTemp();
-				if(temp != g_temperature)
+				static char lastKey = '\0';
+				static int checkCount = 10; /* Initialize to a value above the threshold to prevent an initial false key detect */
+				static int quietCount = 0;
+
+				float magnitudeX;
+				float magnitudeY;
+#ifdef DEBUG_DTMF
+					float magnitudeM;
+#endif  /* DEBUG_DTMF */
+				largestX = 0;
+				largestY = 0;
+				dtmfX = -1;
+				dtmfY = -1;
+
+				dtmfDetected = FALSE;
+				noiseDetected = FALSE;
+				clipCount = 0;
+
+				if(!g_temperature_check_countdown)
 				{
-					g_temperature = temp;
-					int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
-					int8_t adj = ee_mgr.readTemperatureTable(delta25);
-					rv3028_set_offset_RAM(g_rv3028_offset + adj);
+					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
+					int8_t temp = (int8_t)getTemp();
+					if(temp != g_temperature)
+					{
+						g_temperature = temp;
+						int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
+						int8_t adj = ee_mgr.readTemperatureTable(delta25);
+						rv3028_set_offset_RAM(g_rv3028_offset + adj);
+					}
+
+					setUpSampling(AUDIO_SAMPLING, FALSE);
+					g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
+				}
+				else if(!g_voltage_check_countdown)
+				{
+					setUpSampling(VOLTAGE_SAMPLING, FALSE);
+					g_voltage = getVoltage();
+					setUpSampling(AUDIO_SAMPLING, FALSE);
+					g_voltage_check_countdown = VOLTAGE_POLL_INTERVAL_SECONDS;
 				}
 
-				setUpSampling(AUDIO_SAMPLING, FALSE);
-				g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
-			}
-			else if(!g_voltage_check_countdown)
-			{
-				setUpSampling(VOLTAGE_SAMPLING, FALSE);
-				g_voltage = getVoltage();
-				setUpSampling(AUDIO_SAMPLING, FALSE);
-				g_voltage_check_countdown = VOLTAGE_POLL_INTERVAL_SECONDS;
-			}
-
-			for(int i = 0; i < 4; i++)
-			{
-				g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-				magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
-
-				if(magnitudeY > largestY)                           /* Use only the greatest Y value */
-				{
-					largestY = magnitudeY;
-					if(magnitudeY > threshold)                      /* Only consider Y above a certain threshold */
-					{
-						dtmfY = i;
-					}
-				}
-
-#ifdef DEBUG_DTMF
-					if(magnitudeY > threshold)
-					{
-						dtostrf((double)y_frequencies[i], 4, 0, s);
-						sprintf(g_tempStr, "Y(%s)=", s);
-						lb_send_string(g_tempStr, TRUE);
-						dtostrf((double)magnitudeY, 4, 0, s);
-						sprintf(g_tempStr, "%s\n", s);
-						lb_send_string(g_tempStr, TRUE);
-					}
-#endif  /* DEBUG_DTMF */
-			}
-
-			if(dtmfY >= 0)
-			{
 				for(int i = 0; i < 4; i++)
 				{
-					g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
-					magnitudeX = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
+					g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+					magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
 
-					if(magnitudeX > largestX)                           /* Use only the greatest X value */
+					if(magnitudeY > largestY)                           /* Use only the greatest Y value */
 					{
-						largestX = magnitudeX;
-						if(magnitudeX > threshold)                      /* Only consider X above a certain threshold */
+						largestY = magnitudeY;
+						if(magnitudeY > threshold)                      /* Only consider Y above a certain threshold */
 						{
-							dtmfX = i;
+							dtmfY = i;
 						}
 					}
 
 #ifdef DEBUG_DTMF
-						if(magnitudeX > threshold)
+						if(magnitudeY > threshold)
 						{
-							dtostrf((double)x_frequencies[i], 4, 0, s);
-							sprintf(g_tempStr, "X(%s)=", s);
+							dtostrf((double)y_frequencies[i], 4, 0, s);
+							sprintf(g_tempStr, "Y(%s)=", s);
 							lb_send_string(g_tempStr, TRUE);
-							dtostrf((double)magnitudeX, 4, 0, s);
+							dtostrf((double)magnitudeY, 4, 0, s);
 							sprintf(g_tempStr, "%s\n", s);
 							lb_send_string(g_tempStr, TRUE);
 						}
 #endif  /* DEBUG_DTMF */
 				}
 
-				if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount < 50))
+				if(dtmfY >= 0)
 				{
-					if(dtmfX >= 0)
+					for(int i = 0; i < 4; i++)
 					{
-						DTMF_key_t newKey = value2DTMFKey(4 * dtmfY + dtmfX);
-						dtmfDetected = TRUE;
+						g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+						magnitudeX = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
 
-						/* If the same key is detected three times in a row with no silent periods between them then register a new keypress */
-						if(lastKey == newKey)
+						if(magnitudeX > largestX)                           /* Use only the greatest X value */
 						{
-							if(checkCount < 10)
+							largestX = magnitudeX;
+							if(magnitudeX > threshold)                      /* Only consider X above a certain threshold */
 							{
-								checkCount++;
-							}
-
-							if(checkCount == 3)
-							{
-								g_dtmf_detected = TRUE;
-								quietCount = 0;
-								g_lastKey = newKey;
-
-/*#ifdef DEBUG_DTMF */
-								if(lb_enabled())
-								{
-									sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
-									lb_send_string(g_tempStr, TRUE);
-								}
-/*#endif  / * DEBUG_DTMF * / */
-
-								processDTMFdetection(newKey);
-
-#ifdef DEBUG_DTMF
-									if(lb_enabled())
-									{
-										lb_send_string((char*)"Mag X/Y=", TRUE);
-										dtostrf((double)largestX, 4, 0, s);
-										sprintf(g_tempStr, "%s / ", s);
-										lb_send_string(g_tempStr, TRUE);
-										dtostrf((double)largestY, 4, 0, s);
-										sprintf(g_tempStr, "%s\n", s);
-										lb_send_string(g_tempStr, TRUE);
-
-										for(int i = 0; i < 7; i++)
-										{
-											g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
-											magnitudeM = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
-											dtostrf((double)mid_frequencies[i], 4, 0, s);
-											sprintf(g_tempStr, "%s=", s);
-											lb_send_string(g_tempStr, TRUE);
-											dtostrf((double)magnitudeM, 4, 0, s);
-											sprintf(g_tempStr, "%s\n", s);
-											lb_send_string(g_tempStr, TRUE);
-										}
-									}
-#endif  /* DEBUG_DTMF */
+								dtmfX = i;
 							}
 						}
 
-						lastKey = newKey;
+#ifdef DEBUG_DTMF
+							if(magnitudeX > threshold)
+							{
+								dtostrf((double)x_frequencies[i], 4, 0, s);
+								sprintf(g_tempStr, "X(%s)=", s);
+								lb_send_string(g_tempStr, TRUE);
+								dtostrf((double)magnitudeX, 4, 0, s);
+								sprintf(g_tempStr, "%s\n", s);
+								lb_send_string(g_tempStr, TRUE);
+							}
+#endif  /* DEBUG_DTMF */
 					}
-				}
-				else
-				{
-					noiseDetected = TRUE;
-					g_dtmf_detected = TRUE;
 
-					digitalWrite(PIN_LED, ON);
+					if(g_DTMF_sentence_in_progress_ticks || (checkCount < 3) || (clipCount < 50))
+					{
+						if(dtmfX >= 0)
+						{
+							DTMF_key_t newKey = value2DTMFKey(4 * dtmfY + dtmfX);
+							dtmfDetected = TRUE;
+
+							/* If the same key is detected three times in a row with no silent periods between them then register a new keypress */
+							if(lastKey == newKey)
+							{
+								if(checkCount < 10)
+								{
+									checkCount++;
+								}
+
+								if(checkCount == 3)
+								{
+									g_dtmf_detected = TRUE;
+									quietCount = 0;
+									g_lastKey = newKey;
+
+/*#ifdef DEBUG_DTMF */
+									if(lb_enabled())
+									{
+										sprintf(g_tempStr, "\"%c\"\n", g_lastKey);
+										lb_send_string(g_tempStr, TRUE);
+									}
+/*#endif  / * DEBUG_DTMF * / */
+
+									dtmfEntryError = processDTMFdetection(newKey);
+
+#ifdef DEBUG_DTMF
+										if(lb_enabled())
+										{
+											lb_send_string((char*)"Mag X/Y=", TRUE);
+											dtostrf((double)largestX, 4, 0, s);
+											sprintf(g_tempStr, "%s / ", s);
+											lb_send_string(g_tempStr, TRUE);
+											dtostrf((double)largestY, 4, 0, s);
+											sprintf(g_tempStr, "%s\n", s);
+											lb_send_string(g_tempStr, TRUE);
+
+											for(int i = 0; i < 7; i++)
+											{
+												g_goertzel.SetTargetFrequency(mid_frequencies[i]);  /* Initialize the object with the sampling frequency, # of samples and target freq */
+												magnitudeM = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
+												dtostrf((double)mid_frequencies[i], 4, 0, s);
+												sprintf(g_tempStr, "%s=", s);
+												lb_send_string(g_tempStr, TRUE);
+												dtostrf((double)magnitudeM, 4, 0, s);
+												sprintf(g_tempStr, "%s\n", s);
+												lb_send_string(g_tempStr, TRUE);
+											}
+										}
+#endif  /* DEBUG_DTMF */
+								}
+							}
+
+							lastKey = newKey;
+						}
+					}
+					else
+					{
+						noiseDetected = TRUE;
+						g_dtmf_detected = TRUE;
+
+						digitalWrite(PIN_LED, ON);
 /*					g_config_error = NULL_CONFIG;   / * Trigger a new configuration enunciation * / */
 
-					/*#ifdef DEBUG_DTMF */
-					if(lb_enabled())
-					{
+						/*#ifdef DEBUG_DTMF */
+						if(lb_enabled())
+						{
 
-						sprintf(g_tempStr, "ClipCount=%d\n", clipCount);
-						lb_send_string(g_tempStr, TRUE);
+							sprintf(g_tempStr, "ClipCount=%d\n", clipCount);
+							lb_send_string(g_tempStr, TRUE);
 
 /*						char s[10];
  *						lb_send_string((char*)"Mag X/Y=", TRUE);
@@ -1486,56 +1496,70 @@ void loop()
  *						dtostrf((double)largestY, 4, 0, s);
  *						sprintf(g_tempStr, "%s\n", s);
  *						lb_send_string(g_tempStr, TRUE); */
+						}
+						/*#endif  / * DEBUG_DTMF * / */
 					}
-					/*#endif  / * DEBUG_DTMF * / */
 				}
-			}
 
-			if(!dtmfDetected && !noiseDetected) /* Quiet detected */
-			{
-				static unsigned long lastQuiet = 0;
-				unsigned long delta = g_tick_count - lastQuiet;
+				if(!dtmfDetected && !noiseDetected) /* Quiet detected */
+				{
+					static unsigned long lastQuiet = 0;
+					unsigned long delta = g_tick_count - lastQuiet;
 
-				/* Quieting must be detected at least 3 times in less than 2 seconds before another key can be accepted */
-				if(quietCount++ > 2)
+					/* Quieting must be detected at least 3 times in less than 2 seconds before another key can be accepted */
+					if(quietCount++ > 2)
+					{
+						g_dtmf_detected = FALSE;
+						if(g_transmissions_disabled && !g_LED_enunciating)
+						{
+							digitalWrite(PIN_LED, OFF);
+						}
+
+						if(delta < TIMER2_SECONDS_2)
+						{
+							checkCount = 0;
+						}
+
+						quietCount = 0;
+						lastQuiet = g_tick_count;
+						lastKey = '\0';
+					}
+				}
+				else if(g_tone_duration_ticks >= TIMER2_SECONDS_5)  /* The most likely cause of such a long tone is loud noise */
 				{
 					g_dtmf_detected = FALSE;
+					g_config_error = NULL_CONFIG;
+
 					if(g_transmissions_disabled && !g_LED_enunciating)
 					{
 						digitalWrite(PIN_LED, OFF);
 					}
 
-					if(delta < TIMER2_SECONDS_2)
-					{
-						checkCount = 0;
-					}
-
-					quietCount = 0;
-					lastQuiet = g_tick_count;
 					lastKey = '\0';
 				}
+
+				ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+				ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 			}
-			else if(g_tone_duration_ticks >= TIMER2_SECONDS_5)  /* The most likely cause of such a long tone is loud noise */
-			{
-				g_dtmf_detected = FALSE;
-				g_config_error = NULL_CONFIG;
-
-				if(g_transmissions_disabled && !g_LED_enunciating)
-				{
-					digitalWrite(PIN_LED, OFF);
-				}
-
-				lastKey = '\0';
-			}
-
-			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 		}
-#endif  /* !INIT_EEPROM_ONLY */
 
 	if(!g_on_the_air)
 	{
-		if(g_dtmf_detected)
+		if(g_dtmf_error_countdown)
+		{
+			g_dtmf_detected = FALSE;
+		}
+		else if(dtmfEntryError)
+		{
+			BOOL repeat = FALSE;
+			makeMorse(DTMF_ERROR_BLINK_PATTERN, &repeat, NULL);
+			g_code_throttle = THROTTLE_VAL_FROM_WPM(30);
+			g_LED_enunciating = TRUE;
+			g_dtmf_detected = FALSE;
+			g_dtmf_error_countdown = TIMER2_SECONDS_3;
+			g_LED_Enunciation_holdoff = 0;
+		}
+		else if(g_dtmf_detected)
 		{
 			digitalWrite(PIN_LED, ON);
 			g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
@@ -1582,7 +1606,13 @@ void loop()
 				g_LED_enunciating = FALSE;
 			}
 		}
+		else
+		{
+			g_LED_enunciating = FALSE;
+			digitalWrite(PIN_LED, OFF); /* ensure LED is off */
+		}
 	}
+#endif  /* !INIT_EEPROM_ONLY */
 }
 
 
@@ -2094,7 +2124,7 @@ void handleLinkBusMsgs()
  *  *D c...c # - Unlock Arducon (re-enable DTMF commands) where c...c is the password
  *  *D# - Lock Arducon (disables all DTMF commands except *Dc...c#)
  */
-	KeyprocessState_t processDTMFdetection(DTMF_key_t key)
+	BOOL processDTMFdetection(DTMF_key_t key)
 	{
 		static KeyprocessState_t state = STATE_SHUTDOWN;
 		static int digits;
@@ -2102,6 +2132,8 @@ void handleLinkBusMsgs()
 		static int stringLength;
 		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
+		static unsigned int last_in_progress_ticks = 0;
+		BOOL entryError = FALSE;
 
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 
@@ -2109,17 +2141,24 @@ void handleLinkBusMsgs()
 		{
 			g_DTMF_unlocked = FALSE;
 			state = STATE_SHUTDOWN;
-			return( state);
+			return(entryError);
 		}
 
 		if(key == NO_KEY)
 		{
 			if(!g_DTMF_sentence_in_progress_ticks)
 			{
+				if((last_in_progress_ticks) && (state != STATE_SHUTDOWN))
+				{
+					entryError = TRUE;
+				}
+
 				state = STATE_SHUTDOWN;
 			}
 
-			return( state);
+			last_in_progress_ticks = g_DTMF_sentence_in_progress_ticks;
+
+			return(entryError);
 		}
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
@@ -2134,7 +2173,7 @@ void handleLinkBusMsgs()
 			{
 				state = STATE_SENTENCE_START;
 				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
-				return(state);
+				return(entryError);
 			}
 
 			if(key == '#')
@@ -2151,6 +2190,7 @@ void handleLinkBusMsgs()
 		{
 			case STATE_SHUTDOWN:
 			{
+				entryError = TRUE;
 			}
 			break;
 
@@ -2176,6 +2216,7 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
+						entryError = TRUE;
 						g_DTMF_sentence_in_progress_ticks = 0;
 						state = STATE_SHUTDOWN;
 					}
@@ -2207,6 +2248,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
+					entryError = TRUE;
 					g_DTMF_sentence_in_progress_ticks = 0;
 					state = STATE_SHUTDOWN;
 				}
@@ -2318,6 +2360,7 @@ void handleLinkBusMsgs()
 				}
 				else
 				{
+					entryError = TRUE;
 					g_DTMF_sentence_in_progress_ticks = 0;
 					state = STATE_SHUTDOWN;
 				}
@@ -2333,6 +2376,10 @@ void handleLinkBusMsgs()
 						strcpy((char*)g_unlockCode, receivedString);
 						ee_mgr.updateEEPROMVar(UnlockCode, (void*)g_unlockCode);
 					}
+					else
+					{
+						entryError = TRUE;
+					}
 
 					state = STATE_SHUTDOWN;
 				}
@@ -2343,6 +2390,11 @@ void handleLinkBusMsgs()
 						receivedString[stringLength++] = key;
 						receivedString[stringLength] = '\0';
 					}
+				}
+				else
+				{
+					entryError = TRUE;
+					state = STATE_SHUTDOWN;
 				}
 			}
 			break;
@@ -2355,6 +2407,10 @@ void handleLinkBusMsgs()
 					{
 						strcpy((char*)g_messages_text[STATION_ID], receivedString);
 						ee_mgr.updateEEPROMVar(StationID_text, (void*)g_messages_text[STATION_ID]);
+					}
+					else
+					{
+						entryError = TRUE;
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2379,6 +2435,11 @@ void handleLinkBusMsgs()
 						digits = 1;
 					}
 				}
+				else
+				{
+					entryError = TRUE;
+					state = STATE_SHUTDOWN;
+				}
 			}
 			break;
 
@@ -2395,6 +2456,11 @@ void handleLinkBusMsgs()
 							setupForFox(&holdFox, START_NOTHING);
 						}
 					}
+					else
+					{
+						entryError = TRUE;
+					}
+
 					state = STATE_SHUTDOWN;
 				}
 				else if((key >= '0') && (key <= '9'))
@@ -2416,6 +2482,10 @@ void handleLinkBusMsgs()
 						rv3028_set_epoch(t);
 						g_current_epoch = t;
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+					}
+					else
+					{
+						entryError = TRUE;
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2444,6 +2514,10 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
 					}
+					else
+					{
+						entryError = TRUE;
+					}
 
 					state = STATE_SHUTDOWN;
 				}
@@ -2471,6 +2545,10 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
 					}
+					else
+					{
+						entryError = TRUE;
+					}
 
 					state = STATE_SHUTDOWN;
 				}
@@ -2496,6 +2574,11 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Utc_offset, (void*)&hold);
 						g_utc_offset = hold;
 					}
+					else
+					{
+						entryError = TRUE;
+					}
+
 					state = STATE_SHUTDOWN;
 				}
 				else if((key >= '0') && (key <= '9'))
@@ -2539,6 +2622,10 @@ void handleLinkBusMsgs()
 						g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
 						ee_mgr.updateEEPROMVar(Ptt_periodic_reset, (void*)&g_ptt_periodic_reset_enabled);
 					}
+					else
+					{
+						entryError = TRUE;
+					}
 
 					state = STATE_SHUTDOWN;
 				}
@@ -2555,6 +2642,10 @@ void handleLinkBusMsgs()
 				{
 					Fox_t f = REPORT_BATTERY;
 					setupForFox(&f, START_TRANSMISSIONS_NOW);
+				}
+				else
+				{
+					entryError = TRUE;
 				}
 
 				state = STATE_SHUTDOWN;
@@ -2576,6 +2667,7 @@ void handleLinkBusMsgs()
 					g_DTMF_sentence_in_progress_ticks = 0;
 					digits = 0;
 					state = STATE_SHUTDOWN;
+					entryError = TRUE;
 				}
 			}
 			break;
@@ -2611,13 +2703,14 @@ void handleLinkBusMsgs()
 						{
 							g_DTMF_sentence_in_progress_ticks = 0;
 							state = STATE_SHUTDOWN;
+							entryError = TRUE;
 						}
 					}
 					break;
 #endif  /* !SUPPORT_ONLY_80M */
 		}
 
-		return(state);
+		return(entryError);
 	}
 
 #endif  /* #if !INIT_EEPROM_ONLY */
