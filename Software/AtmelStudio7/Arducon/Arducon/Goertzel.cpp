@@ -23,17 +23,19 @@
  */
 
 #include "Goertzel.h"
+#include <string.h>
 
 #if !INIT_EEPROM_ONLY
 
 float _SAMPLING_FREQUENCY;
 float _TARGET_FREQUENCY;
-int _N;
+volatile int _N;
 float g_coeff;
 float Q1;
 float Q2;
-int _index = 0;
-bool _samplesReady = false;
+volatile int _index = 0;
+volatile bool _samplesReady = false;
+int highValueCount = 0;
 
 int* testData;
 
@@ -49,11 +51,17 @@ Goertzel::~Goertzel()
 	free(testData);
 }
 
+void Goertzel::Flush(void)
+{
+	memset(testData, 0x00, _N * sizeof(int));
+	ResetGoertzel();
+}
+
 void Goertzel::SetTargetFrequency(float target_frequency)
 {
 	float floatN = (float)_N;
 
-	_TARGET_FREQUENCY = target_frequency;   /*should be integer of SAMPLING_RATE/N */
+	_TARGET_FREQUENCY = target_frequency;   /* Ideally, this should be an integer multiple of SAMPLING_RATE/N */
 	int k = (int)(0.5 + ((floatN * _TARGET_FREQUENCY) / _SAMPLING_FREQUENCY));
 	float w = (2.0 * PI * k) / floatN;
 	g_coeff = 2.0 * cos(w);
@@ -72,6 +80,11 @@ void Goertzel::ResetGoertzel(void)
 void Goertzel::ProcessSample(int sample)
 {
 	float Q0 = g_coeff * Q1 - Q2 + (float)(sample - ADCCENTER);
+
+	if(sample > 230)
+	{
+		highValueCount++;
+	}
 
 	Q2 = Q1;
 	Q1 = Q0;
@@ -100,15 +113,19 @@ bool Goertzel::SamplesReady(void)
 	return(_samplesReady);
 }
 
-float Goertzel::Magnitude2()
+float Goertzel::Magnitude2(int *highCount)
 {
 	float magnitude2;
+
+	highValueCount = 0;
 
 	/* Process the samples. */
 	for(int index = 0; index < _N; index++)
 	{
 		ProcessSample(testData[index]);
 	}
+
+	if(highCount) *highCount = highValueCount;
 
 	magnitude2 = Q1 * Q1 + Q2 * Q2 - g_coeff * Q1 * Q2;
 

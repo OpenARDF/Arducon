@@ -23,16 +23,12 @@
  */
 
 #include "defs.h"
-#if !SUPPORT_ONLY_80M
 #include "f1975.h"
 #include "linkbus.h"
 
 #ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
 #endif  /* ATMEL_STUDIO_7 */
-
-	static uint8_t lower4;
-	static uint8_t upper2;
 
 void setAtten(tenthDB_t att)
 {
@@ -41,18 +37,13 @@ void setAtten(tenthDB_t att)
 	att -= (att % 5); /* set to nearest multiple of 5 */
 	att /= 5;
 
-	lower4 = dB_low(att);
-	upper2 = dB_high(att);
-
-	pattern = PORTC & 0xF0;
-	PORTC = pattern | lower4;
-
-	pattern = PORTD & 0xFC;
-	PORTD = pattern | upper2;
+	pattern = (uint8_t)att;
+	PORTB = pattern;
 }
 
 void setupPortsForF1975(void)
 {
+#if !SUPPORT_ONLY_80M
 	pinMode(PIN_D0, OUTPUT);
 	pinMode(PIN_D1, OUTPUT);
 	pinMode(PIN_D2, OUTPUT);
@@ -61,7 +52,5 @@ void setupPortsForF1975(void)
 	pinMode(PIN_D5, OUTPUT);  /* Also TXD */
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
-
-//	setAtten(0);
+#endif // !SUPPORT_ONLY_80M
 }
-#endif // #if !SUPPORT_ONLY_80M

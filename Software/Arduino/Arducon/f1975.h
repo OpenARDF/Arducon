@@ -26,7 +26,6 @@
 #ifndef __f1975_H__
 #define __f1975_H__
 
-#if !SUPPORT_ONLY_80M
 #include "defs.h"
 
 
@@ -106,8 +105,6 @@ typedef enum{
 	} dB_t;
 */
 
-#define dB_low(d) (d & 0x0F)
-#define dB_high(d) ((d & 0x30) >> 4)
 #define MAX_ATTEN_TENTHS_DB (uint16_t)315
 #define MAX_ATTEN_SETTING 0x3F
 
@@ -118,5 +115,4 @@ void setupPortsForF1975(void);
 	}
 #endif
 
-#endif // !SUPPORT_ONLY_80M
 #endif //__f1975_H__

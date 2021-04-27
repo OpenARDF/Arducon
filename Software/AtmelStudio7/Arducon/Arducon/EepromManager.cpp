@@ -32,6 +32,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #endif  /* ATMEL_STUDIO_7 */
 
 /* Set Firmware Version Here */
@@ -99,7 +100,7 @@ extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
 extern volatile Fox_t g_fox;
-extern volatile uint8_t g_AM_audio_frequency;
+extern volatile AM_Tone_Freq_t g_AM_audio_frequency;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
 extern volatile int8_t g_utc_offset;
@@ -358,7 +359,7 @@ BOOL EepromManager::readNonVols(void)
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
-		g_AM_audio_frequency = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
+		g_AM_audio_frequency = (AM_Tone_Freq_t)eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
@@ -405,6 +406,7 @@ BOOL EepromManager::readNonVols(void)
 	void EepromManager::sendSuccessString(void)
 	{
 		sendPROGMEMString((const char*)&TEXT_EEPROM_SUCCESS_MESSAGE);
+//		dumpEEPROMVars();
 	}
 
 	void EepromManager::sendPROGMEMString(const char* fl_addr)
@@ -463,7 +465,7 @@ BOOL EepromManager::readNonVols(void)
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting), g_fox);
 
 		g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), g_AM_audio_frequency);
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), (uint8_t)g_AM_audio_frequency);
 
 		g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration), (uint16_t)g_atmega_temp_calibration);
@@ -509,8 +511,7 @@ BOOL EepromManager::readNonVols(void)
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
 		{
-			float val = 16. * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); /* Set maximum attenuation at index 0 */
-/*			float val = 7.5 * (1. + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196)); / * Set maximum attenuation at index 0 * / */
+			float val = 5.5 * squaref((1.4 + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196))); /* Set maximum attenuation to fall at index 0 */
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
 		}
 
@@ -616,8 +617,6 @@ BOOL EepromManager::readNonVols(void)
 		/* Done */
 
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
-
-		lb_send_string((char*)"EEPROM PROGRAMMING FINISHED\n", TRUE);
 
 		return(err);
 	}
@@ -735,8 +734,11 @@ void EepromManager::resetEEPROMValues(void)
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
 	g_unlockCode[i] = '\0';
 
+	g_messages_text[STATION_ID][0] = '\0';
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[0]), 0);
+
 	g_AM_audio_frequency = EEPROM_AM_AUDIO_FREQ_DEFAULT;
-	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), g_AM_audio_frequency);
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.am_audio_frequency), (uint8_t)g_AM_audio_frequency);
 
 	g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
 	eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);

@@ -290,6 +290,40 @@ typedef enum
 	REPORT_BATTERY
 } Fox_t;
 
+typedef enum
+{
+	NO_KEY = 0,
+	ONE_KEY = '1',
+	TWO_KEY = '2',
+	THREE_KEY = '3',
+	A_KEY = 'A',
+	FOUR_KEY = '4',
+	FIVE_KEY = '5',
+	SIX_KEY = '6',
+	B_KEY = 'B',
+	SEVEN_KEY = '7',
+	EIGHT_KEY = '8',
+	NINE_KEY = '9',
+	C_KEY = 'C',
+	STAR_KEY = '*',
+	ZERO_KEY = '0',
+	POUND_KEY = '#',
+	D_KEY = 'D'
+} DTMF_key_t;
+
+typedef enum
+{
+	AM_DISABLED,
+	AM_500Hz,
+	AM_600Hz,
+	AM_700Hz,
+	AM_800Hz,
+	AM_900Hz,
+	AM_1000Hz
+} AM_Tone_Freq_t;
+
+#define Goertzel_N 201
+
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
 #define SPRINT_FAST_CODE_SPEED 15
@@ -365,7 +399,7 @@ typedef enum
 #define EEPROM_TEMP_CALIBRATION_DEFAULT -110
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)1
-#define EEPROM_AM_AUDIO_FREQ_DEFAULT 0
+#define EEPROM_AM_AUDIO_FREQ_DEFAULT (AM_Tone_Freq_t)0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
 #define EEPROM_ENABLE_STARTTIMER_DEFAULT 0
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
@@ -388,8 +422,9 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
-#define ERROR_BLINK_PATTERN ((char*)"E")
-#define WAITING_BLINK_PATTERN ((char*)"E        ")
+#define ERROR_BLINK_PATTERN ((char*)"E ")
+#define WAITING_BLINK_PATTERN ((char*)"EE          ")
+#define DTMF_ERROR_BLINK_PATTERN ((char*)"EEEEEEEE")
 #define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL
@@ -420,7 +455,7 @@ typedef enum
 	})
 
 #define MAX_TIME 4294967295L
-#define MAX_UINT16 65535
+#define MAX_UINT16 65535U
 #define MAX_INT16 32767
 #define MIN_INT16 -32768
 
@@ -429,6 +464,10 @@ typedef enum
 #define TIMER2_20HZ 49
 #define TIMER2_5_8HZ 100
 #define TIMER2_0_5HZ 1000
+#define TIMER2_SECONDS_30 42840
+#define TIMER2_SECONDS_10 14280
+#define TIMER2_SECONDS_6 8566
+#define TIMER2_SECONDS_5 7138
 #define TIMER2_SECONDS_3 4283
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
