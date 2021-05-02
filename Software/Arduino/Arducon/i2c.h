@@ -28,6 +28,10 @@
 #ifndef I2C_H_
 #define I2C_H_
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 #define I2C_TIMEOUT_SUPPORT /* limit number of tries for i2c success */
 /* #define SUPPORT_I2C_CLEARBUS_FUNCTION */
 
@@ -90,5 +94,9 @@ BOOL i2c_status(uint8_t);
  */
 	BOOL i2c_clearBus(void);
 #endif  /* SUPPORT_I2C_CLEARBUS_FUNCTION */
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif  /* I2C_H_ */

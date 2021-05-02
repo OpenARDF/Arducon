@@ -37,6 +37,7 @@
 
 #ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
+#include <math.h>
 #include <stdlib.h>
 #else
 #include "Arduino.h"
@@ -59,8 +60,9 @@ Goertzel(float, float);
 ~Goertzel();
 void SetTargetFrequency(float);
 bool DataPoint(int);
-float Magnitude2();
+float Magnitude2(int *highCount);
 bool SamplesReady(void);
+void Flush(void);
 
 private:
 void ProcessSample(int);

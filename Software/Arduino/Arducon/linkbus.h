@@ -30,6 +30,10 @@
 
 #include "defs.h"
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 #define LINKBUS_MAX_MSG_LENGTH 50
 #define LINKBUS_MIN_MSG_LENGTH 2    /* shortest message: GO */
 #define LINKBUS_MAX_MSG_FIELD_LENGTH 20
@@ -44,9 +48,8 @@
 
 #define LINKBUS_MIN_TX_INTERVAL_MS 100
 
-#define FOSC 16000000   /* Clock Speed */
 #define BAUD 57600
-#define MYUBRR(b) (FOSC / 16 / (b) - 1)
+#define MYUBRR(b) ((F_CPU + b * 8L) / (b * 16L) - 1)
 
 typedef enum
 {
@@ -192,5 +195,9 @@ void lb_send_value(uint16_t value, char* label);
 /**
  */
 BOOL lb_enabled(void);
+
+#ifdef __cplusplus
+	}
+#endif
 
 #endif  /* LINKBUS_H_ */

@@ -44,6 +44,15 @@
 /***********************************************************/
 
 
+/***********************************************************
+ * Uncomment the correct frequency for the Arduino Pro Mini *
+ * you will be using                                        */
+/***********************************************************/
+#define PROCESSOR_FREQ_HERTZ 16000000UL
+// #define PROCESSOR_FREQ_HERTZ 8000000UL
+/***********************************************************/
+
+
 /*************************************************************************
  * IMPORTANT: CHANGING ANY COMPILE SETTINGS BELOW THIS LINE WILL REQUIRE  *
  * BUILDING AND RUNNING THE PROGRAM WITH INIT_EEPROM_ONLY TRUE,           *
@@ -62,9 +71,15 @@
 #define SUPPORT_ONLY_80M FALSE
 /***********************************************************/
 
+
+#ifdef F_CPU
+ #undef F_CPU
+#endif
+
+#define F_CPU PROCESSOR_FREQ_HERTZ
+
 #ifdef ATMEL_STUDIO_7
 	#include <avr/io.h>
-	#include <util/delay.h>
 	#include <avr/interrupt.h>
 	#define USE_WDT_RESET TRUE
 #else
@@ -99,8 +114,6 @@
 #ifndef INPUT_PULLUP
 #define INPUT_PULLUP 0x3
 #endif
-
-/* #define F_CPU 16000000UL / * gets declared in makefile * / */
 
 #define MAX_PATTERN_TEXT_LENGTH 20
 #define TEMP_STRING_LENGTH (MAX_PATTERN_TEXT_LENGTH + 20)
@@ -209,15 +222,15 @@
 	#define PIN_UNUSED_5 D11        /* Arduino Pro Mini pin# 14 = PB3 */
 	#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
 	#define PIN_UNUSED_6 D12        /* Arduino Pro Mini pin# 15 = PB4 */
-	#define PIN_LED D13             /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+	#define PIN_LED D13             /* Arduino Pro Mini pin# 16 = PB5 = SCK Use LED on Pro Mini */
 	#define PIN_UNUSED_7 A0         /* Arduino Pro Mini pin# 17 = PC0 */
 	#define PIN_UNUSED_8 A1         /* Arduino Pro Mini pin# 18 = PC1 */
 	#define PIN_UNUSED_9 A2         /* Arduino Pro Mini pin# 19 = PC2 */
 	#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
-	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
-	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 	#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
 	#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
+	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
+	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 #else
 	#define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
 	#define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
@@ -235,15 +248,15 @@
 	#define PIN_D3 D11              /* Arduino Pro Mini pin# 14 = PB3 */
 	#define PIN_MISO D12            /* Arduino Pro Mini pin# 15 = PB4 */
 	#define PIN_D4 D12              /* Arduino Pro Mini pin# 15 = PB4 */
-	#define PIN_D5 D13              /* Arduino Pro Mini pin# 16 = PB5 = SCK */
+	#define PIN_D5 D13              /* Arduino Pro Mini pin# 16 = PB5 = SCK Use LED on Arducon PCB */
 	#define PIN_UNUSED_2 A0         /* Arduino Pro Mini pin# 17 = PC0 */
 	#define PIN_UNUSED_3 A1         /* Arduino Pro Mini pin# 18 = PC1 */
 	#define PIN_LED A2              /* Arduino Pro Mini pin# 19 = PC2 */
 	#define PIN_SYNC A3             /* Arduino Pro Mini pin# 20 = PC3 */
-	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
-	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 	#define PIN_SDA SDA             /* Arduino Pro Mini pin# 33 = SDA */
 	#define PIN_SCL SCL             /* Arduino Pro Mini pin# 34 = SCL */
+	#define PIN_AUDIO_INPUT A6      /* Arduino Pro Mini pin# 31 = ADC6 */
+	#define PIN_BATTERY_LEVEL A7    /* Arduino Pro Mini pin# 32 = ADC7 */
 #endif /* SUPPORT_ONLY_80M */
 
 typedef enum
@@ -276,6 +289,40 @@ typedef enum
 	INVALID_FOX,
 	REPORT_BATTERY
 } Fox_t;
+
+typedef enum
+{
+	NO_KEY = 0,
+	ONE_KEY = '1',
+	TWO_KEY = '2',
+	THREE_KEY = '3',
+	A_KEY = 'A',
+	FOUR_KEY = '4',
+	FIVE_KEY = '5',
+	SIX_KEY = '6',
+	B_KEY = 'B',
+	SEVEN_KEY = '7',
+	EIGHT_KEY = '8',
+	NINE_KEY = '9',
+	C_KEY = 'C',
+	STAR_KEY = '*',
+	ZERO_KEY = '0',
+	POUND_KEY = '#',
+	D_KEY = 'D'
+} DTMF_key_t;
+
+typedef enum
+{
+	AM_DISABLED,
+	AM_500Hz,
+	AM_600Hz,
+	AM_700Hz,
+	AM_800Hz,
+	AM_900Hz,
+	AM_1000Hz
+} AM_Tone_Freq_t;
+
+#define Goertzel_N 201
 
 #define MAX_CODE_SPEED_WPM 20
 #define MIN_CODE_SPEED_WPM 5
@@ -352,7 +399,7 @@ typedef enum
 #define EEPROM_TEMP_CALIBRATION_DEFAULT -110
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)1
-#define EEPROM_AM_AUDIO_FREQ_DEFAULT 0
+#define EEPROM_AM_AUDIO_FREQ_DEFAULT (AM_Tone_Freq_t)0
 #define EEPROM_ENABLE_LEDS_DEFAULT 1
 #define EEPROM_ENABLE_STARTTIMER_DEFAULT 0
 #define EEPROM_ENABLE_TRANSMITTER_DEFAULT 1
@@ -375,8 +422,9 @@ typedef enum
 	EVENT_IN_PROGRESS
 } ConfigurationState_t;
 
-#define ERROR_BLINK_PATTERN ((char*)"E")
-#define WAITING_BLINK_PATTERN ((char*)"E        ")
+#define ERROR_BLINK_PATTERN ((char*)"E ")
+#define WAITING_BLINK_PATTERN ((char*)"EE          ")
+#define DTMF_ERROR_BLINK_PATTERN ((char*)"EEEEEEEE")
 #define DTMF_DETECTED_BLINK_PATTERN ((char*)"T")
 
 #ifndef BOOL
@@ -407,7 +455,7 @@ typedef enum
 	})
 
 #define MAX_TIME 4294967295L
-#define MAX_UINT16 65535
+#define MAX_UINT16 65535U
 #define MAX_INT16 32767
 #define MIN_INT16 -32768
 
@@ -416,6 +464,10 @@ typedef enum
 #define TIMER2_20HZ 49
 #define TIMER2_5_8HZ 100
 #define TIMER2_0_5HZ 1000
+#define TIMER2_SECONDS_30 42840
+#define TIMER2_SECONDS_10 14280
+#define TIMER2_SECONDS_6 8566
+#define TIMER2_SECONDS_5 7138
 #define TIMER2_SECONDS_3 4283
 #define TIMER2_SECONDS_2 2855
 #define TIMER2_SECONDS_1 1428
@@ -427,10 +479,17 @@ typedef enum
 #define BLINK_LONG 500
 
 /* TIMER0 tone frequencies */
-#define DEFAULT_TONE_FREQUENCY 0x2F
-#define TONE_600Hz 0x1F
-#define TONE_500Hz 0x3F
-#define TONE_400Hz 0x4F
+#if F_CPU == 16000000UL
+	#define DEFAULT_TONE_FREQUENCY 0x2F
+	#define TONE_600Hz 0x1F
+	#define TONE_500Hz 0x3F
+	#define TONE_400Hz 0x4F
+#else
+	#define DEFAULT_TONE_FREQUENCY 0x18
+	#define TONE_600Hz 0x0F
+	#define TONE_500Hz 0x1F
+	#define TONE_400Hz 0x27
+#endif
 
 #define ADC_REF_VOLTAGE_mV 1100L
 #define VOLTAGE_MAX_MV 15000L

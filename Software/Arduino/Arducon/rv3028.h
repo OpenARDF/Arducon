@@ -28,12 +28,12 @@
  *
  */
 
+#ifndef RV3028_H_
+#define RV3028_H_
+
 #include "defs.h"
 #include "i2c.h"
 #include <time.h>
-
-#ifndef RV3028_H_
-#define RV3028_H_
 
 #define RTC_STATUS_NORMAL 0x00
 #define RTC_STATUS_I2C_ERROR 7
@@ -57,7 +57,7 @@
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
 /**
- *  Reads time from the DS3231 and returns the epoch
+ *  Reads time from the RV3028 and returns the epoch
  */
 		time_t rv3028_get_epoch(bool *result, char *datetime);
 

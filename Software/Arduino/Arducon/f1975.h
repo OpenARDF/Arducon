@@ -26,8 +26,13 @@
 #ifndef __f1975_H__
 #define __f1975_H__
 
-#if !SUPPORT_ONLY_80M
 #include "defs.h"
+
+
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
 
 typedef uint16_t tenthDB_t;
 
@@ -100,13 +105,14 @@ typedef enum{
 	} dB_t;
 */
 
-#define dB_low(d) (d & 0x0F)
-#define dB_high(d) ((d & 0x30) >> 4)
 #define MAX_ATTEN_TENTHS_DB (uint16_t)315
 #define MAX_ATTEN_SETTING 0x3F
 
 void setAtten(tenthDB_t att);
 void setupPortsForF1975(void);
 
-#endif // !SUPPORT_ONLY_80M
+#ifdef __cplusplus
+	}
+#endif
+
 #endif //__f1975_H__
