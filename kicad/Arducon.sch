@@ -5,8 +5,8 @@ $Descr B 17000 11000
 encoding utf-8
 Sheet 1 2
 Title "Arducon"
-Date "2021-03-03"
-Rev "P2.0"
+Date "2021-05-01"
+Rev "P2.2"
 Comp ""
 Comment1 ""
 Comment2 ""
