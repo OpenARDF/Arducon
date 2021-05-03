@@ -173,7 +173,7 @@ void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
-void setAMToneFrequency(AM_Tone_Freq_t value);
+BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
 uint16_t readADC();
 float getTemp(void);
@@ -3271,10 +3271,13 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 	return(valid);
 }
 
-void setAMToneFrequency(AM_Tone_Freq_t value)
+BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 {
 	BOOL enableAM = TRUE;
 
+#if INIT_EEPROM_ONLY
+	if(value) enableAM = FALSE; /* Remove compiler warning */
+#else
 	switch(value)
 	{
 		case AM_DISABLED:
@@ -3345,32 +3348,35 @@ void setAMToneFrequency(AM_Tone_Freq_t value)
 		break;
 	}
 
-#if !INIT_EEPROM_ONLY
-		if(!OCR0A)
-		{
-			OCR0A = DEFAULT_TONE_FREQUENCY; /* Ensure that FM tone setting is initialized - even if it won't be used */
+	if(!OCR0A)
+	{
+		OCR0A = DEFAULT_TONE_FREQUENCY; /* Ensure that FM tone setting is initialized - even if it won't be used */
 
-		}
+	}
 
-		if(!OCR1A)
-		{
+ 	if(!OCR1A)
+ 	{
+		OCR1A = 1000;  /* Ensure that AM tone setting is initialized - even if it won't be used */
+ 	}
 
-		}
+	cli();
+	setupPortsForF1975(enableAM);
 
-		if(enableAM)
-		{
-			setupPortsForF1975();
-			TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
-			TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
-		}
-		else
-		{
-			TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
-			TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
-		}
-#endif  /* INIT_EEPROM_ONLY */
+	if(enableAM)
+	{
+		TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
+		TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
+	}
+	else
+	{
+		TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+		TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
+	}
 
 	g_AM_enabled = enableAM;
+	sei();
+#endif  /* INIT_EEPROM_ONLY */
+	return(enableAM);
 }
 
 
