@@ -21,7 +21,7 @@ F 0 "PCB201" H 3698 2374 50  0000 L CNN
 F 1 "Printed Circuit Board" H 3698 2283 50  0000 L CNN
 F 2 "Oddities:Dummy_Empty" H 3990 2510 50  0001 C CNN
 F 3 "" H 3990 2510 50  0001 C CNN
-F 4 "np" H 3150 2350 50  0001 C CNN "Part No."
+F 4 "np" H 3150 2350 50  0001 C CNN "Digi-Key Part No."
 F 5 "np" H 3150 2350 50  0001 C CNN "Link"
 	1    3150 2350
 	1    0    0    -1  
