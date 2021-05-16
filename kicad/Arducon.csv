@@ -33,12 +33,12 @@ R114 ,470,1,Resistors_SMD:R_0805,RES SMD 470 OHM 1% 1/8W 0805,311-470CRCT-ND,C32
 RV101 ,10k,1,Potentiometers:Potentiometer_ST32ET_Handsolder,TRIMMER 10K OHM 0.1W J LEAD TOP,TC33X-103ECT-ND,C719176,<a href="https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND">Link</a>,Bourns Inc.,TC33X-2-103E
 SJ103 SJ104 SJ105 SJ106 SJ107 SJ108 SJ101 SJ102 ,SolderJumper_2_Open,8,Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small, ,np, ,np, , 
 SJ110 ,SolderJumper_3_Bridged12,1,Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small, ,np, ,np, , 
-SW101 ,SPST_small,1,Buttons_Switches_SMD:PTS645SL50SMTR92,SWITCH TACTILE SPST-NO 0.05A 12V,CKN9088CT-ND,C221877,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,C&K,PTS645SL50SMTR92LFS
+SW101 ,SPST,1,Buttons_Switches_SMD:PTS645SL50SMTR92,SWITCH TACTILE SPST-NO 0.05A 12V,CKN9088CT-ND,C221877,<a href="https://www.digikey.com/products/en?keywords=CKN9088CT-ND">Link</a>,C&K,PTS645SL50SMTR92LFS
 SW102 ,5V/12V,1,Buttons_Switches_SMD:SW_SPDT_PCM12,SWITCH SLIDE SPDT 300MA 6V,401-2016-1-ND,C221841,<a href="https://www.digikey.com/products/en?keywords=401-2016-1-ND">Link</a>,C&K,PCM12SMTR
 TP101 ,Conn_01x04,1,Pin_Headers:Pin_Header_Straight_1x04, ,np, ,np, , 
 U104 ,F1975NCGI,1,Housings_DFN_QFN:QFN-20-1EP_4x4mm_Pitch0.5mm,RF ATTENUATOR 31DB 75OHM 20WFQFN,800-3576-ND,C1525854,<a href="https://www.digikey.com/products/en?keywords=800-3576-ND">Link</a>,Renesas Electronics America Inc,F1975NCGI
 U102 ,CD74HC4050M96,1,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm,IC BUFFER NON-INVERT 6V 16SOIC,296-14529-1-ND,C131932,<a href="https://www.digikey.com/products/en?keywords=296-14529-1-ND">Link</a>,Texas Instruments,CD74HC4050M96
-U101 ,MIC5265-3.3YD5-TR,1,TO_SOT_Packages_SMD:SOT-23-5,IC REG LINEAR 3.3V 150MA SOT23-5,576-2835-1-ND,C37970,<a href="https://www.digikey.com/products/en?keywords=576-2835-1-ND">Link</a>,Microchip Technology,MIC5265-3.3YD5-TR
+U101 ,LP2992AIM5-3.3,1,TO_SOT_Packages_SMD:SOT-23-5,IC REG LINEAR 3.3V 250MA SOT23-5,LP2992AIM5-3.3/NOPBCT-ND,C37970,<a href="https://www.digikey.com/products/en?keywords=LP2992AIM5-3.3/NOPBCT-ND">Link</a>,Texas Instruments,LP2992AIM5-3.3/NOPB
 U105 ,DS3231,1,SMD_Packages:SO16,IC RTC CLK/CALENDAR I2C 16-SOIC,DS3231SN#T&RCT-ND,C9866,<a href="https://www.digikey.com/products/en?keywords=DS3231SN#T&RCT-ND">Link</a>,Maxim Integrated,DS3231SN#T&R
 U103 ,RV-8803-C7,1,Oddities:RV-3028-C7,IC RTC CLK/CALENDAR I2C 8-SON,2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND, ,<a href="2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND">Link</a>,Micro Crystal AG,RV-8803-C7-32.768KHZ-3PPM-TA-QC
 W101 W102 ,CONN_01X01,2,Pin_Headers:Pin_Header_Straight_1x01, ,np, ,np, , 
