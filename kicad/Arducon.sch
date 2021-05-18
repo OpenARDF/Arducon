@@ -310,7 +310,7 @@ F 3 "" H 11850 10200 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:Vproc #PWR0127
+L Arducon-rescue:Vproc-power #PWR0127
 U 1 1 591CAC09
 P 3800 3700
 F 0 "#PWR0127" H 3800 3550 50  0001 C CNN
@@ -362,7 +362,7 @@ F 3 "" H 7400 4700 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:Vproc #PWR0107
+L Arducon-rescue:Vproc-power #PWR0107
 U 1 1 5AB7DABB
 P 9250 8150
 F 0 "#PWR0107" H 9250 8000 50  0001 C CNN
@@ -373,7 +373,7 @@ F 3 "" H 9250 8150 50  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:Battery_Single_Cell BT101
+L Arducon-rescue:Battery_Single_Cell-Device BT101
 U 1 1 5BCD438E
 P 6550 8100
 F 0 "BT101" V 6700 8000 50  0000 L CNN
@@ -389,7 +389,7 @@ F 8 "CR1220 BATTERY HOLDER" V 6550 8100 50  0001 C CNN "Description"
 	0    1    -1   0   
 $EndComp
 $Comp
-L power:Vproc #PWR0144
+L Arducon-rescue:Vproc-power #PWR0144
 U 1 1 5C60DF91
 P 5200 7150
 F 0 "#PWR0144" H 5200 7000 50  0001 C CNN
@@ -620,7 +620,7 @@ F 5 "<a href=\"\">Link</a>" H 2100 2200 60  0001 C CNN "Link"
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Switch:SPST_small SW101
+L Arducon-rescue:SPST_small-Switch SW101
 U 1 1 5F9DCC49
 P 7250 5600
 F 0 "SW101" H 7250 5500 50  0000 C CNN
@@ -758,7 +758,7 @@ F 9 "C96346" V 4150 1200 50  0001 C CNN "LCSC Part Number"
 	1    0    0    -1  
 $EndComp
 $Comp
-L MCU_Module:Arduino_Pro_Mini-MCU_Module MOD101
+L Arducon-rescue:Arduino_Pro_Mini-MCU_Module-MCU_Module MOD101
 U 1 1 5FC82DF4
 P 4950 5300
 F 0 "MOD101" H 5000 6667 61  0000 C CNB
@@ -804,7 +804,7 @@ F 9 "C476766" V 2600 4150 50  0001 C CNN "LCSC Part Number"
 	0    -1   1    0   
 $EndComp
 $Comp
-L power:Vproc #PWR0134
+L Arducon-rescue:Vproc-power #PWR0134
 U 1 1 5FF2E22F
 P 2950 3550
 F 0 "#PWR0134" H 2950 3400 50  0001 C CNN
@@ -840,7 +840,7 @@ EXT_BATTERY
 Wire Wire Line
 	3700 6500 3750 6500
 $Comp
-L RF:F1975NCGI U104
+L Arducon-rescue:F1975NCGI-RF U104
 U 1 1 5FF7DEC4
 P 14100 2800
 F 0 "U104" H 14350 3450 61  0000 L CNB
@@ -857,7 +857,7 @@ F 9 "C1525854" H 14100 2800 50  0001 C CNN "LCSC Part Number"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 1 1 5FFA3B6A
 P 10100 5250
 F 0 "U102" H 10250 5400 50  0000 C CNB
@@ -870,7 +870,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 2 1 5FFA7F9B
 P 10100 4700
 F 0 "U102" H 10200 4850 50  0000 C CNB
@@ -883,7 +883,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 3 1 5FFA8DF3
 P 10100 4150
 F 0 "U102" H 10200 4300 50  0000 C CNB
@@ -896,7 +896,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 4 1 5FFA9DCC
 P 10100 3700
 F 0 "U102" H 10200 3850 50  0000 C CNB
@@ -913,7 +913,7 @@ F 9 "C131932" H 10100 3700 50  0001 C CNN "LCSC Part Number"
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 5 1 5FFAB336
 P 10100 3200
 F 0 "U102" H 10200 3350 50  0000 C CNB
@@ -926,7 +926,7 @@ F 5 "<a href=\"https://www.digikey.com/products/en?keywords=296-14529-1-ND\">Lin
 	1    0    0    -1  
 $EndComp
 $Comp
-L Logic_LevelTranslator:CD74HC4050M96-74xx U102
+L Arducon-rescue:CD74HC4050M96-74xx-Logic_LevelTranslator U102
 U 6 1 5FFAC3C8
 P 10100 2700
 F 0 "U102" H 10250 2850 50  0000 C CNB
@@ -1156,7 +1156,7 @@ $EndComp
 Wire Wire Line
 	3850 2600 3850 2500
 $Comp
-L Power_Protection:LMN200B01 Q102
+L Arducon-rescue:LMN200B01-Power_Protection Q102
 U 1 1 5FC59E4B
 P 13550 7600
 F 0 "Q102" H 13550 8200 61  0000 C CNB
@@ -1839,7 +1839,7 @@ F 5 "np" H 14950 8300 50  0001 C CNN "Link"
 	1    0    0    1   
 $EndComp
 $Comp
-L power:Vproc #PWR0113
+L Arducon-rescue:Vproc-power #PWR0113
 U 1 1 5FFE7858
 P 9750 1450
 F 0 "#PWR0113" H 9750 1300 50  0001 C CNN
@@ -1967,7 +1967,7 @@ $EndComp
 NoConn ~ 4050 4900
 NoConn ~ 4050 5000
 $Comp
-L power:Vproc #PWR0156
+L Arducon-rescue:Vproc-power #PWR0156
 U 1 1 5FDC95A5
 P 2750 1950
 F 0 "#PWR0156" H 2750 1800 50  0001 C CNN
@@ -2044,7 +2044,7 @@ F 9 "C15850" V 9350 8550 50  0001 C CNN "LCSC Part Number"
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Transistor_BJT:PN2222A Q101
+L Arducon-rescue:PN2222A-Transistor_BJT Q101
 U 1 1 603D3C3C
 P 3950 2800
 F 0 "Q101" H 4141 2846 50  0000 L CNN
@@ -2061,7 +2061,7 @@ F 9 "C181121" H 3950 2800 50  0001 C CNN "LCSC Part Number"
 	-1   0    0    -1  
 $EndComp
 $Comp
-L Diode:MSS1P4-M3_89A D109
+L Arducon-rescue:MSS1P4-M3_89A-Diode D109
 U 1 1 6037BF00
 P 7850 8100
 F 0 "D109" H 7850 8200 50  0000 C CNN
@@ -2134,7 +2134,7 @@ F 9 "C17414" V 2250 5300 50  0001 C CNN "LCSC Part Number"
 	0    1    1    0   
 $EndComp
 $Comp
-L Transistor_BJT:PN2222A Q103
+L Arducon-rescue:PN2222A-Transistor_BJT Q103
 U 1 1 6037AAF1
 P 1900 5300
 F 0 "Q103" H 2091 5346 50  0000 L CNN
@@ -2266,7 +2266,7 @@ Wire Wire Line
 Wire Wire Line
 	6400 6100 6250 6100
 $Comp
-L Transistor_BJT:PN2222A Q104
+L Arducon-rescue:PN2222A-Transistor_BJT Q104
 U 1 1 6041235C
 P 8350 9400
 F 0 "Q104" H 8541 9446 50  0000 L CNN
@@ -2520,7 +2520,7 @@ F 5 "np" H 7300 4500 50  0001 C CNN "Link"
 	0    1    -1   0   
 $EndComp
 $Comp
-L power:Vproc #PWR0160
+L Arducon-rescue:Vproc-power #PWR0160
 U 1 1 606F1DF4
 P 7300 4700
 F 0 "#PWR0160" H 7300 4550 50  0001 C CNN
@@ -2810,7 +2810,7 @@ $EndComp
 Wire Wire Line
 	3750 6500 4050 6500
 $Comp
-L Diode:MSS1P4-M3_89A D108
+L Arducon-rescue:MSS1P4-M3_89A-Diode D108
 U 1 1 609D6090
 P 9250 8300
 F 0 "D108" H 9250 8400 50  0000 C CNN
@@ -2827,7 +2827,7 @@ F 9 "C506621" H 9250 8300 50  0001 C CNN "LCSC Part Number"
 	0    1    -1   0   
 $EndComp
 $Comp
-L Diode:MSS1P4-M3_89A D101
+L Arducon-rescue:MSS1P4-M3_89A-Diode D101
 U 1 1 609FC00E
 P 3550 6500
 F 0 "D101" H 3550 6600 50  0000 C CNN
@@ -2962,7 +2962,7 @@ F 9 "C15850" V 6700 9000 50  0001 C CNN "LCSC Part Number"
 	0    1    1    0   
 $EndComp
 $Comp
-L power:Vproc #PWR0128
+L Arducon-rescue:Vproc-power #PWR0128
 U 1 1 60D66070
 P 6900 8900
 F 0 "#PWR0128" H 6900 8750 50  0001 C CNN
@@ -3008,7 +3008,7 @@ Wire Wire Line
 NoConn ~ 6500 9750
 NoConn ~ 7500 9350
 $Comp
-L Timer_RTC:RV-8803-C7 U103
+L Arducon-rescue:RV-8803-C7-Timer_RTC U103
 U 1 1 60FCCE49
 P 9250 9300
 F 0 "U103" H 9600 9850 60  0000 C CNB
@@ -3043,7 +3043,7 @@ Wire Notes Line
 Wire Notes Line
 	10650 7650 10650 10300
 $Comp
-L power:Vproc #PWR0121
+L Arducon-rescue:Vproc-power #PWR0121
 U 1 1 6099BDD9
 P 9950 9150
 F 0 "#PWR0121" H 9950 9000 50  0001 C CNN
