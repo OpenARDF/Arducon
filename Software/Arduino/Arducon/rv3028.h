@@ -41,7 +41,7 @@
 #define RTC_STATUS_EVF_OCCURRED 1
 #define RTC_STATUS_CLOCK_CORRUPT 0
 
-#ifdef INCLUDE_RV3028_SUPPORT
+#if INCLUDE_RV3028_SUPPORT
 
 #define RV3028_I2C_SLAVE_ADDR 0xA4  /* corresponds to slave address = 0b10100100x */
 
@@ -59,7 +59,7 @@
 /**
  *  Reads time from the RV3028 and returns the epoch
  */
-		time_t rv3028_get_epoch(bool *result, char *datetime);
+		time_t RTC_get_epoch(bool *result, char *datetime);
 
 
 /**
@@ -72,13 +72,13 @@
 /**
  * Set or Get the UNIX epoch registers
  */
-		BOOL rv3028_set_epoch(time_t epoch);
-		time_t rv3028_get_epoch(void);
+		BOOL RTC_set_epoch(time_t epoch);
+		time_t RTC_get_epoch(void);
 
 /**
  *  Turn on 1-second square wave on the INT/SQW pin.
  */
-		BOOL rv3028_1s_sqw(BOOL onOff);
+		BOOL RTC_1s_sqw(BOOL onOff);
 
 /**
  *  Read current setting of temperature offset RAM

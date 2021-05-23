@@ -4,6 +4,8 @@
 
 ardooweeno.cpp
 
+ds3231.cpp
+
 EepromManager.cpp
 
 F1975.cpp

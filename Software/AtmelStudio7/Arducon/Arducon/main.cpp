@@ -25,7 +25,15 @@
 #include "defs.h"
 #include "linkbus.h"
 #include "morse.h"
+
+#if INCLUDE_RV3028_SUPPORT
 #include "rv3028.h"
+#endif
+
+#if INCLUDE_DS3231_SUPPORT
+#include "ds3231.h"
+#endif
+
 #include "EepromManager.h"
 
 #if !INIT_EEPROM_ONLY
@@ -352,7 +360,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
 #if INIT_EEPROM_ONLY
-		rv3028_1s_sqw(ON);
+		RTC_1s_sqw(ON);
 
 		if(eepromErr)
 		{
@@ -374,12 +382,18 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 			lb_send_string((char*)"EEPROM Error!\n", TRUE);
 		}
 
-		uint8_t result = rv3028_1s_sqw(ON);
+#if INCLUDE_RV3028_SUPPORT
+		BOOL result = RTC_1s_sqw(ON);
+#else
+		RTC_1s_sqw(ON);
+#endif
+
 #endif  /* !INIT_EEPROM_ONLY */
 
 #if !INIT_EEPROM_ONLY
 		ee_mgr.send_Help();
 
+#if INCLUDE_RV3028_SUPPORT
 		if(result & (1 << RTC_STATUS_I2C_ERROR))
 		{
 			sprintf(g_tempStr, "Err 1\n");
@@ -401,6 +415,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		{
 			lb_send_string(g_tempStr, TRUE);
 		}
+#endif
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
@@ -1335,6 +1350,7 @@ void loop()
 
 				if(!g_temperature_check_countdown)
 				{
+#if INCLUDE_RV3028_SUPPORT
 					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 					int8_t temp = (int8_t)getTemp();
 					if(temp != g_temperature)
@@ -1344,6 +1360,7 @@ void loop()
 						int8_t adj = ee_mgr.readTemperatureTable(delta25);
 						rv3028_set_offset_RAM(g_rv3028_offset + adj);
 					}
+#endif // INCLUDE_DS3231_SUPPORT
 
 					setUpSampling(AUDIO_SAMPLING, FALSE);
 					g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
@@ -1944,14 +1961,19 @@ void handleLinkBusMsgs()
 
 					if(t)
 					{
-						rv3028_set_epoch(t);
+						#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+						#else
+							RTC_set_datetime(g_tempStr);
+						#endif
+						
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
 					else
 					{
-						g_current_epoch = rv3028_get_epoch();
+						g_current_epoch = RTC_get_epoch();
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
 						sprintf(g_tempStr, "UNIX Time:%lu\n", g_current_epoch);
 					}
@@ -2013,6 +2035,7 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "Offset:%d\n", g_utc_offset);
 					doprint = TRUE;
 				}
+#if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'C')  /* Test only - Set RTC offset value */
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -2029,6 +2052,7 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "C=%d\n", a);
 					doprint = true;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 				else
 				{
 					ConfigurationState_t cfg = clockConfigurationCheck();
@@ -2479,7 +2503,12 @@ void handleLinkBusMsgs()
 
 					if(t)
 					{
-						rv3028_set_epoch(t);
+						#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+						#else
+							RTC_set_datetime(receivedString);
+						#endif
+
 						g_current_epoch = t;
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
@@ -2726,7 +2755,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 	g_use_ptt_periodic_reset = FALSE;
 
 	cli();
@@ -3051,7 +3080,7 @@ void startEventNow(EventActionSource_t activationSource)
 	g_LED_enunciating = FALSE;
 	sei();
 
-	/*	g_current_epoch = rv3028_get_epoch();
+	/*	g_current_epoch = RTC_get_epoch();
 	 *     lb_send_string((char*)"Sync OK\n", FALSE); */
 }
 
@@ -3089,7 +3118,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
@@ -3114,7 +3143,7 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -3232,7 +3261,7 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 
 	if((len == 12) && (only_digits(str)))
 	{
-		time_t ep = rv3028_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
+		time_t ep = RTC_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
 
 		ep += (HOUR * offsetHours);
 

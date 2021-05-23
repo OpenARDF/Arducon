@@ -28,7 +28,7 @@
 #include <string.h>
 #endif  /* ATMEL_STUDIO_7 */
 
-#ifdef INCLUDE_RV3028_SUPPORT
+#if INCLUDE_RV3028_SUPPORT
 
    #include "rv3028.h"
    #include <util/twi.h>
@@ -251,7 +251,7 @@
 	}
 
 /* Note: this is not thread safe */
-	time_t rv3028_get_epoch(bool *result, char *datetime)
+	time_t RTC_get_epoch(bool *result, char *datetime)
 	{
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		BOOL res = 0;
@@ -309,7 +309,7 @@
 		else
 		{
 /*			res = i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_SECONDS, data, 7); */
-			epoch = rv3028_get_epoch();
+			epoch = RTC_get_epoch();
 			res = epoch == 0;
 		}
 
@@ -375,7 +375,7 @@
 		}
 #endif  /* DATE_STRING_SUPPORT_ENABLED */
 
-	BOOL rv3028_set_epoch(time_t epoch)
+	BOOL RTC_set_epoch(time_t epoch)
 	{
 		uint8_t data[5] = { 0, 0, 0, 0 };
 
@@ -386,7 +386,7 @@
 		return(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_UNIX_TIME_0, data, 4));
 	}
 
-	time_t rv3028_get_epoch(void)
+	time_t RTC_get_epoch(void)
 	{
 		time_t epoch = 0;
 		uint8_t data[4] = { 0, 0, 0, 0 };
@@ -489,7 +489,7 @@
  #define RTC_EE_COMMAND                  0x27
  #define RTC_STATUS                      0x0E
  */
-		uint8_t rv3028_1s_sqw(BOOL onOff)
+		BOOL RTC_1s_sqw(BOOL onOff)
 		{
 			uint8_t status = FALSE;
 			uint8_t temp = onOff; /* remove compile warning */

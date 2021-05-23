@@ -26,7 +26,14 @@
 #include "EepromManager.h"
 #include "linkbus.h"
 #include "i2c.h"
+
+#if INCLUDE_RV3028_SUPPORT
 #include "rv3028.h"
+#endif
+
+#if INCLUDE_DS3231_SUPPORT
+#include "ds3231.h"
+#endif
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
@@ -472,8 +479,10 @@ BOOL EepromManager::readNonVols(void)
 
 		i2c_init(); /* Needs to happen before reading RTC */
 
+#if INCLUDE_RV3028_SUPPORT
 		g_rv3028_offset = rv3028_get_offset_RAM();
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset), (uint16_t)g_rv3028_offset);
+#endif // INCLUDE_RV3028_SUPPORT
 
 		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
 		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);

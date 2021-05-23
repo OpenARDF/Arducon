@@ -39,6 +39,7 @@ SUBDIRS :=  \
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
 ../ardooweeno.cpp \
+../ds3231.cpp \
 ../EepromManager.cpp \
 ../F1975.cpp \
 ../Goertzel.cpp \
@@ -57,6 +58,7 @@ ASM_SRCS +=
 
 OBJS +=  \
 ardooweeno.o \
+ds3231.o \
 EepromManager.o \
 F1975.o \
 Goertzel.o \
@@ -68,6 +70,7 @@ rv3028.o
 
 OBJS_AS_ARGS +=  \
 ardooweeno.o \
+ds3231.o \
 EepromManager.o \
 F1975.o \
 Goertzel.o \
@@ -79,6 +82,7 @@ rv3028.o
 
 C_DEPS +=  \
 ardooweeno.d \
+ds3231.d \
 EepromManager.d \
 F1975.d \
 Goertzel.d \
@@ -90,6 +94,7 @@ rv3028.d
 
 C_DEPS_AS_ARGS +=  \
 ardooweeno.d \
+ds3231.d \
 EepromManager.d \
 F1975.d \
 Goertzel.d \
@@ -114,6 +119,13 @@ LINKER_SCRIPT_DEP+=
 
 # AVR32/GNU C Compiler
 ./ardooweeno.o: .././ardooweeno.cpp
+	@echo Building file: $<
+	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DATMEL_STUDIO_7 -DDEBUG -DF_CPU=16000000  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.4.351\include"  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=atmega328p -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.4.351\gcc\dev\atmega328p" -c -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+./ds3231.o: .././ds3231.cpp
 	@echo Building file: $<
 	@echo Invoking: AVR8/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-g++.exe$(QUOTE) -funsigned-char -funsigned-bitfields -DATMEL_STUDIO_7 -DDEBUG -DF_CPU=16000000  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.4.351\include"  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -Wall -mmcu=atmega328p -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\ATmega_DFP\1.4.351\gcc\dev\atmega328p" -c -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

@@ -23,6 +23,7 @@
  */
 
 #include "Goertzel.h"
+#include <string.h>
 
 #if !INIT_EEPROM_ONLY
 
@@ -48,6 +49,12 @@ Goertzel::Goertzel(float N, float sampling_frequency)
 Goertzel::~Goertzel()
 {
 	free(testData);
+}
+
+void Goertzel::Flush(void)
+{
+	memset(testData, 0x00, _N * sizeof(int));
+	ResetGoertzel();
 }
 
 void Goertzel::SetTargetFrequency(float target_frequency)

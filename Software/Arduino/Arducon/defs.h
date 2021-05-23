@@ -40,7 +40,7 @@
  *       set to TRUE. Then build and run with the flag      *
  *       set to FALSE.                                      */
 /***********************************************************/
-#define INIT_EEPROM_ONLY TRUE
+#define INIT_EEPROM_ONLY FALSE
 /***********************************************************/
 
 
@@ -131,7 +131,16 @@
  *#define DEBUG_DTMF */
 
 #define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
-#define INCLUDE_RV3028_SUPPORT
+#define INCLUDE_RV3028_SUPPORT FALSE
+#define INCLUDE_DS3231_SUPPORT TRUE
+
+#if !INCLUDE_DS3231_SUPPORT && !INCLUDE_RV3028_SUPPORT
+#error One real-time clock device must be supported
+#endif
+
+#if INCLUDE_DS3231_SUPPORT && INCLUDE_RV3028_SUPPORT
+#error Only one real-time clock device may be enabled
+#endif
 
 /*******************************************************/
 
