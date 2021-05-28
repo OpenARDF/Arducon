@@ -234,6 +234,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
 
+	pinMode(PIN_RTC_SQW, INPUT_PULLUP);
+
 	linkbus_disable();
 
 #if SUPPORT_ONLY_80M
@@ -1966,7 +1968,7 @@ void handleLinkBusMsgs()
 						#else
 							RTC_set_datetime(g_tempStr);
 						#endif
-						
+
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
