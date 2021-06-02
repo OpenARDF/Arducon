@@ -194,7 +194,7 @@ void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-time_t validateTimeString(char* str, time_t * epochVar, int8_t offsetHours);
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
@@ -1350,17 +1350,17 @@ void loop()
 
 				if(!g_temperature_check_countdown)
 				{
-#if INCLUDE_RV3028_SUPPORT
 					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 					int8_t temp = (int8_t)getTemp();
 					if(temp != g_temperature)
 					{
 						g_temperature = temp;
+#if INCLUDE_RV3028_SUPPORT
 						int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
 						int8_t adj = ee_mgr.readTemperatureTable(delta25);
 						rv3028_set_offset_RAM(g_rv3028_offset + adj);
-					}
 #endif // INCLUDE_DS3231_SUPPORT
+					}
 
 					setUpSampling(AUDIO_SAMPLING, FALSE);
 					g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;

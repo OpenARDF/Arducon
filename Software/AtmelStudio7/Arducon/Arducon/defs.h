@@ -127,10 +127,6 @@
 /******************************************************
  * Set Hardware Settings */
 
-/*#define TRANQUILIZE_WATCHDOG
- *#define DEBUG_DTMF */
-
-#define HARDWARE_EXTERNAL_DIP_PULLUPS_INSTALLED FALSE
 #define INCLUDE_RV3028_SUPPORT FALSE
 #define INCLUDE_DS3231_SUPPORT TRUE
 
@@ -393,9 +389,6 @@ typedef enum
  * EEPROM definitions */
 #define EEPROM_INITIALIZED_FLAG 0x00BB  /* Never set to 0xFFFF */
 #define EEPROM_UNINITIALIZED 0x00
-
-#define EEPROM_STATION_ID_DEFAULT "FOXBOX"
-#define EEPROM_PATTERN_TEXT_DEFAULT "PARIS|"
 
 #define EEPROM_START_TIME_DEFAULT 0
 #define EEPROM_FINISH_TIME_DEFAULT 0
