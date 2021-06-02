@@ -1751,32 +1751,6 @@ Wire Wire Line
 	13650 4600 13650 3150
 Wire Wire Line
 	13650 3150 13700 3150
-$Comp
-L Connector_Generic:Conn_01x01 J109
-U 1 1 6011CEB1
-P 14250 3650
-F 0 "J109" H 14330 3692 50  0000 L CNN
-F 1 "Conn_01x01" H 14330 3601 50  0001 L CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x01" H 14250 3650 50  0001 C CNN
-F 3 "" H 14250 3650 50  0001 C CNN
-F 4 "np" H 14250 3650 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 14250 3650 50  0001 C CNN "Link"
-	1    14250 3650
-	1    0    0    -1  
-$EndComp
-$Comp
-L Connector_Generic:Conn_01x01 J110
-U 1 1 60130A78
-P 13150 4000
-F 0 "J110" H 13200 4100 50  0000 L CNN
-F 1 "Conn_01x01" H 13230 3951 50  0001 L CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x01" H 13150 4000 50  0001 C CNN
-F 3 "" H 13150 4000 50  0001 C CNN
-F 4 "np" H 13150 4000 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 13150 4000 50  0001 C CNN "Link"
-	1    13150 4000
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	14050 3750 14050 3650
 Text Notes 13450 800  0    79   ~ 16
@@ -3053,6 +3027,11 @@ F 3 "" H 9950 9150 50  0000 C CNN
 	1    9950 9150
 	1    0    0    -1  
 $EndComp
+Wire Wire Line
+	12950 4000 13800 4000
+Wire Wire Line
+	13800 4000 13800 3650
 Wire Bus Line
 	6150 4000 6150 6700
+Connection ~ 13800 3650
 $EndSCHEMATC

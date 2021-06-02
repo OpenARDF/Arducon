@@ -1,6 +1,4 @@
 Ref,Val,Package,PosX,PosY,Rot,Side
-"J109","Conn_01x01","Pin_Header_Straight_1x01",170.020000,-110.060000,0.000000,bottom
-"J110","Conn_01x01","Pin_Header_Straight_1x01",159.890000,-104.550000,0.000000,bottom
 "P101","ISP/PDI","SM_Pin_Header_Straight_2x03",122.850000,-96.050000,180.000000,bottom
 "Q103","PN2222A","SOT-23",103.620000,-123.090000,270.000000,bottom
 "R109","10k","R_0805",107.420000,-122.510000,180.000000,bottom
