@@ -194,7 +194,7 @@ void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
@@ -233,6 +233,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
+
+	pinMode(PIN_RTC_SQW, INPUT_PULLUP);
 
 	linkbus_disable();
 
@@ -522,12 +524,10 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 ISR(ADC_vect)
 {
 #if !INIT_EEPROM_ONLY
-		digitalWrite(PIN_MOSI, ON);
 		if(g_goertzel.DataPoint(ADCH))
 		{
 			ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 		}
-		digitalWrite(PIN_MOSI, OFF);
 #endif /* INIT_EEPROM_ONLY */
 }
 
@@ -1966,7 +1966,7 @@ void handleLinkBusMsgs()
 						#else
 							RTC_set_datetime(g_tempStr);
 						#endif
-						
+
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
@@ -1975,7 +1975,7 @@ void handleLinkBusMsgs()
 					{
 						g_current_epoch = RTC_get_epoch();
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
-						sprintf(g_tempStr, "UNIX Time:%lu\n", g_current_epoch);
+						sprintf(g_tempStr, "Epoch:%lu\n", g_current_epoch);
 					}
 
 					doprint = true;
@@ -2020,6 +2020,7 @@ void handleLinkBusMsgs()
 						doprint = true;
 					}
 				}
+#if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -2035,7 +2036,6 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "Offset:%d\n", g_utc_offset);
 					doprint = TRUE;
 				}
-#if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'C')  /* Test only - Set RTC offset value */
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -2363,11 +2363,13 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_RECEIVING_FINISH_TIME;
 				}
+#if INCLUDE_RV3028_SUPPORT
 				else if(key == '6')
 				{
 					state = STATE_RECEIVING_UTC_OFFSET;
 					digits = 1;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 #if !SUPPORT_ONLY_80M
 					else if(key == '9')
 					{
@@ -2595,6 +2597,7 @@ void handleLinkBusMsgs()
 
 			case STATE_RECEIVING_UTC_OFFSET:
 			{
+#if INCLUDE_RV3028_SUPPORT
 				if(key == '#')
 				{
 					if((value >= 0) && (value < 24))
@@ -2619,6 +2622,7 @@ void handleLinkBusMsgs()
 				{
 					digits = -1;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 			}
 			break;
 
@@ -3079,9 +3083,6 @@ void startEventNow(EventActionSource_t activationSource)
 
 	g_LED_enunciating = FALSE;
 	sei();
-
-	/*	g_current_epoch = RTC_get_epoch();
-	 *     lb_send_string((char*)"Sync OK\n", FALSE); */
 }
 
 void stopEventNow(EventActionSource_t activationSource)
@@ -3241,19 +3242,19 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	return( failure);
 }
 
-time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours)
 {
 	time_t valid = 0;
 	int len = strlen(str);
 	time_t minimumEpoch = MINIMUM_EPOCH;
 	uint8_t validationType = 0;
 
-	if(epicVar == &g_event_start_epoch)
+	if(epochVar == &g_event_start_epoch)
 	{
 		minimumEpoch = MAX(g_current_epoch, MINIMUM_EPOCH);
 		validationType = 1;
 	}
-	else if(epicVar == &g_event_finish_epoch)
+	else if(epochVar == &g_event_finish_epoch)
 	{
 		minimumEpoch = MAX(g_event_start_epoch, g_current_epoch);
 		validationType = 2;
