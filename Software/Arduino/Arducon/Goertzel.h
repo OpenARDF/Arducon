@@ -62,6 +62,7 @@ void SetTargetFrequency(float);
 bool DataPoint(int);
 float Magnitude2(int *highCount);
 bool SamplesReady(void);
+void Flush(void);
 
 private:
 void ProcessSample(int);

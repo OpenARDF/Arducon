@@ -33,13 +33,28 @@
 
 #include <time.h>
 
-/* Set Firmware Version Here */
-#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.54X ***\n"
-#if SUPPORT_ONLY_80M
-#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
-#else
-#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0|1|2 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [1-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
-#endif // SUPPORT_ONLY_80M
+#if INCLUDE_RV3028_SUPPORT
+	#if SUPPORT_ONLY_80M
+		/* Set Firmware Version Here */
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.58A ***\n"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
+	#else
+		/* Set Firmware Version Here */
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.58B ***\n"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
+	#endif  /* SUPPORT_ONLY_80M */
+#elif INCLUDE_DS3231_SUPPORT
+	#if SUPPORT_ONLY_80M
+		/* Set Firmware Version Here */
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.58C ***\n"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
+	#else
+		/* Set Firmware Version Here */
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.58D ***\n"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
+	#endif  /* SUPPORT_ONLY_80M */
+#endif          /* INCLUDE_RV3028_SUPPORT */
+
 #define TEXT_SET_TIME_TXT "CLK T YYMMDDhhmmss <- Set current time\n"
 #define TEXT_SET_START_TXT "CLK S YYMMDDhhmmss <- Set start time\n"
 #define TEXT_SET_FINISH_TXT "CLK F YYMMDDhhmmss <- Set finish time\n"
@@ -54,6 +69,12 @@
 
 struct EE_prom
 {
+	uint16_t eeprom_initialization_flag;
+	uint16_t temperature_table[SIZE_OF_TEMPERATURE_TABLE];
+	int16_t atmega_temp_calibration;
+	int16_t rv3028_offset;
+	time_t event_start_epoch;
+	time_t event_finish_epoch;
 	char textVersion[sizeof(PRODUCT_NAME_LONG_TXT)];
 	char textHelp[sizeof(HELP_TEXT_TXT)];
 	char textSetTime[sizeof(TEXT_SET_TIME_TXT)];
@@ -67,20 +88,14 @@ struct EE_prom
 	char textErrTimeInPast[sizeof(TEXT_ERR_TIME_IN_PAST_TXT)];
 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
 
-	uint16_t temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 	uint8_t dataModulation[SIZE_OF_DATA_MODULATION];
 	uint8_t unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 
 	uint8_t id_codespeed;
 	uint8_t fox_setting;
 	uint8_t am_audio_frequency;
-	int16_t atmega_temp_calibration;
-	int16_t rv3028_offset;
-	time_t event_start_epoch;
-	time_t event_finish_epoch;
 	uint8_t utc_offset;
 	uint8_t ptt_periodic_reset;
-	uint16_t eeprom_initialization_flag;
 };
 
 typedef enum
@@ -140,17 +155,17 @@ uint16_t readTemperatureTable(int i);
 void resetEEPROMValues(void);
 
 #if INIT_EEPROM_ONLY
-void sendSuccessString(void);
-#endif // INIT_EEPROM_ONLY
+	void sendSuccessString(void);
+#endif  /* INIT_EEPROM_ONLY */
 
 protected:
 private:
 EepromManager( const EepromManager &c );
 EepromManager& operator=( const EepromManager &c );
 #if INIT_EEPROM_ONLY
-void sendPROGMEMString(const char* fl_addr);
-#endif // INIT_EEPROM_ONLY
+	void sendPROGMEMString(const char* fl_addr);
+#endif  /* INIT_EEPROM_ONLY */
 
 };  /*EepromManager */
 
-#endif /*__EEPROMMANAGER_H__ */
+#endif  /*__EEPROMMANAGER_H__ */

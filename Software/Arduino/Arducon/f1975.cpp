@@ -41,7 +41,7 @@ void setAtten(tenthDB_t att)
 	PORTB = pattern;
 }
 
-void setupPortsForF1975(void)
+void setupPortsForF1975(BOOL enable)
 {
 #if !SUPPORT_ONLY_80M
 	pinMode(PIN_D0, OUTPUT);
@@ -53,4 +53,9 @@ void setupPortsForF1975(void)
 	pinMode(PIN_PWDN, OUTPUT);
 	digitalWrite(PIN_PWDN, ON);
 #endif // !SUPPORT_ONLY_80M
+
+	if(!enable)
+	{
+		setAtten(0);
+	}
 }

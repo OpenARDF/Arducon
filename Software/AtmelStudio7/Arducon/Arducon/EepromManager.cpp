@@ -26,7 +26,14 @@
 #include "EepromManager.h"
 #include "linkbus.h"
 #include "i2c.h"
+
+#if INCLUDE_RV3028_SUPPORT
 #include "rv3028.h"
+#endif
+
+#if INCLUDE_DS3231_SUPPORT
+#include "ds3231.h"
+#endif
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
@@ -62,6 +69,12 @@ const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_T
 
 const struct EE_prom EEMEM EepromManager::ee_vars =
 {
+	/* .eeprom_initialization_flag = */ 0,
+	/* .temperature_table = */ { 0 },
+	/* .atmega_temp_calibration = */ 0,
+	/* .rv3028_offset = */ 0,
+	/* .event_start_epoch = */ 0,
+	/* .event_finish_epoch = */ 0,
 	/* .textVersion = */ "\0",
 	/* .textHelp = */ "\0",
 	/* .textSetTime = */ "\0",
@@ -75,20 +88,14 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .textErrTimeInPast = */ "\0",
 	/* .stationID_text = */ "\0",
 
-	/* .temperature_table = */ { 0 },
 	/* .dataModulation = */ { 0 },
 	/* .unlockCode = */ EEPROM_DTMF_UNLOCK_CODE_DEFAULT,
 
 	/* .id_codespeed = */ 0,
 	/* .fox_setting = */ 0,
 	/* .am_audio_frequency = */ 0,
-	/* .atmega_temp_calibration = */ 0,
-	/* .rv3028_offset = */ 0,
-	/* .event_start_epoch = */ 0,
-	/* .event_finish_epoch = */ 0,
 	/* .utc_offset = */ 0,
-	/* .ptt_periodic_reset = */ 0,
-	/* .eeprom_initialization_flag = */ 0
+	/* .ptt_periodic_reset = */ 0
 };
 
 extern char g_messages_text[][MAX_PATTERN_TEXT_LENGTH + 1];
@@ -472,8 +479,10 @@ BOOL EepromManager::readNonVols(void)
 
 		i2c_init(); /* Needs to happen before reading RTC */
 
+#if INCLUDE_RV3028_SUPPORT
 		g_rv3028_offset = rv3028_get_offset_RAM();
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset), (uint16_t)g_rv3028_offset);
+#endif // INCLUDE_RV3028_SUPPORT
 
 		g_event_start_epoch = EEPROM_START_EPOCH_DEFAULT;
 		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_start_epoch), g_event_start_epoch);

@@ -25,7 +25,15 @@
 #include "defs.h"
 #include "linkbus.h"
 #include "morse.h"
+
+#if INCLUDE_RV3028_SUPPORT
 #include "rv3028.h"
+#endif
+
+#if INCLUDE_DS3231_SUPPORT
+#include "ds3231.h"
+#endif
+
 #include "EepromManager.h"
 
 #if !INIT_EEPROM_ONLY
@@ -173,7 +181,7 @@ void sendMorseTone(BOOL onOff);
 void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
-void setAMToneFrequency(AM_Tone_Freq_t value);
+BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
 uint16_t readADC();
 float getTemp(void);
@@ -186,7 +194,7 @@ void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-time_t validateTimeString(char* str, time_t* epicVar, int8_t offsetHours);
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
@@ -225,6 +233,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
+
+	pinMode(PIN_RTC_SQW, INPUT_PULLUP);
 
 	linkbus_disable();
 
@@ -352,7 +362,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
 #if INIT_EEPROM_ONLY
-		rv3028_1s_sqw(ON);
+		RTC_1s_sqw(ON);
 
 		if(eepromErr)
 		{
@@ -374,12 +384,18 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 			lb_send_string((char*)"EEPROM Error!\n", TRUE);
 		}
 
-		uint8_t result = rv3028_1s_sqw(ON);
+#if INCLUDE_RV3028_SUPPORT
+		BOOL result = RTC_1s_sqw(ON);
+#else
+		RTC_1s_sqw(ON);
+#endif
+
 #endif  /* !INIT_EEPROM_ONLY */
 
 #if !INIT_EEPROM_ONLY
 		ee_mgr.send_Help();
 
+#if INCLUDE_RV3028_SUPPORT
 		if(result & (1 << RTC_STATUS_I2C_ERROR))
 		{
 			sprintf(g_tempStr, "Err 1\n");
@@ -401,6 +417,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		{
 			lb_send_string(g_tempStr, TRUE);
 		}
+#endif
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
@@ -507,12 +524,10 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 ISR(ADC_vect)
 {
 #if !INIT_EEPROM_ONLY
-		digitalWrite(PIN_MOSI, ON);
 		if(g_goertzel.DataPoint(ADCH))
 		{
 			ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 		}
-		digitalWrite(PIN_MOSI, OFF);
 #endif /* INIT_EEPROM_ONLY */
 }
 
@@ -1340,9 +1355,11 @@ void loop()
 					if(temp != g_temperature)
 					{
 						g_temperature = temp;
+#if INCLUDE_RV3028_SUPPORT
 						int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
 						int8_t adj = ee_mgr.readTemperatureTable(delta25);
 						rv3028_set_offset_RAM(g_rv3028_offset + adj);
+#endif // INCLUDE_DS3231_SUPPORT
 					}
 
 					setUpSampling(AUDIO_SAMPLING, FALSE);
@@ -1944,16 +1961,21 @@ void handleLinkBusMsgs()
 
 					if(t)
 					{
-						rv3028_set_epoch(t);
+						#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+						#else
+							RTC_set_datetime(g_tempStr);
+						#endif
+
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
 					else
 					{
-						g_current_epoch = rv3028_get_epoch();
+						g_current_epoch = RTC_get_epoch();
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
-						sprintf(g_tempStr, "UNIX Time:%lu\n", g_current_epoch);
+						sprintf(g_tempStr, "Epoch:%lu\n", g_current_epoch);
 					}
 
 					doprint = true;
@@ -1998,6 +2020,7 @@ void handleLinkBusMsgs()
 						doprint = true;
 					}
 				}
+#if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -2029,6 +2052,7 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "C=%d\n", a);
 					doprint = true;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 				else
 				{
 					ConfigurationState_t cfg = clockConfigurationCheck();
@@ -2339,11 +2363,13 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_RECEIVING_FINISH_TIME;
 				}
+#if INCLUDE_RV3028_SUPPORT
 				else if(key == '6')
 				{
 					state = STATE_RECEIVING_UTC_OFFSET;
 					digits = 1;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 #if !SUPPORT_ONLY_80M
 					else if(key == '9')
 					{
@@ -2479,7 +2505,12 @@ void handleLinkBusMsgs()
 
 					if(t)
 					{
-						rv3028_set_epoch(t);
+						#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+						#else
+							RTC_set_datetime(receivedString);
+						#endif
+
 						g_current_epoch = t;
 						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
 					}
@@ -2566,6 +2597,7 @@ void handleLinkBusMsgs()
 
 			case STATE_RECEIVING_UTC_OFFSET:
 			{
+#if INCLUDE_RV3028_SUPPORT
 				if(key == '#')
 				{
 					if((value >= 0) && (value < 24))
@@ -2590,6 +2622,7 @@ void handleLinkBusMsgs()
 				{
 					digits = -1;
 				}
+#endif // #if INCLUDE_RV3028_SUPPORT
 			}
 			break;
 
@@ -2726,7 +2759,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 	g_use_ptt_periodic_reset = FALSE;
 
 	cli();
@@ -3050,9 +3083,6 @@ void startEventNow(EventActionSource_t activationSource)
 
 	g_LED_enunciating = FALSE;
 	sei();
-
-	/*	g_current_epoch = rv3028_get_epoch();
-	 *     lb_send_string((char*)"Sync OK\n", FALSE); */
 }
 
 void stopEventNow(EventActionSource_t activationSource)
@@ -3089,7 +3119,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
@@ -3114,7 +3144,7 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
-	g_current_epoch = rv3028_get_epoch();
+	g_current_epoch = RTC_get_epoch();
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -3212,19 +3242,19 @@ BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* f
 	return( failure);
 }
 
-time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours)
 {
 	time_t valid = 0;
 	int len = strlen(str);
 	time_t minimumEpoch = MINIMUM_EPOCH;
 	uint8_t validationType = 0;
 
-	if(epicVar == &g_event_start_epoch)
+	if(epochVar == &g_event_start_epoch)
 	{
 		minimumEpoch = MAX(g_current_epoch, MINIMUM_EPOCH);
 		validationType = 1;
 	}
-	else if(epicVar == &g_event_finish_epoch)
+	else if(epochVar == &g_event_finish_epoch)
 	{
 		minimumEpoch = MAX(g_event_start_epoch, g_current_epoch);
 		validationType = 2;
@@ -3232,7 +3262,7 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 
 	if((len == 12) && (only_digits(str)))
 	{
-		time_t ep = rv3028_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
+		time_t ep = RTC_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
 
 		ep += (HOUR * offsetHours);
 
@@ -3271,10 +3301,13 @@ time_t validateTimeString(char* str, time_t * epicVar, int8_t offsetHours)
 	return(valid);
 }
 
-void setAMToneFrequency(AM_Tone_Freq_t value)
+BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 {
 	BOOL enableAM = TRUE;
 
+#if INIT_EEPROM_ONLY
+	if(value) enableAM = FALSE; /* Remove compiler warning */
+#else
 	switch(value)
 	{
 		case AM_DISABLED:
@@ -3345,32 +3378,35 @@ void setAMToneFrequency(AM_Tone_Freq_t value)
 		break;
 	}
 
-#if !INIT_EEPROM_ONLY
-		if(!OCR0A)
-		{
-			OCR0A = DEFAULT_TONE_FREQUENCY; /* Ensure that FM tone setting is initialized - even if it won't be used */
+	if(!OCR0A)
+	{
+		OCR0A = DEFAULT_TONE_FREQUENCY; /* Ensure that FM tone setting is initialized - even if it won't be used */
 
-		}
+	}
 
-		if(!OCR1A)
-		{
+ 	if(!OCR1A)
+ 	{
+		OCR1A = 1000;  /* Ensure that AM tone setting is initialized - even if it won't be used */
+ 	}
 
-		}
+	cli();
+	setupPortsForF1975(enableAM);
 
-		if(enableAM)
-		{
-			setupPortsForF1975();
-			TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
-			TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
-		}
-		else
-		{
-			TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
-			TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
-		}
-#endif  /* INIT_EEPROM_ONLY */
+	if(enableAM)
+	{
+		TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
+		TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
+	}
+	else
+	{
+		TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+		TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
+	}
 
 	g_AM_enabled = enableAM;
+	sei();
+#endif  /* INIT_EEPROM_ONLY */
+	return(enableAM);
 }
 
 
