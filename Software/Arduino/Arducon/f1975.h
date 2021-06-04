@@ -105,7 +105,7 @@ typedef enum{
 	} dB_t;
 */
 
-#define MAX_ATTEN_TENTHS_DB (uint16_t)315
+#define MAX_ATTEN_TENTHS_DB (tenthDB_t)315
 #define MAX_ATTEN_SETTING 0x3F
 
 void setAtten(tenthDB_t att);
