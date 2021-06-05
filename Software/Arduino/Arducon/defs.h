@@ -40,7 +40,7 @@
  *       set to TRUE. Then build and run with the flag      *
  *       set to FALSE.                                      */
 /***********************************************************/
-#define INIT_EEPROM_ONLY FALSE
+#define INIT_EEPROM_ONLY TRUE
 /***********************************************************/
 
 
