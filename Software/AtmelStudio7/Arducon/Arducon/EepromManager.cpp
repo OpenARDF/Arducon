@@ -412,6 +412,7 @@ BOOL EepromManager::readNonVols(void)
 #if INIT_EEPROM_ONLY
 	void EepromManager::sendSuccessString(void)
 	{
+		sendEEPROMString(TextVersion);
 		sendPROGMEMString((const char*)&TEXT_EEPROM_SUCCESS_MESSAGE);
 //		dumpEEPROMVars();
 	}

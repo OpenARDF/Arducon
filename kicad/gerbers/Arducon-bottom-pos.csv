@@ -9,4 +9,4 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "SJ106","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-113.176000,0.000000,bottom
 "SJ107","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-115.488000,0.000000,bottom
 "SJ108","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-117.800000,0.000000,bottom
-"SJ110","SolderJumper_3_Bridged12","Solder-Jumperx3-NC_1-2_SMD-Pad_Small",97.090000,-122.730000,0.000000,bottom
+"SJ110","SolderJumper_3_Bridged12","Solder-Jumperx3-NC_1-2_SMD-Pad_Small",97.090000,-122.730000,-0.000000,bottom
