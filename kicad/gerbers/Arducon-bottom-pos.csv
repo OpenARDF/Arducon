@@ -1,7 +1,7 @@
 Ref,Val,Package,PosX,PosY,Rot,Side
 "P101","ISP/PDI","SM_Pin_Header_Straight_2x03",122.850000,-96.050000,180.000000,bottom
-"Q103","PN2222A","SOT-23",103.620000,-123.090000,270.000000,bottom
-"R109","10k","R_0805",107.420000,-122.510000,180.000000,bottom
+"Q103","PN2222A","SOT-23",103.490000,-123.440000,270.000000,bottom
+"R109","10k","R_0805",107.400000,-122.800000,180.000000,bottom
 "SJ102","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",99.080000,-111.630000,270.000000,bottom
 "SJ103","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-106.240000,0.000000,bottom
 "SJ104","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-108.552000,0.000000,bottom
