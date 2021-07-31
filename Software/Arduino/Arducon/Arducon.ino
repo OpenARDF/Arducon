@@ -103,6 +103,7 @@ volatile int g_fox_id_offset = 0;   /* Used to handle fast and slow foxes in Spr
 volatile int g_id_interval_seconds = 0;
 volatile InitializeAction_t g_initialize_fox_transmissions = INIT_NOT_SPECIFIED;
 volatile BOOL g_use_ptt_periodic_reset = FALSE;
+volatile int g_att_rf_shutdown_delay = TIMER2_SECONDS_2;
 
 volatile BOOL g_audio_tone_state = FALSE;
 volatile int16_t g_sync_pin_timer = 0;
@@ -194,7 +195,7 @@ void startEventUsingRTC(void);
 void reportConfigErrors(void);
 /*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
-time_t validateTimeString(char* str, time_t * epochVar, int8_t offsetHours);
+time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
@@ -836,6 +837,11 @@ ISR( TIMER2_COMPB_vect )
 		g_dtmf_error_countdown--;
 	}
 
+	if(g_att_rf_shutdown_delay)
+	{
+		g_att_rf_shutdown_delay--;
+	}
+
 	if(g_LED_Enunciation_holdoff)
 	{
 		g_LED_Enunciation_holdoff--;
@@ -909,9 +915,11 @@ ISR( TIMER2_COMPB_vect )
 
 	if(!g_transmissions_disabled && g_on_the_air && !ptt_dropped)
 	{
+		g_att_rf_shutdown_delay = TIMER2_SECONDS_2;
+
 		if(!digitalRead(PIN_PTT_LOGIC))
 		{
-			digitalWrite(PIN_PTT_LOGIC, ON);
+			digitalWrite(PIN_PTT_LOGIC, ON); /* Key the microphone / energize transmitter */
 			ptt_delay = TIMER2_SECONDS_1;
 		}
 		else if(ptt_delay)
@@ -1274,10 +1282,24 @@ ISR(TIMER0_COMPA_vect)
 					PORTB = controlPins;
 					controlPins = 0;
 				}
-				else if(controlPins != MAX_ATTEN_SETTING)
+				else
 				{
-					controlPins = MAX_ATTEN_SETTING;
-					PORTB = controlPins;
+					if(g_on_the_air)
+					{
+						if(controlPins != MAX_ATTEN_SETTING)
+						{
+							controlPins = MAX_ATTEN_SETTING;
+							PORTB = controlPins;
+						}
+					}
+					else
+					{
+						if(!digitalRead(PIN_PTT_LOGIC) && !g_att_rf_shutdown_delay)
+						{
+							controlPins = 0;
+							PORTB = controlPins;
+						}
+					}
 				}
 			}
 #endif  /* INIT_EEPROM_ONLY */
@@ -1350,17 +1372,17 @@ void loop()
 
 				if(!g_temperature_check_countdown)
 				{
-#if INCLUDE_RV3028_SUPPORT
 					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
 					int8_t temp = (int8_t)getTemp();
 					if(temp != g_temperature)
 					{
 						g_temperature = temp;
+#if INCLUDE_RV3028_SUPPORT
 						int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
 						int8_t adj = ee_mgr.readTemperatureTable(delta25);
 						rv3028_set_offset_RAM(g_rv3028_offset + adj);
-					}
 #endif // INCLUDE_DS3231_SUPPORT
+					}
 
 					setUpSampling(AUDIO_SAMPLING, FALSE);
 					g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
@@ -2715,10 +2737,10 @@ void handleLinkBusMsgs()
 								setAtten(0);
 								g_sendAMmodulationConstantly = TRUE;
 							}
-							else if(value > 315)
+							else if(value > (int)MAX_ATTEN_TENTHS_DB)
 							{
 								g_sendAMmodulationConstantly = FALSE;
-								setAtten(315);
+								setAtten(MAX_ATTEN_TENTHS_DB);
 							}
 							else
 							{
