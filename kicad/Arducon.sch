@@ -541,46 +541,46 @@ Text GLabel 6400 6400 2    39   Output ~ 0
 CW_KEY_LOGIC
 Text GLabel 6400 6500 2    39   Output ~ 0
 PWDN
-Text GLabel 1500 4500 2    39   Input ~ 0
+Text GLabel 1450 3850 2    39   Input ~ 0
 TONE_LOGIC
-Text GLabel 4300 950  2    39   Input ~ 0
+Text GLabel 5450 950  2    39   Input ~ 0
 TONE_LOGIC
 $Comp
 L Device:R_POT RV101
 U 1 1 5F9CC9A1
-P 4150 1650
-F 0 "RV101" H 3950 1550 50  0000 C CNN
-F 1 "10k" H 4000 1650 50  0000 C CNN
-F 2 "Potentiometers:Potentiometer_ST32ET_Handsolder" H 4150 1650 50  0001 C CNN
-F 3 "" H 4150 1650 50  0001 C CNN
-F 4 "TC33X-103ECT-ND" H 4150 1650 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND\">Link</a>" H 4150 1650 50  0001 C CNN "Link"
-F 6 "Bourns Inc." H 4150 1650 50  0001 C CNN "Manufacturer"
-F 7 "TC33X-2-103E" H 4150 1650 50  0001 C CNN "Manufacturer PN"
-F 8 "TRIMMER 10K OHM 0.1W J LEAD TOP" H 4150 1650 50  0001 C CNN "Description"
-F 9 "C719176" H 4150 1650 50  0001 C CNN "LCSC Part Number"
-	1    4150 1650
+P 5300 1650
+F 0 "RV101" H 5100 1550 50  0000 C CNN
+F 1 "10k" H 5150 1650 50  0000 C CNN
+F 2 "Potentiometers:Potentiometer_ST32ET_Handsolder" H 5300 1650 50  0001 C CNN
+F 3 "" H 5300 1650 50  0001 C CNN
+F 4 "TC33X-103ECT-ND" H 5300 1650 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=TC33X-103ECT-ND\">Link</a>" H 5300 1650 50  0001 C CNN "Link"
+F 6 "Bourns Inc." H 5300 1650 50  0001 C CNN "Manufacturer"
+F 7 "TC33X-2-103E" H 5300 1650 50  0001 C CNN "Manufacturer PN"
+F 8 "TRIMMER 10K OHM 0.1W J LEAD TOP" H 5300 1650 50  0001 C CNN "Description"
+F 9 "C719176" H 5300 1650 50  0001 C CNN "LCSC Part Number"
+	1    5300 1650
 	-1   0    0    1   
 $EndComp
 $Comp
 L power:GNDD #PWR0110
 U 1 1 5F9CD436
-P 4150 1850
-F 0 "#PWR0110" H 4150 1600 50  0001 C CNN
-F 1 "GNDD" H 4150 1700 50  0000 C CNN
-F 2 "" H 4150 1850 50  0000 C CNN
-F 3 "" H 4150 1850 50  0000 C CNN
-	1    4150 1850
+P 5300 1850
+F 0 "#PWR0110" H 5300 1600 50  0001 C CNN
+F 1 "GNDD" H 5300 1700 50  0000 C CNN
+F 2 "" H 5300 1850 50  0000 C CNN
+F 3 "" H 5300 1850 50  0000 C CNN
+	1    5300 1850
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4150 1050 4150 950 
+	5300 1050 5300 950 
 Wire Wire Line
-	4150 1350 4150 1500
+	5300 1350 5300 1500
 Wire Wire Line
-	4150 1800 4150 1850
+	5300 1800 5300 1850
 Wire Wire Line
-	4000 1650 3800 1650
+	5150 1650 4950 1650
 Text Label 1650 2100 0    39   ~ 0
 AUDIO_OUT
 Text Label 1650 2900 0    39   ~ 0
@@ -592,19 +592,19 @@ RADIO_V+
 Text Label 1650 2200 0    39   ~ 0
 GROUND
 Wire Wire Line
-	1650 2500 3250 2500
+	1650 2500 4400 2500
 $Comp
 L power:GNDD #PWR0115
 U 1 1 5F9D0257
-P 3850 3000
-F 0 "#PWR0115" H 3850 2750 50  0001 C CNN
-F 1 "GNDD" H 3850 2850 50  0000 C CNN
-F 2 "" H 3850 3000 50  0000 C CNN
-F 3 "" H 3850 3000 50  0000 C CNN
-	1    3850 3000
+P 5000 3000
+F 0 "#PWR0115" H 5000 2750 50  0001 C CNN
+F 1 "GNDD" H 5000 2850 50  0000 C CNN
+F 2 "" H 5000 3000 50  0000 C CNN
+F 3 "" H 5000 3000 50  0000 C CNN
+	1    5000 3000
 	1    0    0    -1  
 $EndComp
-Text GLabel 4450 2800 2    39   Input ~ 0
+Text GLabel 5600 2800 2    39   Input ~ 0
 PTT_LOGIC
 $Comp
 L power:GNDD #PWR0108
@@ -647,24 +647,24 @@ F 3 "" H 7500 5600 50  0000 C CNN
 	1    7500 5600
 	0    -1   -1   0   
 $EndComp
-Text GLabel 1500 4700 2    39   Input ~ 0
+Text GLabel 1450 4050 2    39   Input ~ 0
 PTT_LOGIC
 Text GLabel 14750 8300 0    39   Output ~ 0
 EXT_PWR_GROUND
 $Comp
 L power:GNDD #PWR0124
 U 1 1 5F9DFFB0
-P 1500 4400
-F 0 "#PWR0124" H 1500 4150 50  0001 C CNN
-F 1 "GNDD" H 1500 4250 50  0001 C CNN
-F 2 "" H 1500 4400 50  0000 C CNN
-F 3 "" H 1500 4400 50  0000 C CNN
-F 4 "Value" H 1500 4400 60  0001 C CNN "Part No."
-F 5 "<a href=\"\">Link</a>" H 1500 4400 60  0001 C CNN "Link"
-	1    1500 4400
+P 1450 3750
+F 0 "#PWR0124" H 1450 3500 50  0001 C CNN
+F 1 "GNDD" H 1450 3600 50  0001 C CNN
+F 2 "" H 1450 3750 50  0000 C CNN
+F 3 "" H 1450 3750 50  0000 C CNN
+F 4 "Value" H 1450 3750 60  0001 C CNN "Part No."
+F 5 "<a href=\"\">Link</a>" H 1450 3750 60  0001 C CNN "Link"
+	1    1450 3750
 	0    -1   -1   0   
 $EndComp
-Text GLabel 2750 2150 2    39   Output ~ 0
+Text GLabel 3450 2150 2    39   Output ~ 0
 EXT_BATTERY
 Text GLabel 11600 9950 0    39   Input ~ 0
 EXT_PWR_GROUND
@@ -731,7 +731,7 @@ Wire Wire Line
 Wire Wire Line
 	11850 9950 11900 9950
 Wire Wire Line
-	3250 2500 3850 2500
+	4400 2500 5000 2500
 Wire Wire Line
 	3400 5650 4050 5650
 Wire Wire Line
@@ -743,18 +743,18 @@ Wire Wire Line
 $Comp
 L Device:R R101
 U 1 1 5FB82EE5
-P 4150 1200
-F 0 "R101" V 4250 1200 50  0000 C CNN
-F 1 "100k" V 4050 1200 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" V 4080 1200 50  0001 C CNN
-F 3 "" H 4150 1200 50  0001 C CNN
-F 4 "311-100KCRCT-ND" H 4150 1200 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-100KCRCT-ND\">Link</a>" H 4150 1200 60  0001 C CNN "Link"
-F 6 "Yageo" V 4150 1200 50  0001 C CNN "Manufacturer"
-F 7 "RC0805FR-07100KL" V 4150 1200 50  0001 C CNN "Manufacturer PN"
-F 8 "RES SMD 100K OHM 1% 1/8W 0805" V 4150 1200 50  0001 C CNN "Description"
-F 9 "C96346" V 4150 1200 50  0001 C CNN "LCSC Part Number"
-	1    4150 1200
+P 5300 1200
+F 0 "R101" V 5400 1200 50  0000 C CNN
+F 1 "100k" V 5200 1200 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" V 5230 1200 50  0001 C CNN
+F 3 "" H 5300 1200 50  0001 C CNN
+F 4 "311-100KCRCT-ND" H 5300 1200 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-100KCRCT-ND\">Link</a>" H 5300 1200 60  0001 C CNN "Link"
+F 6 "Yageo" V 5300 1200 50  0001 C CNN "Manufacturer"
+F 7 "RC0805FR-07100KL" V 5300 1200 50  0001 C CNN "Manufacturer PN"
+F 8 "RES SMD 100K OHM 1% 1/8W 0805" V 5300 1200 50  0001 C CNN "Description"
+F 9 "C96346" V 5300 1200 50  0001 C CNN "LCSC Part Number"
+	1    5300 1200
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -835,7 +835,7 @@ F 3 "" H 4050 6200 50  0000 C CNN
 $EndComp
 Wire Wire Line
 	2950 4150 3550 4150
-Text GLabel 3400 6500 0    39   Input ~ 0
+Text GLabel 3300 6500 0    39   Input ~ 0
 EXT_BATTERY
 Wire Wire Line
 	3700 6500 3750 6500
@@ -1154,7 +1154,7 @@ F 8 "TH" H 13200 2550 50  0001 C CNN "Description"
 	-1   0    0    -1  
 $EndComp
 Wire Wire Line
-	3850 2600 3850 2500
+	5000 2600 5000 2500
 $Comp
 L Arducon-rescue:LMN200B01-Power_Protection Q102
 U 1 1 5FC59E4B
@@ -1274,18 +1274,18 @@ $EndComp
 $Comp
 L Device:C_Small C103
 U 1 1 5FCC669B
-P 3700 1650
-F 0 "C103" V 3600 1650 50  0000 L CNN
-F 1 "100nF" V 3800 1550 50  0000 L CNN
-F 2 "Capacitors_SMD:C_0805" H 3700 1650 50  0001 C CNN
-F 3 "" H 3700 1650 50  0001 C CNN
-F 4 "478-1395-1-ND" H 3700 1650 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 3700 1650 60  0001 C CNN "Link"
-F 6 "AVX Corporation" V 3700 1650 50  0001 C CNN "Manufacturer"
-F 7 "08055C104KAT2A" V 3700 1650 50  0001 C CNN "Manufacturer PN"
-F 8 "CAP CER 0.1UF 50V X7R 0805" V 3700 1650 50  0001 C CNN "Description"
-F 9 "C476766" V 3700 1650 50  0001 C CNN "LCSC Part Number"
-	1    3700 1650
+P 4850 1650
+F 0 "C103" V 4750 1650 50  0000 L CNN
+F 1 "100nF" V 4950 1550 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 4850 1650 50  0001 C CNN
+F 3 "" H 4850 1650 50  0001 C CNN
+F 4 "478-1395-1-ND" H 4850 1650 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=478-1395-1-ND\">Link</a>" H 4850 1650 60  0001 C CNN "Link"
+F 6 "AVX Corporation" V 4850 1650 50  0001 C CNN "Manufacturer"
+F 7 "08055C104KAT2A" V 4850 1650 50  0001 C CNN "Manufacturer PN"
+F 8 "CAP CER 0.1UF 50V X7R 0805" V 4850 1650 50  0001 C CNN "Description"
+F 9 "C476766" V 4850 1650 50  0001 C CNN "LCSC Part Number"
+	1    4850 1650
 	0    -1   1    0   
 $EndComp
 $Comp
@@ -1535,31 +1535,31 @@ Wire Wire Line
 $Comp
 L Device:R R104
 U 1 1 60031369
-P 4300 2800
-F 0 "R104" V 4400 2800 50  0000 C CNN
-F 1 "10k" V 4200 2800 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 4230 2800 50  0001 C CNN
-F 3 "" H 4300 2800 50  0001 C CNN
-F 4 "311-10.0KCRCT-ND" H 4300 2800 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 4300 2800 60  0001 C CNN "Link"
-F 6 "Yageo" V 4300 2800 50  0001 C CNN "Manufacturer"
-F 7 "RC0805FR-0710KL" V 4300 2800 50  0001 C CNN "Manufacturer PN"
-F 8 "RES SMD 10K OHM 1% 1/8W 0805" V 4300 2800 50  0001 C CNN "Description"
-F 9 "C17414" V 4300 2800 50  0001 C CNN "LCSC Part Number"
-	1    4300 2800
+P 5450 2800
+F 0 "R104" V 5550 2800 50  0000 C CNN
+F 1 "10k" V 5350 2800 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 5380 2800 50  0001 C CNN
+F 3 "" H 5450 2800 50  0001 C CNN
+F 4 "311-10.0KCRCT-ND" H 5450 2800 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND\">Link</a>" H 5450 2800 60  0001 C CNN "Link"
+F 6 "Yageo" V 5450 2800 50  0001 C CNN "Manufacturer"
+F 7 "RC0805FR-0710KL" V 5450 2800 50  0001 C CNN "Manufacturer PN"
+F 8 "RES SMD 10K OHM 1% 1/8W 0805" V 5450 2800 50  0001 C CNN "Description"
+F 9 "C17414" V 5450 2800 50  0001 C CNN "LCSC Part Number"
+	1    5450 2800
 	0    1    1    0   
 $EndComp
 $Comp
 L Jumper:SolderJumper_2_Open SJ102
 U 1 1 60076C09
-P 3100 1150
-F 0 "SJ102" H 3100 1017 50  0000 C CNN
-F 1 "SolderJumper_2_Open" V 3145 1218 50  0001 L CNN
-F 2 "Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small" H 3100 1150 50  0001 C CNN
-F 3 "" H 3100 1150 50  0001 C CNN
-F 4 "np" H 3100 1150 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 3100 1150 50  0001 C CNN "Link"
-	1    3100 1150
+P 4250 1150
+F 0 "SJ102" H 4250 1017 50  0000 C CNN
+F 1 "SolderJumper_2_Open" V 4295 1218 50  0001 L CNN
+F 2 "Wire_Connections_Bridges:Solder-Jumper-NO-SMD-Pad_Small" H 4250 1150 50  0001 C CNN
+F 3 "" H 4250 1150 50  0001 C CNN
+F 4 "np" H 4250 1150 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 4250 1150 50  0001 C CNN "Link"
+	1    4250 1150
 	-1   0    0    1   
 $EndComp
 Wire Wire Line
@@ -1588,32 +1588,32 @@ F 3 "" H 13800 3600 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	4150 950  4300 950 
+	5300 950  5450 950 
 Wire Wire Line
-	3250 1150 3250 2500
+	4400 1150 4400 2500
 $Comp
 L Device:R R102
 U 1 1 5F9DAE1C
-P 2950 1400
-F 0 "R102" V 3030 1400 50  0000 C CNN
-F 1 "2.2k" V 2850 1400 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" V 2880 1400 50  0001 C CNN
-F 3 "" H 2950 1400 50  0001 C CNN
-F 4 "311-2.20KCRCT-ND" H 2950 1400 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND\">Link</a>" H 2950 1400 60  0001 C CNN "Link"
-F 6 "Yageo" V 2950 1400 50  0001 C CNN "Manufacturer"
-F 7 "RC0805FR-072K2L" V 2950 1400 50  0001 C CNN "Manufacturer PN"
-F 8 "RES SMD 2.2K OHM 1% 1/8W 0805" V 2950 1400 50  0001 C CNN "Description"
-F 9 "C114561" V 2950 1400 50  0001 C CNN "LCSC Part Number"
-	1    2950 1400
+P 4100 1400
+F 0 "R102" V 4180 1400 50  0000 C CNN
+F 1 "2.2k" V 4000 1400 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" V 4030 1400 50  0001 C CNN
+F 3 "" H 4100 1400 50  0001 C CNN
+F 4 "311-2.20KCRCT-ND" H 4100 1400 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-2.20KCRCT-ND\">Link</a>" H 4100 1400 60  0001 C CNN "Link"
+F 6 "Yageo" V 4100 1400 50  0001 C CNN "Manufacturer"
+F 7 "RC0805FR-072K2L" V 4100 1400 50  0001 C CNN "Manufacturer PN"
+F 8 "RES SMD 2.2K OHM 1% 1/8W 0805" V 4100 1400 50  0001 C CNN "Description"
+F 9 "C114561" V 4100 1400 50  0001 C CNN "LCSC Part Number"
+	1    4100 1400
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	2950 1550 2950 1650
+	4100 1550 4100 1650
 Wire Wire Line
-	2950 1650 3600 1650
+	4100 1650 4750 1650
 Wire Wire Line
-	2950 1250 2950 1150
+	4100 1250 4100 1150
 Wire Wire Line
 	2250 2900 2250 4150
 Wire Wire Line
@@ -2020,18 +2020,18 @@ $EndComp
 $Comp
 L Arducon-rescue:PN2222A-Transistor_BJT Q101
 U 1 1 603D3C3C
-P 3950 2800
-F 0 "Q101" H 4141 2846 50  0000 L CNN
-F 1 "PN2222A" H 4141 2755 50  0000 L CNN
-F 2 "TO_SOT_Packages_SMD:SOT-23" H 4150 2725 50  0001 L CIN
-F 3 "" H 3950 2800 50  0001 L CNN
-F 4 "MMBT2222ATPMSCT-ND" H 3950 2800 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 3950 2800 50  0001 C CNN "Link"
-F 6 "Micro Commercial Co" H 3950 2800 50  0001 C CNN "Manufacturer"
-F 7 "MMBT2222A-TP" H 3950 2800 50  0001 C CNN "Manufacturer PN"
-F 8 "TRANS NPN 40V 0.6A SOT23" H 3950 2800 50  0001 C CNN "Description"
-F 9 "C181121" H 3950 2800 50  0001 C CNN "LCSC Part Number"
-	1    3950 2800
+P 5100 2800
+F 0 "Q101" H 5291 2846 50  0000 L CNN
+F 1 "PN2222A" H 5291 2755 50  0000 L CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23" H 5300 2725 50  0001 L CIN
+F 3 "" H 5100 2800 50  0001 L CNN
+F 4 "MMBT2222ATPMSCT-ND" H 5100 2800 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND\">Link</a>" H 5100 2800 50  0001 C CNN "Link"
+F 6 "Micro Commercial Co" H 5100 2800 50  0001 C CNN "Manufacturer"
+F 7 "MMBT2222A-TP" H 5100 2800 50  0001 C CNN "Manufacturer PN"
+F 8 "TRANS NPN 40V 0.6A SOT23" H 5100 2800 50  0001 C CNN "Description"
+F 9 "C181121" H 5100 2800 50  0001 C CNN "LCSC Part Number"
+	1    5100 2800
 	-1   0    0    -1  
 $EndComp
 $Comp
@@ -2162,27 +2162,12 @@ F 5 "np" H 2150 4950 50  0001 C CNN "Link"
 	1    2150 4950
 	-1   0    0    1   
 $EndComp
-$Comp
-L Connector_Generic:Conn_01x04 J106
-U 1 1 60513603
-P 1300 4500
-F 0 "J106" H 1250 4750 50  0000 C CNN
-F 1 "Logic Level" V 1400 4450 50  0000 C CNN
-F 2 "Pin_Headers:Pin_Header_Straight_1x04" H 1300 4500 50  0001 C CNN
-F 3 "" H 1300 4500 50  0001 C CNN
-F 4 "np" H 1300 4500 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 1300 4500 50  0001 C CNN "Link"
-	1    1300 4500
-	-1   0    0    -1  
-$EndComp
 Wire Wire Line
 	1800 5100 1800 4950
 Wire Wire Line
 	1800 4950 1950 4950
 Wire Wire Line
 	2150 4800 2150 4600
-Wire Wire Line
-	2150 4600 1500 4600
 Wire Wire Line
 	2550 5300 2450 5300
 Wire Wire Line
@@ -2322,22 +2307,21 @@ Text GLabel 1650 2300 2    39   Output ~ 0
 DTR
 Text GLabel 4050 5100 0    39   Input ~ 0
 DTR
-Connection ~ 3250 2500
+Connection ~ 4400 2500
 Text GLabel 1650 2700 2    39   Input ~ 0
 CW_KEY
 Text GLabel 2250 4600 2    39   Output ~ 0
 CW_KEY
 Wire Wire Line
 	2250 4600 2150 4600
-Connection ~ 2150 4600
 NoConn ~ 6400 6100
 Wire Wire Line
 	1650 2100 2000 2100
 Wire Wire Line
 	2000 2100 2000 1650
 Wire Wire Line
-	2000 1650 2950 1650
-Connection ~ 2950 1650
+	2000 1650 4100 1650
+Connection ~ 4100 1650
 Wire Wire Line
 	2300 2400 2300 2050
 Wire Wire Line
@@ -2801,23 +2785,6 @@ F 9 "C506621" H 9250 8300 50  0001 C CNN "LCSC Part Number"
 	0    1    -1   0   
 $EndComp
 $Comp
-L Arducon-rescue:MSS1P4-M3_89A-Diode D101
-U 1 1 609FC00E
-P 3550 6500
-F 0 "D101" H 3550 6600 50  0000 C CNN
-F 1 "MSS1P2L-M3/89A" H 3700 6750 50  0001 C CNN
-F 2 "Diodes_SMD:DO-219AD" H 3550 6325 50  0001 C CNN
-F 3 "" H 3550 6500 50  0001 C CNN
-F 4 "MSS1P2L-M3/89AGICT-ND" H 3550 6500 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P2L-M3/89AGICT-ND\">Link</a>" H 3550 6500 50  0001 C CNN "Link"
-F 6 "Vishay General Semiconductor" H 3550 6500 50  0001 C CNN "Manufacturer"
-F 7 "MSS1P2L-M3/89A" H 3550 6500 50  0001 C CNN "Manufacturer PN"
-F 8 "DIODE SCHOTTKY 20V 1A MICROSMP" H 3550 6500 50  0001 C CNN "Description"
-F 9 "C506621" H 3550 6500 50  0001 C CNN "LCSC Part Number"
-	1    3550 6500
-	-1   0    0    -1  
-$EndComp
-$Comp
 L Diode:ESD9B5.0ST5G D104
 U 1 1 60A484E1
 P 950 10150
@@ -3031,7 +2998,65 @@ Wire Wire Line
 	12950 4000 13800 4000
 Wire Wire Line
 	13800 4000 13800 3650
+Connection ~ 13800 3650
+Wire Wire Line
+	3450 2150 2750 2150
+$Comp
+L Device:D_Zener_ALT D101
+U 1 1 61038367
+P 3550 6500
+F 0 "D101" H 3550 6600 50  0000 C CNN
+F 1 "4.3V" H 3550 6400 50  0000 C CNN
+F 2 "Diodes_SMD:SOD-123" H 3550 6500 50  0001 C CNN
+F 3 "~" H 3550 6500 50  0001 C CNN
+F 4 "SZMMSZ5229BT1GOSCT-ND‎" H 3550 6500 50  0001 C CNN "Digi-Key Part No."
+F 5 "SZMMSZ5229BT1G‎" H 3550 6500 50  0001 C CNN "Manufacturer PN"
+F 6 "4.3V 500mW Zener" H 3550 6500 50  0001 C CNN "Description"
+	1    3550 6500
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3300 6500 3400 6500
+$Comp
+L Connector_Generic:Conn_01x08 J106
+U 1 1 6107598F
+P 1250 4050
+F 0 "J106" H 1168 4567 50  0000 C CNN
+F 1 "Wiring" V 1350 4050 50  0000 C CNN
+F 2 "Pin_Headers:Pin_Header_Straight_1x08" H 1250 4050 50  0001 C CNN
+F 3 "" H 1250 4050 50  0001 C CNN
+F 4 "np" H 1250 4050 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 1250 4050 50  0001 C CNN "Link"
+	1    1250 4050
+	-1   0    0    -1  
+$EndComp
+Text GLabel 2350 2900 2    39   Output ~ 0
+Audio_In
+Wire Wire Line
+	2350 2900 2250 2900
+Connection ~ 2250 2900
+Text GLabel 1450 4150 2    39   Output ~ 0
+Audio_In
+Text GLabel 1450 3950 2    39   Input ~ 0
+CW_KEY
+Text GLabel 5150 2500 2    39   Output ~ 0
+PTT_Out
+Wire Wire Line
+	5150 2500 5000 2500
+Connection ~ 5000 2500
+Text GLabel 1450 4250 2    39   Input ~ 0
+PTT_Out
+Text GLabel 1450 4450 2    39   Output ~ 0
+EXT_BATTERY
+Text GLabel 2100 1500 2    39   Output ~ 0
+Audio_Out
+Wire Wire Line
+	2100 1500 2000 1500
+Wire Wire Line
+	2000 1500 2000 1650
 Wire Bus Line
 	6150 4000 6150 6700
-Connection ~ 13800 3650
+Connection ~ 2000 1650
+Text GLabel 1450 4350 2    39   Input ~ 0
+Audio_Out
 $EndSCHEMATC
