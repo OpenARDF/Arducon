@@ -1090,6 +1090,7 @@ ISR( TIMER2_COMPB_vect )
 				{
 					g_use_rtc_for_startstop = FALSE;
 					g_transmissions_disabled = TRUE;
+					g_on_the_air = FALSE;
 				}
 			}
 
@@ -2659,9 +2660,9 @@ void handleLinkBusMsgs()
 
 							state = STATE_SHUTDOWN;
 						}
-						else if((key >= MIN_AM_TONE_FREQUENCY) && (key <= MAX_AM_TONE_FREQUENCY))
+						else 
 						{
-							value = key - '0';
+							value = CLAMP(MIN_AM_TONE_FREQUENCY, (int)key, MAX_AM_TONE_FREQUENCY);
 						}
 					}
 					break;
@@ -2937,7 +2938,7 @@ uint16_t readADC()
  */
 float getTemp(void)
 {
-	float offset = CLAMP(-200., (float)g_atmega_temp_calibration / 10., 200.);
+	float offset = CLAMP(-440., (float)g_atmega_temp_calibration / 10., 440.);
 
 	/* The offset in 1/10ths C (first term) was determined empirically */
 	readADC();  /* throw away first reading */
