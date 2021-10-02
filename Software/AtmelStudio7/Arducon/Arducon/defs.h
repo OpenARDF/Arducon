@@ -213,7 +213,7 @@
 #if SUPPORT_ONLY_80M
 	#define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
 	#define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
-	#define PIN_RESET               /* Arduino Pro Mini pin# 3/22 = PC6 */
+//	#define PIN_RESET               /* Arduino Pro Mini pin# 3/22 = PC6 */
 	#define PIN_RTC_SQW D2          /* Arduino Pro Mini pin# 5 = PD2 */
 	#define PIN_UNUSED_1 D3         /* Arduino Pro Mini pin# 6 = PD3 */
 	#define PIN_PTT_LOGIC D4        /* Arduino Pro Mini pin# 7 = PD4 */
@@ -239,7 +239,7 @@
 #else
 	#define PIN_RXD 0               /* Arduino Pro Mini pin# 1/28 = PD0 */
 	#define PIN_TXD 1               /* Arduino Pro Mini pin# 2/29 = PD1 */
-	#define PIN_RESET               /* Arduino Pro Mini pin# 3/22 = PC6 */
+//	#define PIN_RESET               /* Arduino Pro Mini pin# 3/22 = PC6 */
 	#define PIN_RTC_SQW D2          /* Arduino Pro Mini pin# 5 = PD2 */
 	#define PIN_UNUSED_1 D3         /* Arduino Pro Mini pin# 6 = PD3 */
 	#define PIN_PTT_LOGIC D4        /* Arduino Pro Mini pin# 7 = PD4 */
@@ -398,7 +398,7 @@ typedef enum
 #define EEPROM_ON_AIR_TIME_DEFAULT 60
 #define EEPROM_OFF_AIR_TIME_DEFAULT 240
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
-#define EEPROM_TEMP_CALIBRATION_DEFAULT -110
+#define EEPROM_TEMP_CALIBRATION_DEFAULT 330 /* Use -110 for genuine ATMEGA328P) */
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)1
 #define EEPROM_AM_AUDIO_FREQ_DEFAULT (AM_Tone_Freq_t)0
