@@ -166,7 +166,7 @@ char g_lastKey = '\0';
 volatile unsigned long g_tick_count = 0;
 volatile unsigned int g_tone_duration_ticks = 0;
 volatile unsigned int g_LED_Enunciation_holdoff = 0;
-volatile unsigned int g_DTMF_sentence_in_progress_ticks = 0;
+volatile unsigned long g_DTMF_sentence_in_progress_ticks = 0;
 
 #if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
@@ -2227,9 +2227,13 @@ void handleLinkBusMsgs()
 			{
 				g_DTMF_sentence_in_progress_ticks = 0;
 			}
+			else if(state == STATE_RECEIVING_SET_CLOCK)
+			{
+				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_60;
+			}
 			else if(state != STATE_SHUTDOWN)
 			{
-				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_10;
+				g_DTMF_sentence_in_progress_ticks = TIMER2_SECONDS_20;
 			}
 		}
 
@@ -2660,9 +2664,9 @@ void handleLinkBusMsgs()
 
 							state = STATE_SHUTDOWN;
 						}
-						else 
+						else
 						{
-							value = CLAMP(MIN_AM_TONE_FREQUENCY, (int)key, MAX_AM_TONE_FREQUENCY);
+							value = CLAMP(MIN_AM_TONE_FREQUENCY, (int)(key-'0'), MAX_AM_TONE_FREQUENCY);
 						}
 					}
 					break;
