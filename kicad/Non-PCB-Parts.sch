@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 2 2
 Title "Arducon"
 Date "2021-10-24"
-Rev "V2.5"
+Rev "V2.6"
 Comp ""
 Comment1 ""
 Comment2 ""
