@@ -6,7 +6,7 @@ encoding utf-8
 Sheet 1 2
 Title "Arducon"
 Date "2021-10-24"
-Rev "V2.5"
+Rev "V2.6"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -2324,7 +2324,7 @@ Wire Wire Line
 Connection ~ 4100 1650
 Text GLabel 3350 2400 2    39   Output ~ 0
 Power_In
-Text GLabel 2500 5650 0    39   Input ~ 0
+Text GLabel 2000 5800 0    39   Input ~ 0
 Power_In
 $Comp
 L Connector_Generic:Conn_01x06 J112
@@ -3075,7 +3075,30 @@ Wire Wire Line
 	2700 2050 2750 2050
 Wire Wire Line
 	3350 2400 2700 2400
+Connection ~ 2700 2400
+$Comp
+L Jumper:SolderJumper_3_Bridged12 SJ109
+U 1 1 617A675B
+P 2100 6000
+F 0 "SJ109" V 2100 6067 50  0000 L CNN
+F 1 "SolderJumper_3_Bridged12" V 2055 6068 50  0001 L CNN
+F 2 "Wire_Connections_Bridges:Solder-Jumperx3-NC_1-2_SMD-Pad_Small" H 2100 6000 50  0001 C CNN
+F 3 "~" H 2100 6000 50  0001 C CNN
+	1    2100 6000
+	0    -1   -1   0   
+$EndComp
+Text GLabel 2050 6300 0    39   Input ~ 0
+EXT_BATTERY
+Wire Wire Line
+	2050 6300 2100 6300
+Wire Wire Line
+	2100 6300 2100 6200
+Wire Wire Line
+	2000 5800 2100 5800
+Wire Wire Line
+	2250 6000 2500 6000
+Wire Wire Line
+	2500 6000 2500 5650
 Wire Bus Line
 	6150 4000 6150 6700
-Connection ~ 2700 2400
 $EndSCHEMATC
