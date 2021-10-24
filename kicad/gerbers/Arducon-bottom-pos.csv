@@ -1,4 +1,5 @@
 Ref,Val,Package,PosX,PosY,Rot,Side
+"D102","LED","LED_0805",128.440000,-127.830000,180.000000,bottom
 "P101","ISP/PDI","SM_Pin_Header_Straight_2x03",122.850000,-96.050000,180.000000,bottom
 "Q103","PN2222A","SOT-23",103.490000,-123.440000,270.000000,bottom
 "R109","10k","R_0805",107.400000,-122.800000,180.000000,bottom
@@ -10,3 +11,4 @@ Ref,Val,Package,PosX,PosY,Rot,Side
 "SJ107","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-115.488000,0.000000,bottom
 "SJ108","SolderJumper_2_Open","Solder-Jumper-NO-SMD-Pad_Small",141.620000,-117.800000,0.000000,bottom
 "SJ110","SolderJumper_3_Bridged12","Solder-Jumperx3-NC_1-2_SMD-Pad_Small",97.090000,-122.730000,0.000000,bottom
+"SW101","SPST","PTS645SL50SMTR92",137.530000,-126.460000,180.000000,bottom

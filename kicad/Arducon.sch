@@ -5,8 +5,8 @@ $Descr B 17000 11000
 encoding utf-8
 Sheet 1 2
 Title "Arducon"
-Date "2021-05-01"
-Rev "P2.2"
+Date "2021-10-24"
+Rev "V2.5"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -664,7 +664,7 @@ F 5 "<a href=\"\">Link</a>" H 1450 3750 60  0001 C CNN "Link"
 	1    1450 3750
 	0    -1   -1   0   
 $EndComp
-Text GLabel 3450 2150 2    39   Output ~ 0
+Text GLabel 3850 2150 2    39   Output ~ 0
 EXT_BATTERY
 Text GLabel 11600 9950 0    39   Input ~ 0
 EXT_PWR_GROUND
@@ -1943,12 +1943,12 @@ NoConn ~ 4050 5000
 $Comp
 L Arducon-rescue:Vproc-power #PWR0156
 U 1 1 5FDC95A5
-P 2750 1950
-F 0 "#PWR0156" H 2750 1800 50  0001 C CNN
-F 1 "Vproc" V 2750 2200 50  0000 C CNN
-F 2 "" H 2750 1950 50  0000 C CNN
-F 3 "" H 2750 1950 50  0000 C CNN
-	1    2750 1950
+P 3150 1950
+F 0 "#PWR0156" H 3150 1800 50  0001 C CNN
+F 1 "Vproc" V 3150 2200 50  0000 C CNN
+F 2 "" H 3150 1950 50  0000 C CNN
+F 3 "" H 3150 1950 50  0000 C CNN
+	1    3150 1950
 	0    1    1    0   
 $EndComp
 $Comp
@@ -2289,18 +2289,18 @@ NoConn ~ 9650 9150
 $Comp
 L Switch:SW_SPDT SW102
 U 1 1 6042734C
-P 2550 2050
-F 0 "SW102" H 2750 2050 50  0000 C CNN
-F 1 "5V/12V" H 3100 2050 50  0000 C CNN
-F 2 "Buttons_Switches_SMD:SW_SPDT_PCM12" H 2550 2050 50  0001 C CNN
-F 3 "" H 2550 2050 50  0001 C CNN
-F 4 "401-2016-1-ND" H 2550 2050 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=401-2016-1-ND\">Link</a>" H 2550 2050 50  0001 C CNN "Link"
-F 6 "C&K" H 2550 2050 50  0001 C CNN "Manufacturer"
-F 7 "PCM12SMTR" H 2550 2050 50  0001 C CNN "Manufacturer PN"
-F 8 "SWITCH SLIDE SPDT 300MA 6V" H 2550 2050 50  0001 C CNN "Description"
-F 9 "C221841" H 2550 2050 50  0001 C CNN "LCSC Part Number"
-	1    2550 2050
+P 2950 2050
+F 0 "SW102" H 3150 2050 50  0000 C CNN
+F 1 "5V/12V" H 3500 2050 50  0000 C CNN
+F 2 "Buttons_Switches_SMD:SW_SPDT_PCM12" H 2950 2050 50  0001 C CNN
+F 3 "" H 2950 2050 50  0001 C CNN
+F 4 "401-2016-1-ND" H 2950 2050 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=401-2016-1-ND\">Link</a>" H 2950 2050 50  0001 C CNN "Link"
+F 6 "C&K" H 2950 2050 50  0001 C CNN "Manufacturer"
+F 7 "PCM12SMTR" H 2950 2050 50  0001 C CNN "Manufacturer PN"
+F 8 "SWITCH SLIDE SPDT 300MA 6V" H 2950 2050 50  0001 C CNN "Description"
+F 9 "C221841" H 2950 2050 50  0001 C CNN "LCSC Part Number"
+	1    2950 2050
 	1    0    0    -1  
 $EndComp
 Text GLabel 1650 2300 2    39   Output ~ 0
@@ -2322,14 +2322,8 @@ Wire Wire Line
 Wire Wire Line
 	2000 1650 4100 1650
 Connection ~ 4100 1650
-Wire Wire Line
-	2300 2400 2300 2050
-Wire Wire Line
-	2300 2050 2350 2050
-Text GLabel 2350 2400 2    39   Output ~ 0
+Text GLabel 3350 2400 2    39   Output ~ 0
 Power_In
-Wire Wire Line
-	2350 2400 2300 2400
 Text GLabel 2500 5650 0    39   Input ~ 0
 Power_In
 $Comp
@@ -2530,9 +2524,6 @@ F 9 "C96697" V 2000 2200 50  0001 C CNN "LCSC Part Number"
 $EndComp
 Wire Wire Line
 	1900 2400 1650 2400
-Wire Wire Line
-	2100 2400 2300 2400
-Connection ~ 2300 2400
 Wire Wire Line
 	1900 2200 1650 2200
 Wire Wire Line
@@ -3000,7 +2991,7 @@ Wire Wire Line
 	13800 4000 13800 3650
 Connection ~ 13800 3650
 Wire Wire Line
-	3450 2150 2750 2150
+	3850 2150 3150 2150
 $Comp
 L Device:D_Zener_ALT D101
 U 1 1 61038367
@@ -3054,9 +3045,37 @@ Wire Wire Line
 	2100 1500 2000 1500
 Wire Wire Line
 	2000 1500 2000 1650
-Wire Bus Line
-	6150 4000 6150 6700
 Connection ~ 2000 1650
 Text GLabel 1450 4350 2    39   Input ~ 0
 Audio_Out
+$Comp
+L Arducon-rescue:MSS1P4-M3_89A-Diode D110
+U 1 1 6176C6A6
+P 2500 2400
+F 0 "D110" H 2500 2500 50  0000 C CNN
+F 1 "MSS1P2L-M3/89A" H 2650 2650 50  0001 C CNN
+F 2 "Diodes_SMD:DO-219AD" H 2500 2225 50  0001 C CNN
+F 3 "" H 2500 2400 50  0001 C CNN
+F 4 "MSS1P2L-M3/89AGICT-ND" H 2500 2400 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=MSS1P2L-M3/89AGICT-ND\">Link</a>" H 2500 2400 50  0001 C CNN "Link"
+F 6 "Vishay General Semiconductor" H 2500 2400 50  0001 C CNN "Manufacturer"
+F 7 "MSS1P2L-M3/89A" H 2500 2400 50  0001 C CNN "Manufacturer PN"
+F 8 "DIODE SCHOTTKY 20V 1A MICROSMP" H 2500 2400 50  0001 C CNN "Description"
+F 9 "C506621" H 2500 2400 50  0001 C CNN "LCSC Part Number"
+	1    2500 2400
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	2100 2400 2350 2400
+Wire Wire Line
+	2650 2400 2700 2400
+Wire Wire Line
+	2700 2400 2700 2050
+Wire Wire Line
+	2700 2050 2750 2050
+Wire Wire Line
+	3350 2400 2700 2400
+Wire Bus Line
+	6150 4000 6150 6700
+Connection ~ 2700 2400
 $EndSCHEMATC
