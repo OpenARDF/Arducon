@@ -1,12 +1,12 @@
 G04 #@! TF.GenerationSoftware,KiCad,Pcbnew,(5.1.9-0-10_14)*
-G04 #@! TF.CreationDate,2021-10-30T15:00:32-04:00*
+G04 #@! TF.CreationDate,2021-10-30T15:19:37-04:00*
 G04 #@! TF.ProjectId,Arducon,41726475-636f-46e2-9e6b-696361645f70,rev?*
 G04 #@! TF.SameCoordinates,Original*
 G04 #@! TF.FileFunction,Soldermask,Top*
 G04 #@! TF.FilePolarity,Negative*
 %FSLAX46Y46*%
 G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
-G04 Created by KiCad (PCBNEW (5.1.9-0-10_14)) date 2021-10-30 15:00:32*
+G04 Created by KiCad (PCBNEW (5.1.9-0-10_14)) date 2021-10-30 15:19:37*
 %MOMM*%
 %LPD*%
 G01*
