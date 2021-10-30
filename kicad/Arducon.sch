@@ -3115,8 +3115,6 @@ F 3 "" H 14650 3200 50  0001 C CNN
 	1    14650 3200
 	0    -1   -1   0   
 $EndComp
-Wire Bus Line
-	6150 4000 6150 6700
 $Comp
 L power:GNDS #PWR0146
 U 1 1 61AA4004
@@ -3150,4 +3148,6 @@ F 3 "~" H 15250 4250 50  0001 C CNN
 	1    15250 4250
 	1    0    0    -1  
 $EndComp
+Wire Bus Line
+	6150 4000 6150 6700
 $EndSCHEMATC
