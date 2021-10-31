@@ -179,7 +179,6 @@ char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
  */
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
-void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
@@ -193,7 +192,6 @@ void stopEventNow(EventActionSource_t activationSource);
 void startEventNow(EventActionSource_t buttonActivated);
 void startEventUsingRTC(void);
 void reportConfigErrors(void);
-/*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
@@ -336,7 +334,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	TIMSK0 = 0x00;
 
 	/*******************************************************************
-	 *  Sync button pin change interrupt */
+	 *  Pushbutton pin change interrupt */
 	PCMSK2 = 0x00;
 	PCMSK1 = 0x00;
 	PCMSK1 = (1 << PCINT11);    /* Enable PCINT11 */
@@ -374,8 +372,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 			ee_mgr.sendSuccessString();
 		}
 
-		digitalWrite(PIN_LED, ON);
-		while(1)
+		digitalWrite(PIN_LED, ON); /* Turn the LED constantly on */
+		while(1) /* Wait forever */
 		{
 			;
 		}
@@ -1206,6 +1204,7 @@ ISR( TIMER2_COMPB_vect )
 					{
 						BOOL repeat;
 						/* Choose the appropriate Morse pattern to be sent */
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 						if(g_fox == REPORT_BATTERY)
 						{
 							uint16_t v = g_voltage + 5;
@@ -1218,6 +1217,10 @@ ISR( TIMER2_COMPB_vect )
 							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
 							repeat = TRUE;
 						}
+#else
+							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							repeat = TRUE;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 						g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
 						makeMorse((char*)"\0", NULL, NULL);
@@ -1236,7 +1239,7 @@ ISR( TIMER2_COMPB_vect )
 #endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
- *  Timer0 interrupt generates an audio tone on the audio out pin.
+ *  Timer0 interrupt generates a square wave audio tone on the audio out pin.
  ************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
@@ -1699,21 +1702,6 @@ void sendMorseTone(BOOL onOff)
 	g_audio_tone_state = onOff;
 }
 
-void playStartingTone(uint8_t toneFreq)
-{
-	if(toneFreq > 0)
-	{
-		OCR0A = toneFreq;
-		g_audio_tone_state = ON;
-	}
-	else
-	{
-		OCR0A = DEFAULT_TONE_FREQUENCY;
-		g_audio_tone_state = OFF;
-	}
-}
-
-
 /* The compiler does not seem to always optimize large switch statements correctly
  * void __attribute__((optimize("O3"))) handleLinkBusMsgs() */
 void handleLinkBusMsgs()
@@ -2043,6 +2031,11 @@ void handleLinkBusMsgs()
 						doprint = true;
 					}
 				}
+				else if(lb_buff->fields[FIELD1][0] == '*')  /* Sync seconds to zero */
+				{
+					ds3231_sync2nearestMinute();
+				}
+
 #if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
@@ -2407,10 +2400,12 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_SET_PTT_PERIODIC_RESET;
 				}
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 				else if(key == 'B')
 				{
 					state = STATE_GET_BATTERY_VOLTAGE;
 				}
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 				else
 				{
 					entryError = TRUE;
@@ -2528,22 +2523,36 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch, -g_utc_offset);
-
-					if(t)
+					if(!receivedString[0])
 					{
-						#if INCLUDE_RV3028_SUPPORT
-							RTC_set_epoch(t);
-						#else
-							RTC_set_datetime(receivedString);
-						#endif
-
-						g_current_epoch = t;
-						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+						ds3231_sync2nearestMinute();
 					}
 					else
 					{
-						entryError = TRUE;
+						if(stringLength == 10) /* allow seconds to be dropped if zero */
+						{
+							receivedString[10] = '0';
+							receivedString[11] = '0';
+							receivedString[12] = '\0';
+						}
+
+						time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch, -g_utc_offset);
+
+						if(t)
+						{
+							#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+							#else
+							RTC_set_datetime(receivedString);
+							#endif
+
+							g_current_epoch = t;
+							setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+						}
+						else
+						{
+							entryError = TRUE;
+						}
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2696,6 +2705,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 			case STATE_GET_BATTERY_VOLTAGE:
 			{
 				if(key == '#')
@@ -2711,6 +2721,7 @@ void handleLinkBusMsgs()
 				state = STATE_SHUTDOWN;
 			}
 			break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 			case STATE_CHECK_PASSWORD:
 			{
@@ -2838,6 +2849,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 		break;
 
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 		case REPORT_BATTERY:
 		{
 			g_on_air_interval_seconds = 30;
@@ -2848,6 +2860,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_id_interval_seconds = 60;
 		}
 		break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 
 		/* case BEACON:
@@ -3289,7 +3302,7 @@ time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours)
 
 	if((len == 12) && (only_digits(str)))
 	{
-		time_t ep = RTC_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
+		time_t ep = RTC_String2Epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
 
 		ep += (HOUR * offsetHours);
 
@@ -3514,26 +3527,3 @@ DTMF_key_t value2DTMFKey(uint8_t value)
 
 	return( key);
 }
-
-/**
- *   Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"
- *
- *  #define THIRTY_YEARS 946080000
- *  char* convertEpochToTimeString(unsigned long epoch)
- *  {
- *  struct tm  ts;
- *
- *  if (epoch < MINIMUM_EPOCH)
- *  {
- *       g_tempStr[0] = '\0';
- *   return g_tempStr;
- *  }
- *
- *  time_t e = (time_t)epoch - THIRTY_YEARS;
- *  // Format time, "ddd yyyy-mm-ddThh:mm:ss"
- *  ts = *localtime(&e);
- *  strftime(g_tempStr, sizeof(g_tempStr), "%Y-%m-%dT%H:%M:%SZ", &ts);
- *
- *  return g_tempStr;
- *  }
- */

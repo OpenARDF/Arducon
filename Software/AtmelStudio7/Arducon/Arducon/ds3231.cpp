@@ -57,24 +57,29 @@ time_t epoch_from_ltm(tm *ltm);
 uint8_t bcd2dec(uint8_t val)
 {
 	uint8_t result = 10 * (val >> 4) + (val & 0x0F);
-
 	return( result);
+}
+
+uint8_t dec2bcd(uint8_t val)
+{
+	uint8_t result = val % 10;
+	result |= (val / 10) << 4;
+	return (result);
 }
 
 uint8_t char2bcd(char c[])
 {
 	uint8_t result = (c[1] - '0') + ((c[0] - '0') << 4);
-
 	return( result);
 }
 
-	
+
 /* Returns the UNIX epoch value for the character string passed in datetime. If datetime is null then it returns
-the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it holds 1 if an error occurred */	
-	time_t RTC_get_epoch(bool *error, char *datetime)
+the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it holds 1 if an error occurred */
+	time_t RTC_String2Epoch(bool *error, char *datetime)
 	{
 		time_t epoch = 0;
-		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };		
+		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
 
 		struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		int16_t year = 100;                 /* start at 100 years past 1900 */
@@ -95,7 +100,7 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
 
 			hours = bcd2dec(data[2]); /* Must be calculated here */
-			
+
 			year += (int16_t)bcd2dec(data[6]);
 			ltm.tm_year = year;                         /* year since 1900 */
 
@@ -136,13 +141,13 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 
 		return(epoch);
 	}
-	
+
 	time_t epoch_from_ltm(tm *ltm)
 	{
 		time_t epoch = ltm->tm_sec + ltm->tm_min * 60 + ltm->tm_hour * 3600L + ltm->tm_yday * 86400L +
 		(ltm->tm_year - 70) * 31536000L + ((ltm->tm_year - 69) / 4) * 86400L -
 		((ltm->tm_year - 1) / 100) * 86400L + ((ltm->tm_year + 299) / 400) * 86400L;
-		
+
 		return(epoch);
 	}
 
@@ -176,9 +181,9 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			{
 				hour10 = 2;
 			}
-			
+
 			hours = 10 * hour10 + hour;
-			
+
 			year += (int16_t)bcd2dec(data[6]);
 			ltm.tm_year = year;                         /* year since 1900 */
 
@@ -210,8 +215,8 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 
 		return( epoch);
 	}
-	
-	
+
+
 	BOOL RTC_set_datetime(char *datetime)
 	{
 		BOOL failure = TRUE;
@@ -227,9 +232,9 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			data[5] = char2bcd(&datetime[2]);   /* month in BCD */
 			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
 
-			failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7);		
+			failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7);
 		}
-		
+
 		return(failure);
 	}
 
@@ -237,7 +242,7 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 	BOOL RTC_1s_sqw(BOOL enable)
 	{
 		BOOL fail;
-		
+
 		if(enable)
 		{
 			uint8_t byte = 0x00;
@@ -248,21 +253,138 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			uint8_t byte = 0x04;
 			fail = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_CONTROL, &byte, 1);
 		}
-		
+
 		return(fail);
 	}
-	
+
+#ifdef SUPPORT_DS3231_AGING
 	void ds3231_set_aging(int8_t* data)
 	{
 		i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1);
 	}
-	
+
 	int8_t ds3231_get_aging()
 	{
 		int8_t data[1];
 		i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1);
 		return(data[0]);
 	}
+#endif // SUPPORT_DS3231_AGING
+
+/* This simple synchronization approach works for all times except 12 midnight. If synchronization
+results in the advancement to the next day, then one day would be lost. Instead of introducing that
+error, this function merely fails to synchronize at midnight. */
+BOOL ds3231_sync2nearestMinute()
+{
+	BOOL err = FALSE;
+	uint8_t data[7] = { 0, 0, 0 };
+
+	if(!i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3))
+	{
+		uint8_t hours;
+		uint8_t minutes;
+		uint8_t seconds;
+
+		uint8_t hour10;
+		uint8_t hour;
+		BOOL am_pm;
+		BOOL twelvehour;
+
+		seconds = bcd2dec(data[0]);
+		minutes = bcd2dec(data[1]);
+		am_pm = ((data[2] >> 5) & 0x01);
+		hour10 = ((data[2] >> 4) & 0x01);
+		hour = (data[2] & 0x0f);
+
+		twelvehour = ((data[2] >> 6) & 0x01);
+
+		if(!twelvehour && am_pm)
+		{
+			hour10 = 2;
+		}
+
+		hours = 10 * hour10 + hour;
+
+		if(seconds > 30)
+		{
+			minutes++;
+
+			if(minutes > 59)
+			{
+				minutes = 0;
+				hours++;
+
+				if(hours > 23) /* Don't attempt to synchronize at midnight */
+				{
+					err = TRUE;
+				}
+			}
+		}
+
+		if(!err)
+		{
+			data[0] = 0; /* seconds = 00 */
+			data[1] = dec2bcd(minutes);
+			data[2] = 0;
+
+			if(twelvehour)
+			{
+				data[2] |= 0x40; /* set  12-hour bit */
+
+				if(hours >= 12)
+				{
+					data[2] |= 0x20; /* set pm bit */
+				}
+
+				if(hours >= 10)
+				{
+					data[2] |= 0x10;
+				}
+			}
+			else
+			{
+				if(hours >= 20)
+				{
+					data[2] |= 0x20; /* set 20 bit */
+				}
+				else if(hours >= 10)
+				{
+					data[2] |= 0x10; /* set 10 bit */
+				}
+			}
+
+			data[2] |= hours % 10;
+			err = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3);
+		}
+	}
+
+	return err;
+}
+
+/**
+ *   Converts an epoch (seconds since 1900)  into a string with format "yymmddhhmmss"
+ */
+// #define THIRTY_YEARS 946080000
+// char* convertEpochToTimeString(unsigned long epoch, char* timeString)
+//  {
+//    struct tm  ts;
+//
+//    if(!timeString) return(timeString);
+//
+//    if (epoch < MINIMUM_EPOCH)
+//    {
+//         timeString[0] = '\0';
+// 		return timeString;
+//    }
+//
+//    time_t e = (time_t)epoch - THIRTY_YEARS;
+//    // Format time, "yymmddhhmmss"
+//    ts = *localtime(&e);
+//    strftime(timeString, sizeof(timeString), "%y%m%d%H%M%S", &ts);
+//
+//    return timeString;
+//  }
+
 
 #endif  /* #ifdef INCLUDE_DS3231_SUPPORT */
 

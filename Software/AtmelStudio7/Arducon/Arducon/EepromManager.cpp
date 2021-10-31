@@ -631,7 +631,6 @@ BOOL EepromManager::readNonVols(void)
 		return(err);
 	}
 
-
 	void EepromManager::dumpEEPROMVars(void)
 	{
 		uint8_t byt;

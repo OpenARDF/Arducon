@@ -141,7 +141,7 @@ void linkbus_disable(void);
 /**
  * Undoes linkbus_disable()
  */
-void linkbus_enable(void);
+// void linkbus_enable(void);
 
 
 /**
@@ -150,7 +150,7 @@ void linkbus_end_tx(void);
 
 /**
  */
-void linkbus_reset_rx(void);
+// void linkbus_reset_rx(void);
 
 /**
  */
