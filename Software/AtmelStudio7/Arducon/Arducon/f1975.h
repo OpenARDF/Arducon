@@ -109,7 +109,7 @@ typedef enum{
 #define MAX_ATTEN_SETTING 0x3F
 
 void setAtten(tenthDB_t att);
-void setupPortsForF1975(BOOL enable);
+void setupPortsForAttenuator(BOOL enable);
 
 #ifdef __cplusplus
 	}

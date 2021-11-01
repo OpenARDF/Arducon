@@ -41,7 +41,7 @@ void setAtten(tenthDB_t att)
 	PORTB = pattern;
 }
 
-void setupPortsForF1975(BOOL enable)
+void setupPortsForAttenuator(BOOL enable)
 {
 #if !SUPPORT_ONLY_80M
 	pinMode(PIN_D0, OUTPUT);
@@ -50,8 +50,6 @@ void setupPortsForF1975(BOOL enable)
 	pinMode(PIN_D3, OUTPUT);
 	pinMode(PIN_D4, OUTPUT);  /* Also RXD */
 	pinMode(PIN_D5, OUTPUT);  /* Also TXD */
-	pinMode(PIN_PWDN, OUTPUT);
-	digitalWrite(PIN_PWDN, ON);
 #endif // !SUPPORT_ONLY_80M
 
 	if(!enable)
