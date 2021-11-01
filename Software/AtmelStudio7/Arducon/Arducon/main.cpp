@@ -2002,14 +2002,11 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
-						startEventUsingRTC();
-					}
-					else
-					{
-						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
+						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 
+					sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
 					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
@@ -2021,15 +2018,12 @@ void handleLinkBusMsgs()
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						lb_send_string(g_tempStr, TRUE);
-						startEventUsingRTC();
+						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
-					else
-					{
-						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						doprint = true;
-					}
+
+					sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
+					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == '*')  /* Sync seconds to zero */
 				{
@@ -2573,13 +2567,23 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
+					if(stringLength == 10) /* allow seconds to be dropped if zero */
+					{
+						receivedString[10] = '0';
+						receivedString[11] = '0';
+						receivedString[12] = '\0';
+					}
+
 					time_t s = validateTimeString(receivedString, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
 					if(s)
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
+						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
+						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 					else
 					{
@@ -2604,6 +2608,13 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
+					if(stringLength == 10) /* allow seconds to be dropped if zero */
+					{
+						receivedString[10] = '0';
+						receivedString[11] = '0';
+						receivedString[12] = '\0';
+					}
+
 					time_t f = validateTimeString(receivedString, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
 					if(f)
@@ -2611,6 +2622,7 @@ void handleLinkBusMsgs()
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 					else
 					{

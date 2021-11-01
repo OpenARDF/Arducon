@@ -36,21 +36,21 @@
 #if INCLUDE_RV3028_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.61A ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.62A ***\n"
 		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
 	#else
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.61B ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.62B ***\n"
 		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
 	#endif  /* SUPPORT_ONLY_80M */
 #elif INCLUDE_DS3231_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.61C ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.62C ***\n"
 		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
 	#else
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.61D ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. S2.62D ***\n"
 		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset"
 	#endif  /* SUPPORT_ONLY_80M */
 #endif          /* INCLUDE_RV3028_SUPPORT */
