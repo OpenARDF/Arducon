@@ -1988,7 +1988,7 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
-						g_current_epoch = RTC_get_epoch();
+						g_current_epoch = RTC_get_epoch(NULL);
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
 						sprintf(g_tempStr, "Epoch:%lu\n", g_current_epoch);
 					}
@@ -2813,7 +2813,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	g_use_ptt_periodic_reset = FALSE;
 
 	cli();
@@ -3179,7 +3179,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
@@ -3204,7 +3204,7 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
