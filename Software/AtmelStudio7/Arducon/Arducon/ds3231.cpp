@@ -131,7 +131,7 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 		}
 		else
 		{
-			epoch = RTC_get_epoch();
+			epoch = RTC_get_epoch(NULL);
 		}
 
 		if(error)
@@ -151,12 +151,16 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 		return(epoch);
 	}
 
-	time_t RTC_get_epoch(void)
+	time_t RTC_get_epoch(BOOL *result)
 	{
+		uint8_t tries = 10; /* try several times in case of transient bus issues */
 		time_t epoch = 0;
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
+		bool res;
 
-		if(!i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7))
+		while(tries-- && (res = i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7)));
+
+		if(!res)
 		{
 			struct tm ltm = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			int16_t year = 100;                 /* start at 100 years past 1900 */
@@ -213,7 +217,8 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			epoch = epoch_from_ltm(&ltm);
 		}
 
-		return( epoch);
+		if(result) *result = res;
+		return(epoch);
 	}
 
 
@@ -221,6 +226,7 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 	{
 		BOOL failure = TRUE;
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
+		uint8_t tries = 10; /* try several times in case of transient bus issues */
 
 		if(datetime)                            /* String format "YYMMDDhhmmss" */
 		{
@@ -233,6 +239,7 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 			data[6] = char2bcd(&datetime[0]);   /* 2-digit year in BCD */
 
 			failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7);
+			while(tries-- && (failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 7)));
 		}
 
 		return(failure);
@@ -241,32 +248,35 @@ the UNIX epoch for the time held in the DS3231 RTC. If error is not null then it
 
 	BOOL RTC_1s_sqw(BOOL enable)
 	{
-		BOOL fail;
-
-		if(enable)
-		{
-			uint8_t byte = 0x00;
-			fail = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_CONTROL, &byte, 1);
-		}
-		else
-		{
-			uint8_t byte = 0x04;
-			fail = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_CONTROL, &byte, 1);
-		}
-
-		return(fail);
+		uint8_t tries = 10; /* try several times in case of transient bus issues */
+		bool failure;
+		uint8_t data[1];
+		
+		data[0] = enable ? 0x00:0x04;	
+		while(tries-- && (failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_CONTROL, data, 1)));
+		
+		return(failure);
 	}
 
 #ifdef SUPPORT_DS3231_AGING
 	void ds3231_set_aging(int8_t* data)
 	{
-		i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1);
+		uint8_t tries = 10; /* try several times in case of transient bus issues */
+		bool failure;
+		int8_t data[1];
+		
+		data[0] = data_in;
+		while(tries-- && (failure = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1)));
+		return(failure);
 	}
 
 	int8_t ds3231_get_aging()
 	{
+		uint8_t tries = 10; /* try several times in case of transient bus issues */
+		bool failure;
 		int8_t data[1];
-		i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1);
+		
+		while(tries-- && (failure = i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_AGING, (uint8_t*)data, 1)));
 		return(data[0]);
 	}
 #endif // SUPPORT_DS3231_AGING
@@ -276,10 +286,13 @@ results in the advancement to the next day, then one day would be lost. Instead 
 error, this function merely fails to synchronize at midnight. */
 BOOL ds3231_sync2nearestMinute()
 {
+	uint8_t tries = 10; /* try several times in case of transient bus issues */
 	BOOL err = FALSE;
 	uint8_t data[7] = { 0, 0, 0 };
 
-	if(!i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3))
+	while(tries-- && (err = i2c_device_read(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3)));
+
+	if(!err)
 	{
 		uint8_t hours;
 		uint8_t minutes;
@@ -354,7 +367,8 @@ BOOL ds3231_sync2nearestMinute()
 			}
 
 			data[2] |= hours % 10;
-			err = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3);
+
+			while(tries-- && (err = i2c_device_write(DS3231_BUS_BASE_ADDR, RTC_SECONDS, data, 3)));
 		}
 	}
 

@@ -51,7 +51,7 @@
  *  *error - If error is not null then it holds 1 if an error occurred
  */
 		time_t RTC_String2Epoch(bool *error, char *datetime);
-		time_t RTC_get_epoch(void);
+		time_t RTC_get_epoch(BOOL *result);
 
 		BOOL RTC_set_datetime(char *datetime);
 

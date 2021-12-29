@@ -228,7 +228,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
 
 	pinMode(PIN_PWDN, OUTPUT);
-	digitalWrite(PIN_PWDN, ON);
+	digitalWrite(PIN_PWDN, ON); /* Turn on power to the radio */
 
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
@@ -1069,6 +1069,11 @@ ISR( TIMER2_COMPB_vect )
 		{
 			if(g_use_rtc_for_startstop)
 			{
+				if(g_current_epoch >= (g_event_start_epoch - 5)) /* Turn on radio power in advance of the start time */
+				{
+					digitalWrite(PIN_PWDN, ON);
+				}
+
 				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
 				{
 					g_LED_enunciating = FALSE;
@@ -1089,6 +1094,7 @@ ISR( TIMER2_COMPB_vect )
 					g_use_rtc_for_startstop = FALSE;
 					g_transmissions_disabled = TRUE;
 					g_on_the_air = FALSE;
+					digitalWrite(PIN_PWDN, OFF); /* Power off the radio */
 				}
 			}
 
@@ -1326,9 +1332,7 @@ void loop()
 		BOOL noiseDetected = FALSE;
 		int clipCount = 0;
 		BOOL dtmfEntryError = FALSE;
-#endif  /* !INIT_EEPROM_ONLY */
 
-#if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
 		{
 			ee_mgr.resetEEPROMValues();
@@ -1984,7 +1988,7 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
-						g_current_epoch = RTC_get_epoch();
+						g_current_epoch = RTC_get_epoch(NULL);
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
 						sprintf(g_tempStr, "Epoch:%lu\n", g_current_epoch);
 					}
@@ -2809,7 +2813,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	g_use_ptt_periodic_reset = FALSE;
 
 	cli();
@@ -2922,6 +2926,10 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		{
 			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
 			g_fox_counter = 1;
+			if(g_event_start_epoch > (g_current_epoch + 300))
+			{
+				digitalWrite(PIN_PWDN, OFF); /* Turn off the radio until close to start time */
+			}
 		}
 
 		g_use_rtc_for_startstop = TRUE;
@@ -3171,7 +3179,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
@@ -3196,7 +3204,7 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -3442,7 +3450,7 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
  	}
 
 	cli();
-	setupPortsForF1975(enableAM);
+	setupPortsForAttenuator(enableAM);
 
 	if(enableAM)
 	{
