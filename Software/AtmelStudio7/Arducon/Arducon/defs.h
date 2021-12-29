@@ -71,6 +71,14 @@
 #define SUPPORT_ONLY_80M FALSE
 /***********************************************************/
 
+/***********************************************************
+ * OPTIONAL FEATURES:                                       *
+ *                                                          *
+ * Caution: Take care to avoid exceeding memory constraints *
+ * when enabling optional features                          */
+/***********************************************************/
+#define SUPPORT_TEMP_AND_VOLTAGE_REPORTING TRUE
+/***********************************************************/
 
 #ifdef F_CPU
  #undef F_CPU
@@ -291,8 +299,11 @@ typedef enum
 	SPRINT_F3,
 	SPRINT_F4,
 	SPRINT_F5,
-	INVALID_FOX,
+	INVALID_FOX
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+	,
 	REPORT_BATTERY
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 } Fox_t;
 
 typedef enum
@@ -372,7 +383,9 @@ typedef enum
 		STATE_TEST_ATTENUATOR,  /* Temporary test definition */
 #endif /* !SUPPORT_ONLY_80M */
 	STATE_SET_PTT_PERIODIC_RESET,
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 	STATE_GET_BATTERY_VOLTAGE,
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 	STATE_SET_PASSWORD,
 	STATE_CHECK_PASSWORD,
 	STATE_RECEIVING_FOXES_TO_ADDRESS

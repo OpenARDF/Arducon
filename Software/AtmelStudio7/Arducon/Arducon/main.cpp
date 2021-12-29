@@ -179,7 +179,6 @@ char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
  */
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
-void playStartingTone(uint8_t toneFreq);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
@@ -193,7 +192,6 @@ void stopEventNow(EventActionSource_t activationSource);
 void startEventNow(EventActionSource_t buttonActivated);
 void startEventUsingRTC(void);
 void reportConfigErrors(void);
-/*char* convertEpochToTimeString(unsigned long epoch); */
 BOOL reportTimeTill(time_t from, time_t until, const char* prefix, const char* failMsg);
 time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours);
 void wdt_init(WDReset resetType);
@@ -230,7 +228,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	pinMode(PIN_BATTERY_LEVEL, INPUT);  /* Battery voltage level */
 
 	pinMode(PIN_PWDN, OUTPUT);
-	digitalWrite(PIN_PWDN, ON);
+	digitalWrite(PIN_PWDN, ON); /* Turn on power to the radio */
 
 	pinMode(PIN_SCL, INPUT_PULLUP);
 	pinMode(PIN_SDA, INPUT_PULLUP);
@@ -336,7 +334,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 	TIMSK0 = 0x00;
 
 	/*******************************************************************
-	 *  Sync button pin change interrupt */
+	 *  Pushbutton pin change interrupt */
 	PCMSK2 = 0x00;
 	PCMSK1 = 0x00;
 	PCMSK1 = (1 << PCINT11);    /* Enable PCINT11 */
@@ -374,8 +372,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 			ee_mgr.sendSuccessString();
 		}
 
-		digitalWrite(PIN_LED, ON);
-		while(1)
+		digitalWrite(PIN_LED, ON); /* Turn the LED constantly on */
+		while(1) /* Wait forever */
 		{
 			;
 		}
@@ -1071,6 +1069,11 @@ ISR( TIMER2_COMPB_vect )
 		{
 			if(g_use_rtc_for_startstop)
 			{
+				if(g_current_epoch >= (g_event_start_epoch - 5)) /* Turn on radio power in advance of the start time */
+				{
+					digitalWrite(PIN_PWDN, ON);
+				}
+
 				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
 				{
 					g_LED_enunciating = FALSE;
@@ -1091,6 +1094,7 @@ ISR( TIMER2_COMPB_vect )
 					g_use_rtc_for_startstop = FALSE;
 					g_transmissions_disabled = TRUE;
 					g_on_the_air = FALSE;
+					digitalWrite(PIN_PWDN, OFF); /* Power off the radio */
 				}
 			}
 
@@ -1206,6 +1210,7 @@ ISR( TIMER2_COMPB_vect )
 					{
 						BOOL repeat;
 						/* Choose the appropriate Morse pattern to be sent */
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 						if(g_fox == REPORT_BATTERY)
 						{
 							uint16_t v = g_voltage + 5;
@@ -1218,6 +1223,10 @@ ISR( TIMER2_COMPB_vect )
 							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
 							repeat = TRUE;
 						}
+#else
+							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							repeat = TRUE;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 						g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
 						makeMorse((char*)"\0", NULL, NULL);
@@ -1236,7 +1245,7 @@ ISR( TIMER2_COMPB_vect )
 #endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
- *  Timer0 interrupt generates an audio tone on the audio out pin.
+ *  Timer0 interrupt generates a square wave audio tone on the audio out pin.
  ************************************************************************/
 ISR(TIMER0_COMPA_vect)
 {
@@ -1323,9 +1332,7 @@ void loop()
 		BOOL noiseDetected = FALSE;
 		int clipCount = 0;
 		BOOL dtmfEntryError = FALSE;
-#endif  /* !INIT_EEPROM_ONLY */
 
-#if !INIT_EEPROM_ONLY
 		if(g_perform_EEPROM_reset)
 		{
 			ee_mgr.resetEEPROMValues();
@@ -1699,21 +1706,6 @@ void sendMorseTone(BOOL onOff)
 	g_audio_tone_state = onOff;
 }
 
-void playStartingTone(uint8_t toneFreq)
-{
-	if(toneFreq > 0)
-	{
-		OCR0A = toneFreq;
-		g_audio_tone_state = ON;
-	}
-	else
-	{
-		OCR0A = DEFAULT_TONE_FREQUENCY;
-		g_audio_tone_state = OFF;
-	}
-}
-
-
 /* The compiler does not seem to always optimize large switch statements correctly
  * void __attribute__((optimize("O3"))) handleLinkBusMsgs() */
 void handleLinkBusMsgs()
@@ -1996,7 +1988,7 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
-						g_current_epoch = RTC_get_epoch();
+						g_current_epoch = RTC_get_epoch(NULL);
 						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", NULL);
 						sprintf(g_tempStr, "Epoch:%lu\n", g_current_epoch);
 					}
@@ -2014,14 +2006,11 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
 						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
-						startEventUsingRTC();
-					}
-					else
-					{
-						sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
+						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 
+					sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
 					doprint = true;
 				}
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
@@ -2033,16 +2022,18 @@ void handleLinkBusMsgs()
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						lb_send_string(g_tempStr, TRUE);
-						startEventUsingRTC();
+						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
-					else
-					{
-						sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
-						doprint = true;
-					}
+
+					sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
+					doprint = true;
 				}
+				else if(lb_buff->fields[FIELD1][0] == '*')  /* Sync seconds to zero */
+				{
+					ds3231_sync2nearestMinute();
+				}
+
 #if INCLUDE_RV3028_SUPPORT
 				else if(lb_buff->fields[FIELD1][0] == 'O')
 				{
@@ -2407,10 +2398,12 @@ void handleLinkBusMsgs()
 				{
 					state = STATE_SET_PTT_PERIODIC_RESET;
 				}
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 				else if(key == 'B')
 				{
 					state = STATE_GET_BATTERY_VOLTAGE;
 				}
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 				else
 				{
 					entryError = TRUE;
@@ -2528,22 +2521,36 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
-					time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch, -g_utc_offset);
-
-					if(t)
+					if(!receivedString[0])
 					{
-						#if INCLUDE_RV3028_SUPPORT
-							RTC_set_epoch(t);
-						#else
-							RTC_set_datetime(receivedString);
-						#endif
-
-						g_current_epoch = t;
-						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+						ds3231_sync2nearestMinute();
 					}
 					else
 					{
-						entryError = TRUE;
+						if(stringLength == 10) /* allow seconds to be dropped if zero */
+						{
+							receivedString[10] = '0';
+							receivedString[11] = '0';
+							receivedString[12] = '\0';
+						}
+
+						time_t t = validateTimeString(receivedString, (time_t*)&g_current_epoch, -g_utc_offset);
+
+						if(t)
+						{
+							#if INCLUDE_RV3028_SUPPORT
+							RTC_set_epoch(t);
+							#else
+							RTC_set_datetime(receivedString);
+							#endif
+
+							g_current_epoch = t;
+							setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+						}
+						else
+						{
+							entryError = TRUE;
+						}
 					}
 
 					state = STATE_SHUTDOWN;
@@ -2564,13 +2571,23 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
+					if(stringLength == 10) /* allow seconds to be dropped if zero */
+					{
+						receivedString[10] = '0';
+						receivedString[11] = '0';
+						receivedString[12] = '\0';
+					}
+
 					time_t s = validateTimeString(receivedString, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
 					if(s)
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
+						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
+						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 					else
 					{
@@ -2595,6 +2612,13 @@ void handleLinkBusMsgs()
 			{
 				if(key == '#')
 				{
+					if(stringLength == 10) /* allow seconds to be dropped if zero */
+					{
+						receivedString[10] = '0';
+						receivedString[11] = '0';
+						receivedString[12] = '\0';
+					}
+
 					time_t f = validateTimeString(receivedString, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
 					if(f)
@@ -2602,6 +2626,7 @@ void handleLinkBusMsgs()
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
 						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
 					}
 					else
 					{
@@ -2696,6 +2721,7 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 			case STATE_GET_BATTERY_VOLTAGE:
 			{
 				if(key == '#')
@@ -2711,6 +2737,7 @@ void handleLinkBusMsgs()
 				state = STATE_SHUTDOWN;
 			}
 			break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 			case STATE_CHECK_PASSWORD:
 			{
@@ -2786,7 +2813,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	g_use_ptt_periodic_reset = FALSE;
 
 	cli();
@@ -2838,6 +2865,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 		break;
 
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 		case REPORT_BATTERY:
 		{
 			g_on_air_interval_seconds = 30;
@@ -2848,6 +2876,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_id_interval_seconds = 60;
 		}
 		break;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
 
 		/* case BEACON:
@@ -2897,6 +2926,10 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		{
 			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
 			g_fox_counter = 1;
+			if(g_event_start_epoch > (g_current_epoch + 300))
+			{
+				digitalWrite(PIN_PWDN, OFF); /* Turn off the radio until close to start time */
+			}
 		}
 
 		g_use_rtc_for_startstop = TRUE;
@@ -3146,7 +3179,7 @@ void stopEventNow(EventActionSource_t activationSource)
 
 void startEventUsingRTC(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 	ConfigurationState_t state = clockConfigurationCheck();
 
 	if(state != CONFIGURATION_ERROR)
@@ -3171,7 +3204,7 @@ void startEventUsingRTC(void)
 
 void reportConfigErrors(void)
 {
-	g_current_epoch = RTC_get_epoch();
+	g_current_epoch = RTC_get_epoch(NULL);
 
 	if(g_messages_text[STATION_ID][0] == '\0')
 	{
@@ -3289,7 +3322,7 @@ time_t validateTimeString(char* str, time_t* epochVar, int8_t offsetHours)
 
 	if((len == 12) && (only_digits(str)))
 	{
-		time_t ep = RTC_get_epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
+		time_t ep = RTC_String2Epoch(NULL, str);    /* String format "YYMMDDhhmmss" */
 
 		ep += (HOUR * offsetHours);
 
@@ -3417,7 +3450,7 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
  	}
 
 	cli();
-	setupPortsForF1975(enableAM);
+	setupPortsForAttenuator(enableAM);
 
 	if(enableAM)
 	{
@@ -3514,26 +3547,3 @@ DTMF_key_t value2DTMFKey(uint8_t value)
 
 	return( key);
 }
-
-/**
- *   Converts an epoch (seconds since 1900) and converts it into a string of format "yyyy-mm-ddThh:mm:ssZ containing UTC"
- *
- *  #define THIRTY_YEARS 946080000
- *  char* convertEpochToTimeString(unsigned long epoch)
- *  {
- *  struct tm  ts;
- *
- *  if (epoch < MINIMUM_EPOCH)
- *  {
- *       g_tempStr[0] = '\0';
- *   return g_tempStr;
- *  }
- *
- *  time_t e = (time_t)epoch - THIRTY_YEARS;
- *  // Format time, "ddd yyyy-mm-ddThh:mm:ss"
- *  ts = *localtime(&e);
- *  strftime(g_tempStr, sizeof(g_tempStr), "%Y-%m-%dT%H:%M:%SZ", &ts);
- *
- *  return g_tempStr;
- *  }
- */

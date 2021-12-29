@@ -46,30 +46,41 @@
 #define DS3231_BUS_BASE_ADDR 0xD0   /* corresponds to slave address = 0b1101000x */
 
 /**
- *  Returns the UNIX epoch value for the character string passed in datetime or from the DS3231. 
- *  *datetime - If datetime is null then it returns the UNIX epoch for the time held in the DS3231 RTC. 
- *  *error - If error is not null then it holds 1 if an error occurred 
+ *  Returns the UNIX epoch value for the character string passed in datetime or from the DS3231.
+ *  *datetime - If datetime is null then it returns the UNIX epoch for the time held in the DS3231 RTC.
+ *  *error - If error is not null then it holds 1 if an error occurred
  */
-		time_t RTC_get_epoch(bool *error, char *datetime);
-		time_t RTC_get_epoch(void);
-		
+		time_t RTC_String2Epoch(bool *error, char *datetime);
+		time_t RTC_get_epoch(BOOL *result);
+
 		BOOL RTC_set_datetime(char *datetime);
 
 /**
  *  Turn on/off 1-second square wave on the INT/SQW pin.
  */
 		BOOL RTC_1s_sqw(BOOL enable);
-		
-/** 
+
+#ifdef SUPPORT_DS3231_AGING
+/**
  *
  */
 	void ds3231_set_aging(int8_t* data);
-	
-/** 
+
+/**
  *
  */
 	int8_t ds3231_get_aging(void);
+#endif // #ifdef SUPPORT_DS3231_AGING
 
+/**
+ *
+ */
+BOOL ds3231_sync2nearestMinute(void);
+
+/**
+ *
+ */
+//char* convertEpochToTimeString(unsigned long epoch, char* timeString);
 
 #endif  /* #ifdef INCLUDE_DS3231_SUPPORT */
 

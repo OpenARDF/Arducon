@@ -202,17 +202,15 @@ void linkbus_end_tx(void)
 	}
 }
 
-void linkbus_reset_rx(void)
-{
-	if(UCSR0B & (1 << RXEN0))   /* perform only if rx is currently enabled */
-	{
-		UCSR0B &= ~(1 << RXEN0);
-/*    uint16_t s = sizeof(rx_buffer); // test */
-		memset(rx_buffer, 0, sizeof(rx_buffer));
-/*    if(s) s = 0; // test */
-		UCSR0B |= (1 << RXEN0);
-	}
-}
+// void linkbus_reset_rx(void)
+// {
+// 	if(UCSR0B & (1 << RXEN0))   /* perform only if rx is currently enabled */
+// 	{
+// 		UCSR0B &= ~(1 << RXEN0);
+// 		memset(rx_buffer, 0, sizeof(rx_buffer));
+// 		UCSR0B |= (1 << RXEN0);
+// 	}
+// }
 
 void linkbus_init(uint32_t baud)
 {
@@ -250,20 +248,20 @@ void linkbus_disable(void)
 	}
 }
 
-void linkbus_enable(void)
-{
-	uint8_t bufferIndex;
-
-	g_bus_disabled = FALSE;
-	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
-
-	memset(rx_buffer, 0, sizeof(rx_buffer));
-
-	for(bufferIndex = 0; bufferIndex < LINKBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
-	{
-		tx_buffer[bufferIndex][0] = '\0';
-	}
-}
+// void linkbus_enable(void)
+// {
+// 	uint8_t bufferIndex;
+//
+// 	g_bus_disabled = FALSE;
+// 	UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
+//
+// 	memset(rx_buffer, 0, sizeof(rx_buffer));
+//
+// 	for(bufferIndex = 0; bufferIndex < LINKBUS_NUMBER_OF_TX_MSG_BUFFERS; bufferIndex++)
+// 	{
+// 		tx_buffer[bufferIndex][0] = '\0';
+// 	}
+// }
 
 
 BOOL linkbus_send_text(char* text)

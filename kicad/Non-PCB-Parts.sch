@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 2 2
 Title "Arducon"
-Date "2021-10-24"
-Rev "V2.6"
+Date "2021-10-28"
+Rev "V2.7"
 Comp ""
 Comment1 ""
 Comment2 ""

@@ -226,12 +226,6 @@
     <Compile Include="morse.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="rv3028.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="rv3028.h">
-      <SubType>compile</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Source" />
