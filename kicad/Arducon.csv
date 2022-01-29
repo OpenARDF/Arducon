@@ -1,7 +1,7 @@
 Ref,Value,QTY PER,Footprint,Description,Digi-Key Part No.,LCSC Part Number,Link,Manufacturer,Manufacturer PN,
 BT101 ,CR1220,1,Oddities:BC501SM_CR1220_BAT_Handsolder,,CR1220 BATTERY HOLDER,BC501SM-ND, ,<a href="https://www.digikey.com/products/en?keywords=BC501SM-ND">Link</a>,Memory Protection Devices,BC501SM
 C108 C103 C109 C110 ,100nF,4,Capacitors_SMD:C_0805,,CAP CER 0.1UF 50V X7R 0805,478-1395-1-ND,C476766,<a href="https://www.digikey.com/products/en?keywords=478-1395-1-ND">Link</a>,AVX Corporation,08055C104KAT2A
-C101 C102 C104 C105 ,10uF,4,Capacitors_SMD:C_0805,,CAP CER 10UF 25V X5R 0805,490-5523-1-ND,C15850,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,Murata Electronics,GRM21BR61E106KA73L
+C101 C102 C104 C105 C106 ,10uF,5,Capacitors_SMD:C_0805,,CAP CER 10UF 25V X5R 0805,490-5523-1-ND,C15850,<a href="https://www.digikey.com/products/en?keywords=490-5523-1-ND">Link</a>,Murata Electronics,GRM21BR61E106KA73L
 D103 D104 D105 D106 D107 ,CG0603MLC-05LECT-ND,5,Resistors_SMD:R_0603,,VARISTOR 0603,CG0603MLC-05LECT-ND,C316054,<a href="https://www.digikey.com/products/en?keywords=CG0603MLC-05LECT-ND">Link</a>,Bourns Inc.,CG0603MLC-05LE
 D109 D108 D110 ,MSS1P2L-M3/89A,3,Diodes_SMD:DO-219AD,,DIODE SCHOTTKY 20V 1A MICROSMP,MSS1P2L-M3/89AGICT-ND,C506621,<a href="https://www.digikey.com/products/en?keywords=MSS1P2L-M3/89AGICT-ND">Link</a>,Vishay General Semiconductor,MSS1P2L-M3/89A
 D102 ,LED,1,LEDs:LED_0805,,LED RED CLEAR 0805 SMD,732-4984-1-ND,C389523,<a href="https://www.digikey.com/products/en?keywords=732-4984-1-ND">Link</a>,Würth Elektronik,150080RS75000
@@ -17,10 +17,10 @@ J112 ,Conn_01x06,1,Pin_Headers:Pin_Header_Angled_1x06,, ,929550-01-06-ND, ,<a hr
 J111 ,DB9_Male,1,Connect:DB9F_CI,, ,609-5908-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-5908-ND">Link</a>,TH,TH
 J113 ,To Stub,1,Connect:CON-SMA-EDGE-S,,TH,CON-SMA-EDGE-S-ND, ,<a href="https://www.digikey.com/products/en?keywords=CON-SMA-EDGE-S-ND">Link</a>,TH,TH
 J106 ,Wiring,1,Pin_Headers:Pin_Header_Straight_1x08,, ,np, ,np, , 
+J109 J110 ,Conn_01x02,2,Pin_Headers:Pin_Header_Straight_1x02,, ,np, ,np,np, 
 MOD101 ,Arduino Pro Mini (5V Version),1,Modules:Arduino_Pro_Mini,,ARDUINO PRO MINI 328 5V/16MHZ,1568-1055-ND, ,<a href="https://www.digikey.com/products/en?keywords=1568-1055-ND">Link</a>,SparkFun Electronics,DEV-11113
 P101 ,ISP/PDI,1,Pin_Headers:SM_Pin_Header_Straight_2x03,, ,609-3487-1-ND, ,<a href="https://www.digikey.com/products/en?keywords=609-3487-1-ND">Link</a>,np,np
 PCB201 ,Printed Circuit Board,1,Oddities:Dummy_Empty,, ,np, ,np, , 
-Q102 ,LMN200,1,TO_SOT_Packages_SMD:SOT-363-0.65,,MCU LOAD SWITCH 200MA SOT-363,LMN200B02DICT-ND,C150757,<a href="https://www.digikey.com/products/en?keywords=LMN200B02DICT-ND">Link</a>,Diodes Incorporated,LMN200B02-7
 Q101 Q103 Q104 ,PN2222A,3,TO_SOT_Packages_SMD:SOT-23,,TRANS NPN 40V 0.6A SOT23,MMBT2222ATPMSCT-ND,C181121,<a href="https://www.digikey.com/products/en?keywords=MMBT2222ATPMSCT-ND">Link</a>,Micro Commercial Co,MMBT2222A-TP
 R103 R104 R108 R111 R109 ,10k,5,Resistors_SMD:R_0805,,RES SMD 10K OHM 1% 1/8W 0805,311-10.0KCRCT-ND,C17414,<a href="https://www.digikey.com/products/en?keywords=311-10.0KCRCT-ND">Link</a>,Yageo,RC0805FR-0710KL
 R107 ,162k,1,Resistors_SMD:R_0805,,RES SMD 162K OHM 1% 1/8W 0805,311-162KCRCT-ND,C416820,<a href="https://www.digikey.com/products/en?keywords=311-162KCRCT-ND">Link</a>,Yageo,RC0805FR-07162KL
@@ -40,5 +40,6 @@ TP101 ,Conn_01x04,1,Pin_Headers:Pin_Header_Straight_1x04,, ,np, ,np, ,
 U102 ,CD74HC4050M96,1,Housings_SOIC:SOIC-16_3.9x9.9mm_Pitch1.27mm,,IC BUFFER NON-INVERT 6V 16SOIC,296-14529-1-ND,C131932,<a href="https://www.digikey.com/products/en?keywords=296-14529-1-ND">Link</a>,Texas Instruments,CD74HC4050M96
 U101 ,LP2992AIM5-3.3,1,TO_SOT_Packages_SMD:SOT-23-5,,IC REG LINEAR 3.3V 250MA SOT23-5,LP2992AIM5-3.3/NOPBCT-ND,C37970,<a href="https://www.digikey.com/products/en?keywords=LP2992AIM5-3.3/NOPBCT-ND">Link</a>,Texas Instruments,LP2992AIM5-3.3/NOPB
 U105 ,DS3231,1,SMD_Packages:SO16,,IC RTC CLK/CALENDAR I2C 16-SOIC,DS3231SN#T&RCT-ND,C9866,<a href="https://www.digikey.com/products/en?keywords=DS3231SN#T&RCT-ND">Link</a>,Maxim Integrated,DS3231SN#T&R
-U103 ,RV-8803-C7,1,Oddities:RV-3028-C7,,IC RTC CLK/CALENDAR I2C 8-SON,2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND, ,<a href="2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND">Link</a>,Micro Crystal AG,RV-8803-C7-32.768KHZ-3PPM-TA-QC
+U103 ,RV-8803-C7,1,Oddities:RV-3028-C7,,IC RTC CLK/CALENDAR I2C 8-SON,2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND, ,<a href="https://www.digikey.com/products/en?keywords=2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND">Link</a>,Micro Crystal AG,RV-8803-C7-32.768KHZ-3PPM-TA-QC
 U104 ,PE43712,1,Housings_DFN_QFN:QFN-32-1EP_5x5mm_Pitch0.5mm,,RF ATTENUATOR 31.75DB 32VFQFN,1046-1139-1-ND,C2654160,<a href="https://www.digikey.com/products/en?keywords=1046-1139-1-ND">Link</a>,pSemi,PE43712B-Z
+U106 ,TPS22810DBVT,1,TO_SOT_Packages_SMD:SOT-23-6,,Power Switch/Driver 1:1 N-Channel 2A SOT-23-6,296-45304-1-ND,C2680364,<a href="https://www.digikey.com/products/en?keywords=296-45304-1-ND">Link</a>,Texas Instruments,TPS22810DBVT

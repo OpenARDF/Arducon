@@ -5,8 +5,8 @@ $Descr B 17000 11000
 encoding utf-8
 Sheet 1 2
 Title "Arducon"
-Date "2021-10-28"
-Rev "V2.7"
+Date "2022-01-20"
+Rev "V3.0"
 Comp ""
 Comment1 ""
 Comment2 ""
@@ -564,29 +564,29 @@ $EndComp
 $Comp
 L Arducon-rescue:SPST_small-Switch SW101
 U 1 1 5F9DCC49
-P 7250 5600
-F 0 "SW101" H 7250 5500 50  0000 C CNN
-F 1 "SPST" H 7250 5500 50  0001 C CNN
-F 2 "Buttons_Switches_SMD:PTS645SL50SMTR92" H 7250 5600 50  0001 C CNN
-F 3 "" H 7250 5600 50  0001 C CNN
-F 4 "CKN9088CT-ND" H 7250 5600 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CKN9088CT-ND\">Link</a>" H 7250 5600 50  0001 C CNN "Link"
-F 6 "C&K" H 7250 5600 50  0001 C CNN "Manufacturer"
-F 7 "PTS645SL50SMTR92LFS" H 7250 5600 50  0001 C CNN "Manufacturer PN"
-F 8 "SWITCH TACTILE SPST-NO 0.05A 12V" H 7250 5600 50  0001 C CNN "Description"
-F 9 "C221877" H 7250 5600 50  0001 C CNN "LCSC Part Number"
-	1    7250 5600
+P 7800 5600
+F 0 "SW101" H 7800 5500 50  0000 C CNN
+F 1 "SPST" H 7800 5500 50  0001 C CNN
+F 2 "Buttons_Switches_SMD:PTS645SL50SMTR92" H 7800 5600 50  0001 C CNN
+F 3 "" H 7800 5600 50  0001 C CNN
+F 4 "CKN9088CT-ND" H 7800 5600 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=CKN9088CT-ND\">Link</a>" H 7800 5600 50  0001 C CNN "Link"
+F 6 "C&K" H 7800 5600 50  0001 C CNN "Manufacturer"
+F 7 "PTS645SL50SMTR92LFS" H 7800 5600 50  0001 C CNN "Manufacturer PN"
+F 8 "SWITCH TACTILE SPST-NO 0.05A 12V" H 7800 5600 50  0001 C CNN "Description"
+F 9 "C221877" H 7800 5600 50  0001 C CNN "LCSC Part Number"
+	1    7800 5600
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GNDD #PWR0139
 U 1 1 5F9DCF27
-P 7500 5600
-F 0 "#PWR0139" H 7500 5350 50  0001 C CNN
-F 1 "GNDD" H 7500 5450 50  0000 C CNN
-F 2 "" H 7500 5600 50  0000 C CNN
-F 3 "" H 7500 5600 50  0000 C CNN
-	1    7500 5600
+P 8050 5600
+F 0 "#PWR0139" H 8050 5350 50  0001 C CNN
+F 1 "GNDD" H 8050 5450 50  0000 C CNN
+F 2 "" H 8050 5600 50  0000 C CNN
+F 3 "" H 8050 5600 50  0000 C CNN
+	1    8050 5600
 	0    -1   -1   0   
 $EndComp
 Text GLabel 1450 4050 2    39   Input ~ 0
@@ -1041,59 +1041,19 @@ F 8 "TH" H 13200 2550 50  0001 C CNN "Description"
 $EndComp
 Wire Wire Line
 	5000 2600 5000 2500
-$Comp
-L Arducon-rescue:LMN200B01-Power_Protection Q102
-U 1 1 5FC59E4B
-P 13550 7600
-F 0 "Q102" H 13550 8200 61  0000 C CNB
-F 1 "LMN200" H 13550 8092 61  0000 C CNB
-F 2 "TO_SOT_Packages_SMD:SOT-363-0.65" H 13565 7400 50  0001 L CNN
-F 3 "" H 13565 7400 50  0001 L CNN
-F 4 "LMN200B02DICT-ND" H 13550 7600 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=LMN200B02DICT-ND\">Link</a>" H 13550 7600 50  0001 C CNN "Link"
-F 6 "Diodes Incorporated" H 13550 7600 50  0001 C CNN "Manufacturer"
-F 7 "LMN200B02-7" H 13550 7600 50  0001 C CNN "Manufacturer PN"
-F 8 "MCU LOAD SWITCH 200MA SOT-363" H 13550 7600 50  0001 C CNN "Description"
-F 9 "C150757" H 13550 7600 50  0001 C CNN "LCSC Part Number"
-	1    13550 7600
-	1    0    0    -1  
-$EndComp
-Text GLabel 13300 7400 0    39   Input ~ 0
-PWDN
-$Comp
-L power:GNDD #PWR0141
-U 1 1 5FC5EC97
-P 13800 7500
-F 0 "#PWR0141" H 13800 7250 50  0001 C CNN
-F 1 "GNDD" H 13800 7350 50  0000 C CNN
-F 2 "" H 13800 7500 50  0000 C CNN
-F 3 "" H 13800 7500 50  0000 C CNN
-	1    13800 7500
-	0    -1   -1   0   
-$EndComp
-Wire Wire Line
-	13800 7250 13900 7250
-Wire Wire Line
-	13900 7250 13900 6850
-Wire Wire Line
-	13900 6850 12900 6850
-Wire Wire Line
-	12900 6850 12900 7800
-Wire Wire Line
-	12900 7800 13300 7800
 Text Notes 13150 6650 0    79   ~ 16
 OPTIONAL EXTERNAL POWER CONTROL
 $Comp
 L Connector_Generic:Conn_01x02 J108
 U 1 1 5FCE82B0
-P 14950 7800
-F 0 "J108" H 15030 7792 50  0000 L CNN
-F 1 "Controlled Power" H 15100 7700 50  0000 L CNN
-F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 7800 50  0001 C CNN
-F 3 "" H 14950 7800 50  0001 C CNN
-F 4 "np" H 14950 7800 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 14950 7800 50  0001 C CNN "Link"
-	1    14950 7800
+P 15450 7500
+F 0 "J108" H 15530 7492 50  0000 L CNN
+F 1 "Controlled Power" H 15350 7250 50  0000 L CNN
+F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 15450 7500 50  0001 C CNN
+F 3 "" H 15450 7500 50  0001 C CNN
+F 4 "np" H 15450 7500 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 15450 7500 50  0001 C CNN "Link"
+	1    15450 7500
 	1    0    0    1   
 $EndComp
 Wire Wire Line
@@ -1651,9 +1611,9 @@ Wire Wire Line
 Connection ~ 11450 4000
 Wire Wire Line
 	11450 3900 12600 3900
-Text GLabel 6650 5800 2    39   Output ~ 0
+Text GLabel 6450 5800 2    39   Output ~ 0
 RXD
-Text GLabel 7150 5900 2    39   Output ~ 0
+Text GLabel 6950 5900 2    39   Output ~ 0
 TXD
 Text GLabel 1650 2600 2    39   Input ~ 0
 RXD
@@ -1662,15 +1622,15 @@ TXD
 $Comp
 L Connector_Generic:Conn_01x02 J107
 U 1 1 5FE800D7
-P 14950 8300
-F 0 "J107" H 15030 8292 50  0000 L CNN
-F 1 "External Power Source" H 15100 8200 50  0000 L CNN
-F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 14950 8300 50  0001 C CNN
-F 3 "" H 14950 8300 50  0001 C CNN
-F 4 "np" H 14950 8300 50  0001 C CNN "Digi-Key Part No."
-F 5 "np" H 14950 8300 50  0001 C CNN "Link"
-	1    14950 8300
-	1    0    0    1   
+P 12900 7500
+F 0 "J107" H 12980 7492 50  0000 L CNN
+F 1 "External Power Source" H 12750 7250 50  0000 L CNN
+F 2 "Wire_Pads:SolderWirePad_2x_1-5mmDrill_Polarized" H 12900 7500 50  0001 C CNN
+F 3 "" H 12900 7500 50  0001 C CNN
+F 4 "np" H 12900 7500 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 12900 7500 50  0001 C CNN "Link"
+	1    12900 7500
+	-1   0    0    1   
 $EndComp
 $Comp
 L Arducon-rescue:Vproc-power #PWR0113
@@ -1783,18 +1743,18 @@ PTT_LOGIC
 $Comp
 L Device:R R110
 U 1 1 5FE40666
-P 7000 5900
-F 0 "R110" V 7100 5900 50  0000 C CNN
-F 1 "10" V 6900 5900 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 6930 5900 50  0001 C CNN
-F 3 "" H 7000 5900 50  0001 C CNN
-F 4 "311-10.0CRCT-ND" H 7000 5900 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND\">Link</a>" H 7000 5900 60  0001 C CNN "Link"
-F 6 "Yageo" V 7000 5900 50  0001 C CNN "Manufacturer"
-F 7 "RC0805FR-0710RL" V 7000 5900 50  0001 C CNN "Manufacturer PN"
-F 8 "RES SMD 10 OHM 1% 1/8W 0805" V 7000 5900 50  0001 C CNN "Description"
-F 9 "C193989" V 7000 5900 50  0001 C CNN "LCSC Part Number"
-	1    7000 5900
+P 6800 5900
+F 0 "R110" V 6900 5850 50  0000 C CNN
+F 1 "10" V 6700 5900 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 6730 5900 50  0001 C CNN
+F 3 "" H 6800 5900 50  0001 C CNN
+F 4 "311-10.0CRCT-ND" H 6800 5900 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-10.0CRCT-ND\">Link</a>" H 6800 5900 60  0001 C CNN "Link"
+F 6 "Yageo" V 6800 5900 50  0001 C CNN "Manufacturer"
+F 7 "RC0805FR-0710RL" V 6800 5900 50  0001 C CNN "Manufacturer PN"
+F 8 "RES SMD 10 OHM 1% 1/8W 0805" V 6800 5900 50  0001 C CNN "Description"
+F 9 "C193989" V 6800 5900 50  0001 C CNN "LCSC Part Number"
+	1    6800 5900
 	0    -1   1    0   
 $EndComp
 NoConn ~ 4050 4900
@@ -1829,18 +1789,10 @@ F 9 "C17414" V 3400 5850 50  0001 C CNN "LCSC Part Number"
 $EndComp
 Text GLabel 10050 1700 0    39   Input ~ 0
 PWDN
-Wire Wire Line
-	13800 7950 14450 7950
-Wire Wire Line
-	14450 7950 14450 8200
-Wire Wire Line
-	14450 8200 14750 8200
 Wire Notes Line
 	12100 6700 16200 6700
 Wire Notes Line
 	16200 6700 16200 8600
-Wire Notes Line
-	16200 8600 12100 8600
 Wire Notes Line
 	12100 8600 12100 6700
 Wire Notes Line
@@ -2061,9 +2013,9 @@ Wire Wire Line
 	6600 4850 6600 4750
 Connection ~ 6600 4750
 Wire Wire Line
-	6250 5800 6650 5800
+	6250 5800 6450 5800
 Wire Wire Line
-	6250 5900 6850 5900
+	6250 5900 6650 5900
 Wire Wire Line
 	6250 6200 6400 6200
 Wire Wire Line
@@ -2071,7 +2023,7 @@ Wire Wire Line
 NoConn ~ 6400 5300
 NoConn ~ 6400 5400
 Wire Wire Line
-	6250 5600 7000 5600
+	6250 5600 7350 5600
 Wire Wire Line
 	6400 6100 6250 6100
 $Comp
@@ -2260,29 +2212,29 @@ Wire Wire Line
 $Comp
 L Device:LED_ALT D102
 U 1 1 604C2CC2
-P 7250 5350
-F 0 "D102" H 7250 5450 50  0000 C CNN
-F 1 "LED" H 7250 5250 50  0000 C CNN
-F 2 "LEDs:LED_0805" H 7250 5350 50  0001 C CNN
-F 3 "" H 7250 5350 50  0001 C CNN
-F 4 "732-4984-1-ND" H 7250 5350 50  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=732-4984-1-ND\">Link</a>" H 7250 5350 50  0001 C CNN "Link"
-F 6 "Würth Elektronik" H 7250 5350 50  0001 C CNN "Manufacturer"
-F 7 "150080RS75000" H 7250 5350 50  0001 C CNN "Manufacturer PN"
-F 8 "LED RED CLEAR 0805 SMD" H 7250 5350 50  0001 C CNN "Description"
-F 9 "C389523" H 7250 5350 50  0001 C CNN "LCSC Part Number"
-	1    7250 5350
+P 7900 5350
+F 0 "D102" H 7900 5450 50  0000 C CNN
+F 1 "LED" H 7900 5250 50  0000 C CNN
+F 2 "LEDs:LED_0805" H 7900 5350 50  0001 C CNN
+F 3 "" H 7900 5350 50  0001 C CNN
+F 4 "732-4984-1-ND" H 7900 5350 50  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=732-4984-1-ND\">Link</a>" H 7900 5350 50  0001 C CNN "Link"
+F 6 "Würth Elektronik" H 7900 5350 50  0001 C CNN "Manufacturer"
+F 7 "150080RS75000" H 7900 5350 50  0001 C CNN "Manufacturer PN"
+F 8 "LED RED CLEAR 0805 SMD" H 7900 5350 50  0001 C CNN "Description"
+F 9 "C389523" H 7900 5350 50  0001 C CNN "LCSC Part Number"
+	1    7900 5350
 	-1   0    0    1   
 $EndComp
 $Comp
 L power:GNDD #PWR0158
 U 1 1 604C760D
-P 7400 5350
-F 0 "#PWR0158" H 7400 5100 50  0001 C CNN
-F 1 "GNDD" H 7400 5200 50  0000 C CNN
-F 2 "" H 7400 5350 50  0000 C CNN
-F 3 "" H 7400 5350 50  0000 C CNN
-	1    7400 5350
+P 8050 5350
+F 0 "#PWR0158" H 8050 5100 50  0001 C CNN
+F 1 "GNDD" H 8050 5200 50  0000 C CNN
+F 2 "" H 8050 5350 50  0000 C CNN
+F 3 "" H 8050 5350 50  0000 C CNN
+	1    8050 5350
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
@@ -2292,22 +2244,22 @@ Wire Wire Line
 $Comp
 L Device:R R114
 U 1 1 605220BB
-P 6950 5350
-F 0 "R114" V 7050 5350 50  0000 C CNN
-F 1 "470" V 6850 5350 50  0000 C CNN
-F 2 "Resistors_SMD:R_0805" H 6880 5350 50  0001 C CNN
-F 3 "" H 6950 5350 50  0001 C CNN
-F 4 "311-470CRCT-ND" H 6950 5350 60  0001 C CNN "Digi-Key Part No."
-F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-470CRCT-ND\">Link</a>" H 6950 5350 60  0001 C CNN "Link"
-F 6 "Yageo" V 6950 5350 50  0001 C CNN "Manufacturer"
-F 7 "RC0805FR-07470RL" V 6950 5350 50  0001 C CNN "Manufacturer PN"
-F 8 "RES SMD 470 OHM 1% 1/8W 0805" V 6950 5350 50  0001 C CNN "Description"
-F 9 "C328396" V 6950 5350 50  0001 C CNN "LCSC Part Number"
-	1    6950 5350
+P 7050 5350
+F 0 "R114" V 7150 5350 50  0000 C CNN
+F 1 "470" V 6950 5350 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805" H 6980 5350 50  0001 C CNN
+F 3 "" H 7050 5350 50  0001 C CNN
+F 4 "311-470CRCT-ND" H 7050 5350 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=311-470CRCT-ND\">Link</a>" H 7050 5350 60  0001 C CNN "Link"
+F 6 "Yageo" V 7050 5350 50  0001 C CNN "Manufacturer"
+F 7 "RC0805FR-07470RL" V 7050 5350 50  0001 C CNN "Manufacturer PN"
+F 8 "RES SMD 470 OHM 1% 1/8W 0805" V 7050 5350 50  0001 C CNN "Description"
+F 9 "C328396" V 7050 5350 50  0001 C CNN "LCSC Part Number"
+	1    7050 5350
 	0    -1   1    0   
 $EndComp
 Wire Wire Line
-	6650 5350 6800 5350
+	6650 5350 6900 5350
 $Comp
 L Connector_Generic:Conn_01x04 TP101
 U 1 1 606CBB3F
@@ -2675,7 +2627,7 @@ F 4 "2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND" H 9250 9300 50  0001 C CNN "Digi
 F 5 "Micro Crystal AG" H 9250 9300 50  0001 C CNN "Manufacturer"
 F 6 "RV-8803-C7-32.768KHZ-3PPM-TA-QC" H 9250 9300 50  0001 C CNN "Manufacturer PN"
 F 7 "IC RTC CLK/CALENDAR I2C 8-SON" H 9250 9300 50  0001 C CNN "Description"
-F 8 "<a href=\"2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND\">Link</a>" H 9250 9300 50  0001 C CNN "Link"
+F 8 "<a href=\"https://www.digikey.com/products/en?keywords=2195-RV-8803-C7-32.768KHZ-3PPM-TA-QCCT-ND\">Link</a>" H 9250 9300 50  0001 C CNN "Link"
 	1    9250 9300
 	1    0    0    -1  
 $EndComp
@@ -2911,7 +2863,7 @@ Wire Notes Line
 Wire Notes Line
 	15900 850  12150 850 
 Wire Wire Line
-	13800 7700 14750 7700
+	14600 7400 15250 7400
 $Comp
 L power:PWR_FLAG #FLG0105
 U 1 1 61FFB1D7
@@ -2934,12 +2886,12 @@ Connection ~ 14700 2950
 $Comp
 L power:GNDD #PWR0150
 U 1 1 61A0F5ED
-P 14750 8300
-F 0 "#PWR0150" H 14750 8050 50  0001 C CNN
-F 1 "GNDD" H 14750 8150 50  0000 C CNN
-F 2 "" H 14750 8300 50  0000 C CNN
-F 3 "" H 14750 8300 50  0000 C CNN
-	1    14750 8300
+P 13100 7500
+F 0 "#PWR0150" H 13100 7250 50  0001 C CNN
+F 1 "GNDD" H 13100 7350 50  0000 C CNN
+F 2 "" H 13100 7500 50  0000 C CNN
+F 3 "" H 13100 7500 50  0000 C CNN
+	1    13100 7500
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -2967,12 +2919,12 @@ $EndComp
 $Comp
 L power:GNDD #PWR0148
 U 1 1 61B92C83
-P 14750 7800
-F 0 "#PWR0148" H 14750 7550 50  0001 C CNN
-F 1 "GNDD" H 14750 7650 50  0000 C CNN
-F 2 "" H 14750 7800 50  0000 C CNN
-F 3 "" H 14750 7800 50  0000 C CNN
-	1    14750 7800
+P 15250 7500
+F 0 "#PWR0148" H 15250 7250 50  0001 C CNN
+F 1 "GNDD" H 15250 7350 50  0000 C CNN
+F 2 "" H 15250 7500 50  0000 C CNN
+F 3 "" H 15250 7500 50  0000 C CNN
+	1    15250 7500
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
@@ -3148,6 +3100,148 @@ F 3 "~" H 15250 4250 50  0001 C CNN
 	1    15250 4250
 	1    0    0    -1  
 $EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J109
+U 1 1 61D81420
+P 7550 5150
+F 0 "J109" H 7630 5096 50  0000 L CNN
+F 1 "Conn_01x02" H 7630 5051 50  0001 L CNN
+F 2 "Pin_Headers:Pin_Header_Straight_1x02" H 7550 5150 50  0001 C CNN
+F 3 "" H 7550 5150 50  0001 C CNN
+F 4 "np" H 7550 5150 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 7550 5150 50  0001 C CNN "Link"
+F 6 "np" H 7550 5150 50  0001 C CNN "Manufacturer"
+	1    7550 5150
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J110
+U 1 1 61D82662
+P 7550 5800
+F 0 "J110" H 7468 5567 50  0000 C CNN
+F 1 "Conn_01x02" H 7468 5566 50  0001 C CNN
+F 2 "Pin_Headers:Pin_Header_Straight_1x02" H 7550 5800 50  0001 C CNN
+F 3 "" H 7550 5800 50  0001 C CNN
+F 4 "np" H 7550 5800 50  0001 C CNN "Digi-Key Part No."
+F 5 "np" H 7550 5800 50  0001 C CNN "Link"
+F 6 "np" H 7550 5800 50  0001 C CNN "Manufacturer"
+	1    7550 5800
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	7200 5350 7350 5350
+$Comp
+L power:GNDD #PWR0159
+U 1 1 61E231A9
+P 7350 5150
+F 0 "#PWR0159" H 7350 4900 50  0001 C CNN
+F 1 "GNDD" H 7350 5000 50  0000 C CNN
+F 2 "" H 7350 5150 50  0000 C CNN
+F 3 "" H 7350 5150 50  0000 C CNN
+	1    7350 5150
+	0    1    1    0   
+$EndComp
+$Comp
+L power:GNDD #PWR0161
+U 1 1 61E24881
+P 7350 5800
+F 0 "#PWR0161" H 7350 5550 50  0001 C CNN
+F 1 "GNDD" H 7350 5650 50  0000 C CNN
+F 2 "" H 7350 5800 50  0000 C CNN
+F 3 "" H 7350 5800 50  0000 C CNN
+	1    7350 5800
+	0    1    1    0   
+$EndComp
+Connection ~ 7350 5600
+Wire Wire Line
+	7350 5600 7550 5600
+Wire Wire Line
+	7350 5700 7350 5600
+Wire Wire Line
+	7350 5250 7350 5350
+Connection ~ 7350 5350
+Wire Wire Line
+	7350 5350 7750 5350
+Wire Notes Line
+	16200 8600 12100 8600
+$Comp
+L power:GNDD #PWR0141
+U 1 1 5FC5EC97
+P 14200 7800
+F 0 "#PWR0141" H 14200 7550 50  0001 C CNN
+F 1 "GNDD" H 14200 7650 50  0000 C CNN
+F 2 "" H 14200 7800 50  0000 C CNN
+F 3 "" H 14200 7800 50  0000 C CNN
+	1    14200 7800
+	1    0    0    -1  
+$EndComp
+Text GLabel 13800 7500 0    39   Input ~ 0
+PWDN
+Wire Wire Line
+	13100 7400 13400 7400
+NoConn ~ 14600 7500
+NoConn ~ 14600 7600
+$Comp
+L Device:C_Small C106
+U 1 1 6282EFC3
+P 13400 7600
+F 0 "C106" V 13500 7500 50  0000 L CNN
+F 1 "10uF" V 13300 7500 50  0000 L CNN
+F 2 "Capacitors_SMD:C_0805" H 13400 7600 50  0001 C CNN
+F 3 "http://www.kemet.com/Lists/ProductCatalog/Attachments/53/KEM_C1002_X7R_SMD.pdf" H 13400 7600 50  0001 C CNN
+F 4 "490-5523-1-ND" H 13400 7600 60  0001 C CNN "Digi-Key Part No."
+F 5 "<a href=\"https://www.digikey.com/products/en?keywords=490-5523-1-ND\">Link</a>" H 13400 7600 60  0001 C CNN "Link"
+F 6 "Murata Electronics" V 13400 7600 50  0001 C CNN "Manufacturer"
+F 7 "GRM21BR61E106KA73L" V 13400 7600 50  0001 C CNN "Manufacturer PN"
+F 8 "CAP CER 10UF 25V X5R 0805" V 13400 7600 50  0001 C CNN "Description"
+F 9 "C15850" V 13400 7600 50  0001 C CNN "LCSC Part Number"
+	1    13400 7600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	13400 7500 13400 7400
+Connection ~ 13400 7400
+Wire Wire Line
+	13400 7400 13800 7400
+$Comp
+L power:GNDD #PWR0162
+U 1 1 6285698F
+P 13400 7700
+F 0 "#PWR0162" H 13400 7450 50  0001 C CNN
+F 1 "GNDD" H 13400 7550 50  0000 C CNN
+F 2 "" H 13400 7700 50  0000 C CNN
+F 3 "" H 13400 7700 50  0000 C CNN
+	1    13400 7700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Power_Management:TPS22810DBVT U106
+U 1 1 62908C33
+P 14200 7500
+F 0 "U106" H 14200 7867 50  0000 C CNN
+F 1 "TPS22810DBVT" H 14200 7776 50  0000 C CNN
+F 2 "TO_SOT_Packages_SMD:SOT-23-6" H 14200 6800 50  0001 C CNN
+F 3 "http://www.ti.com/lit/ds/symlink/tps22810.pdf" H 14200 7500 50  0001 C CNN
+F 4 "296-45304-1-ND" H 14200 7500 50  0001 C CNN "Digi-Key Part No."
+F 5 "Texas Instruments" H 14200 7500 50  0001 C CNN "Manufacturer"
+F 6 "TPS22810DBVT" H 14200 7500 50  0001 C CNN "Manufacturer PN"
+F 7 "<a href=\"https://www.digikey.com/products/en?keywords=296-45304-1-ND\">Link</a>" H 14200 7500 50  0001 C CNN "Link"
+F 8 "Power Switch/Driver 1:1 N-Channel 2A SOT-23-6" H 14200 7500 50  0001 C CNN "Description"
+F 9 "C2680364" H 14200 7500 50  0001 C CNN "LCSC Part Number"
+	1    14200 7500
+	1    0    0    -1  
+$EndComp
 Wire Bus Line
 	6150 4000 6150 6700
+$Comp
+L power:PWR_FLAG #FLG0107
+U 1 1 62C75AB7
+P 13400 7400
+F 0 "#FLG0107" H 13400 7475 50  0001 C CNN
+F 1 "PWR_FLAG" H 13400 7573 50  0000 C CNN
+F 2 "" H 13400 7400 50  0001 C CNN
+F 3 "~" H 13400 7400 50  0001 C CNN
+	1    13400 7400
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
