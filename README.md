@@ -9,6 +9,7 @@ Consult the <a href="https://docs.google.com/document/d/12K_Gxl0QbTVqAUzWxVBv87l
 
 ![Docs/Arducon1.png](Docs/Arducon1.png)
 
+<b>Want to change the hardware design, or modify the software. Everything you need is provided in the following folders: </b>
 <b>KiCad</b>
 
 The KiCad folder holds files for generating the schematic, BOM, and PCB files using KiCad. On an OS X system the kicad directory should be placed in ~/Documents/GitHub/Arducon.
