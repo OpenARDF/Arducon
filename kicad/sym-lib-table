@@ -1,5 +1,7 @@
 (sym_lib_table
-  (lib (name Arducon-rescue)(type Legacy)(uri ${KIPRJMOD}/Arducon-rescue.lib)(options "")(descr ""))
-  (lib (name special)(type Legacy)(uri "/Library/Application Support/kicad/library/special.lib")(options "")(descr "")(disabled))
-  (lib (name Two-band-Tx)(type Legacy)(uri "/Library/Application Support/kicad/library/ARDF_2-Band_MiniTx-cache.lib")(options "")(descr "")(disabled))
+  (lib (name "Arducon-rescue")(type "KiCad")(uri "${KIPRJMOD}/Arducon-rescue.kicad_sym")(options "")(descr ""))
+  (lib (name "special")(type "KiCad")(uri "/Library/Application Support/kicad/library/special.kicad_sym")(options "")(descr ""))
+  (lib (name "Two-band-Tx")(type "KiCad")(uri "/Library/Application Support/kicad/library/ARDF_2-Band_MiniTx-cache.kicad_sym")(options "")(descr ""))
+  (lib (name "RF Arducon")(type "KiCad")(uri "/Users/Charles/Documents/GitHub/Arducon/KiCad/Arducon-rescue.kicad_sym")(options "")(descr ""))
+  (lib (name "Misc Arducon")(type "KiCad")(uri "/Users/Charles/Documents/GitHub/Arducon/KiCad/Arducon-cache.kicad_sym")(options "")(descr ""))
 )
