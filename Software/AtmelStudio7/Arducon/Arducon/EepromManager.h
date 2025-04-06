@@ -33,6 +33,8 @@
 
 #include <time.h>
 
+// Set version information here
+
 #if INCLUDE_RV3028_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */

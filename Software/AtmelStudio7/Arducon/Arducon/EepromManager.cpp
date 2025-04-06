@@ -42,7 +42,6 @@
 #include <math.h>
 #endif  /* ATMEL_STUDIO_7 */
 
-/* Set Firmware Version Here */
 const char PRODUCT_NAME_LONG[] PROGMEM = PRODUCT_NAME_LONG_TXT;
 const char HELP_TEXT[] PROGMEM = HELP_TEXT_TXT;
 const char TEXT_SET_TIME[] PROGMEM = TEXT_SET_TIME_TXT;
