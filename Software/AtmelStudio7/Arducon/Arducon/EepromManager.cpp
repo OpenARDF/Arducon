@@ -83,17 +83,6 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .rv3028_offset = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
-	/* .textVersion = */ "\0",
-	/* .textHelp = */ "\0",
-	/* .textSetTime = */ "\0",
-	/* .textSetStart = */ "\0",
-	/* .textSetFinish = */ "\0",
-	/* .textSetID = */ "\0",
-	/* .textErrFinishB4Start = */ "\0",
-	/* .textErrFinishInPast = */ "\0",
-	/* .textErrStartInPast = */ "\0",
-	/* .textErrInvalidTime = */ "\0",
-	/* .textErrTimeInPast = */ "\0",
 	/* .stationID_text = */ "\0",
 
 	/* .dataModulation = */ { 0 },
@@ -264,7 +253,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 
 void EepromManager::sendEEPROMString(EE_var_t v)
 {
-	char* ee_addr = NULL;
+	const char* fl_addr = NULL;
 
 	if(!lb_enabled())
 	{
@@ -275,68 +264,68 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 	{
 		case TextVersion:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textVersion[0]);
+			fl_addr = PRODUCT_NAME_LONG;
 		}
 		break;
 
 		case TextHelp:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textHelp[0]);
+			fl_addr = HELP_TEXT;
 		}
 		break;
 
 		case TextSetTime:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetTime[0]);
+			fl_addr = TEXT_SET_TIME;
 		}
 		break;
 
 		case TextSetStart:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetStart[0]);
+			fl_addr = TEXT_SET_START;
 		}
 		break;
 
 		case TextSetFinish:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetFinish[0]);
+			fl_addr = TEXT_SET_FINISH;
 		}
 		break;
 
 		case TextSetID:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetID[0]);
+			fl_addr = TEXT_SET_ID;
 		}
 		break;
 
 		case TextErrFinishB4Start:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrFinishB4Start[0]);
+			fl_addr = TEXT_ERR_FINISH_BEFORE_START;
 
 		}
 		break;
 
 		case TextErrFinishInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrFinishInPast[0]);
+			fl_addr = TEXT_ERR_FINISH_IN_PAST;
 		}
 		break;
 
 		case TextErrStartInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrStartInPast[0]);
+			fl_addr = TEXT_ERR_START_IN_PAST;
 		}
 		break;
 
 		case TextErrInvalidTime:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrInvalidTime[0]);
+			fl_addr = TEXT_ERR_INVALID_TIME;
 		}
 		break;
 
 		case TextErrTimeInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrTimeInPast[0]);
+			fl_addr = TEXT_ERR_TIME_IN_PAST;
 		}
 		break;
 
@@ -347,14 +336,14 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 		break;
 	}
 
-	if(ee_addr)
+	if(fl_addr)
 	{
-		char c = eeprom_read_byte((uint8_t*)ee_addr++);
+		char c = pgm_read_byte(fl_addr++);
 
 		while(c)
 		{
 			lb_echo_char(c);
-			c = eeprom_read_byte((uint8_t*)(ee_addr++));
+			c = pgm_read_byte(fl_addr++);
 
 			while(linkbusTxInProgress())
 			{
@@ -541,105 +530,6 @@ BOOL EepromManager::initializeEEPROMVars(void)
 	{
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), pgm_read_byte(&DATA_MODULATION_DEFAULTS[i]));
 	}
-
-		/* Software Version String */
-		for(i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++)
-		{
-			uint8_t byteval = pgm_read_byte(PRODUCT_NAME_LONG + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textVersion[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textVersion[i]), 0);
-
-		/* Help String */
-		for(i = 0; i < strlen_P(HELP_TEXT); i++)
-		{
-			uint8_t byteval = pgm_read_byte(HELP_TEXT + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textHelp[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textHelp[i]), 0);
-
-		/* Set ID String */
-		for(i = 0; i < strlen_P(TEXT_SET_ID); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_ID + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetID[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetID[i]), 0);
-
-		/* Set Time String */
-		for(i = 0; i < strlen_P(TEXT_SET_TIME); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_TIME + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetTime[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetTime[i]), 0);
-
-		/* Set Start String */
-		for(i = 0; i < strlen_P(TEXT_SET_START); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_START + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetStart[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetStart[i]), 0);
-
-		/* Set Finish String */
-		for(i = 0; i < strlen_P(TEXT_SET_FINISH); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_FINISH + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetFinish[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetFinish[i]), 0);
-
-		/* Set Err Finish in Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_FINISH_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishInPast[i]), 0);
-
-		/* Set Err Start in Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_START_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_START_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrStartInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrStartInPast[i]), 0);
-
-		/* Set Err Finish Before Start String */
-		for(i = 0; i < strlen_P(TEXT_ERR_FINISH_BEFORE_START); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_BEFORE_START + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishB4Start[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishB4Start[i]), 0);
-
-		/* Set Err Invalid Time String */
-		for(i = 0; i < strlen_P(TEXT_ERR_INVALID_TIME); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_INVALID_TIME + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrInvalidTime[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrInvalidTime[i]), 0);
-
-		/* Set Err Time In Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_TIME_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_TIME_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrTimeInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrTimeInPast[i]), 0);
 
 		/* Done */
 

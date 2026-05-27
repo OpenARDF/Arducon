@@ -79,17 +79,6 @@ struct EE_prom
 	int16_t rv3028_offset;
 	time_t event_start_epoch;
 	time_t event_finish_epoch;
-	char textVersion[sizeof(PRODUCT_NAME_LONG_TXT)];
-	char textHelp[sizeof(HELP_TEXT_TXT)];
-	char textSetTime[sizeof(TEXT_SET_TIME_TXT)];
-	char textSetStart[sizeof(TEXT_SET_START_TXT)];
-	char textSetFinish[sizeof(TEXT_SET_FINISH_TXT)];
-	char textSetID[sizeof(TEXT_SET_ID_TXT)];
-	char textErrFinishB4Start[sizeof(TEXT_ERR_FINISH_BEFORE_START_TXT)];
-	char textErrFinishInPast[sizeof(TEXT_ERR_FINISH_IN_PAST_TXT)];
-	char textErrStartInPast[sizeof(TEXT_ERR_START_IN_PAST_TXT)];
-	char textErrInvalidTime[sizeof(TEXT_ERR_INVALID_TIME_TXT)];
-	char textErrTimeInPast[sizeof(TEXT_ERR_TIME_IN_PAST_TXT)];
 	char stationID_text[MAX_PATTERN_TEXT_LENGTH + 1];
 
 	uint8_t dataModulation[SIZE_OF_DATA_MODULATION];
