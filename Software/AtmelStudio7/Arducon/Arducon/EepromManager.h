@@ -68,8 +68,6 @@
 #define TEXT_ERR_INVALID_TIME_TXT "Err: Invalid time!\n"
 #define TEXT_ERR_TIME_IN_PAST_TXT "Err: Time in past!\n"
 
-#define TEXT_EEPROM_SUCCESS_MESSAGE_TXT "Success! EEPROM has been programmed. Program is done.\n"
-
 struct EE_prom
 {
 	uint16_t eeprom_initialization_flag;
@@ -138,7 +136,6 @@ EepromManager();
 static const struct EE_prom ee_vars;
 
 //void initEEPROMStrings(void);
-void dumpEEPROMVars(void);
 BOOL initializeEEPROMVars(void);
 BOOL readNonVols(void);
 void send_Help(void);
@@ -147,18 +144,12 @@ void updateEEPROMVar(EE_var_t v, void* val);
 uint16_t readTemperatureTable(int i);
 void resetEEPROMValues(void);
 
-#if INIT_EEPROM_ONLY
-	void sendSuccessString(void);
-#endif  /* INIT_EEPROM_ONLY */
 
 protected:
 private:
 EepromManager( const EepromManager &c );
 EepromManager& operator=( const EepromManager &c );
 BOOL eepromLayoutIsCurrent(void);
-#if INIT_EEPROM_ONLY
-	void sendPROGMEMString(const char* fl_addr);
-#endif  /* INIT_EEPROM_ONLY */
 
 };  /*EepromManager */
 

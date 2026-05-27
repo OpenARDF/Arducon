@@ -34,16 +34,6 @@
 #endif
 
 /***********************************************************
- * LEGACY DIAGNOSTIC BUILD:                                 *
- * The normal firmware initializes EEPROM on first boot when *
- * the EEPROM marker is missing or the layout version        *
- * changes. Leave this FALSE for production builds.          */
-/***********************************************************/
-#define INIT_EEPROM_ONLY FALSE
-/***********************************************************/
-
-
-/***********************************************************
  * Uncomment the correct frequency for the Arduino Pro Mini *
  * you will be using                                        */
 /***********************************************************/

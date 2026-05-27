@@ -36,10 +36,8 @@
 
 #include "EepromManager.h"
 
-#if !INIT_EEPROM_ONLY
 #include "Goertzel.h"
 #include "f1975.h"
-#endif  /* INIT_EEPROM_ONLY */
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/io.h>
@@ -72,9 +70,7 @@ volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
 volatile int g_dtmf_error_countdown = 0;
 
-#if !INIT_EEPROM_ONLY
 	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
-#endif  /* !INIT_EEPROM_ONLY */
 
 volatile BOOL g_callsign_sent = TRUE;
 
@@ -151,7 +147,6 @@ volatile uint8_t g_temperature_check_countdown = 0;
 volatile uint8_t g_voltage_check_countdown = 0;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
-#if !INIT_EEPROM_ONLY
 	const int N = Goertzel_N;
 	const float threshold = 500000. * (Goertzel_N / 100);
 	const float sampling_freq = SAMPLE_RATE;
@@ -160,7 +155,6 @@ volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 #ifdef DEBUG_DTMF
 		const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 #endif  /* DEBUG_DTMF */
-#endif  /* !INIT_EEPROM_ONLY */
 
 char g_lastKey = '\0';
 volatile unsigned long g_tick_count = 0;
@@ -168,9 +162,7 @@ volatile unsigned int g_tone_duration_ticks = 0;
 volatile unsigned int g_LED_Enunciation_holdoff = 0;
 volatile unsigned long g_DTMF_sentence_in_progress_ticks = 0;
 
-#if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
-#endif  /* INIT_EEPROM_ONLY */
 
 char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
@@ -200,10 +192,8 @@ void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
 
-#if !INIT_EEPROM_ONLY
 	BOOL processDTMFdetection(DTMF_key_t key);
 	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
-#endif  /* !INIT_EEPROM_ONLY */
 
 #ifdef ATMEL_STUDIO_7
 	void loop(void);
@@ -280,9 +270,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		PORTB &= 0xC0;
 #endif  /* !SUPPORT_ONLY_80M */
 
-#if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                                 /* Must happen after pins are configured due to I2C access */
-#else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
 		if(eepromErr)
@@ -294,7 +281,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 			}
 		}
 		setUpSampling(AUDIO_SAMPLING, TRUE);
-#endif
 
 	cli();
 
@@ -370,24 +356,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
-#if INIT_EEPROM_ONLY
-		RTC_1s_sqw(ON);
-
-		if(eepromErr)
-		{
-			lb_send_string((char*)"EEPROM Erase Error!\n", TRUE);
-		}
-		else
-		{
-			ee_mgr.sendSuccessString();
-		}
-
-		digitalWrite(PIN_LED, ON); /* Turn the LED constantly on */
-		while(1) /* Wait forever */
-		{
-			;
-		}
-#else
 		if(eepromErr)
 		{
 			lb_send_string((char*)"EEPROM Error!\n", TRUE);
@@ -399,9 +367,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		RTC_1s_sqw(ON);
 #endif
 
-#endif  /* !INIT_EEPROM_ONLY */
 
-#if !INIT_EEPROM_ONLY
 		ee_mgr.send_Help();
 
 #if INCLUDE_RV3028_SUPPORT
@@ -431,7 +397,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		reportConfigErrors();
 		lb_send_NewPrompt();
 
-#endif  /* #if INIT_EEPROM_ONLY */
 
 	startEventNow(POWER_UP);
 
@@ -532,12 +497,10 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
  ************************************************************************/
 ISR(ADC_vect)
 {
-#if !INIT_EEPROM_ONLY
 		if(g_goertzel.DataPoint(ADCH))
 		{
 			ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 		}
-#endif /* INIT_EEPROM_ONLY */
 }
 
 
@@ -1044,7 +1007,6 @@ ISR( TIMER2_COMPB_vect )
 }                                               /* End of Timer 2 ISR */
 
 
-#if !INIT_EEPROM_ONLY
 /***********************************************************************
  *  Handle RTC 1-second interrupts
  **********************************************************************/
@@ -1252,7 +1214,6 @@ ISR( TIMER2_COMPB_vect )
 			}
 		}
 	}                                   /* end of INT0 ISR */
-#endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
  *  Timer0 interrupt generates a square wave audio tone on the audio out pin.
@@ -1284,7 +1245,6 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 	ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 	{
-#if !INIT_EEPROM_ONLY
 			if(g_AM_enabled)
 			{
 				static uint8_t index = 0;
@@ -1322,7 +1282,6 @@ ISR(TIMER0_COMPA_vect)
 					}
 				}
 			}
-#endif  /* INIT_EEPROM_ONLY */
 	}
 #endif  /* !SUPPORT_ONLY_80M */
 
@@ -1333,7 +1292,6 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 void loop()
 {
-#if !INIT_EEPROM_ONLY
 		int8_t dtmfX = -1;
 		int8_t dtmfY = -1;
 		float largestX;
@@ -1356,7 +1314,6 @@ void loop()
 		}
 
 		dtmfEntryError = processDTMFdetection(NO_KEY);
-#endif  /* !INIT_EEPROM_ONLY */
 
 	handleLinkBusMsgs();
 
@@ -1365,7 +1322,6 @@ void loop()
 #endif /* TRANQUILIZE_WATCHDOG */
 
 
-#if !INIT_EEPROM_ONLY
 		if(!dtmfEntryError)
 		{
 			if(g_goertzel.SamplesReady())
@@ -1669,7 +1625,6 @@ void loop()
 			digitalWrite(PIN_LED, OFF); /* ensure LED is off */
 		}
 	}
-#endif  /* !INIT_EEPROM_ONLY */
 }
 
 
@@ -2121,7 +2076,7 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
-#if !INIT_EEPROM_ONLY && !SUPPORT_ONLY_80M
+#if !SUPPORT_ONLY_80M
 					else if(lb_buff->fields[FIELD1][0] == 'Z')
 					{
 						cli();
@@ -2130,7 +2085,7 @@ void handleLinkBusMsgs()
 						setAtten(0);
 						sei();
 					}
-#endif /* INIT_EEPROM_ONLY */
+#endif /* !SUPPORT_ONLY_80M */
 
 				sprintf(g_tempStr, "T=%dC\n", g_temperature);
 				lb_send_string(g_tempStr, TRUE);
@@ -2194,7 +2149,6 @@ void enterBootloaderUpdateMode(void)
 	}
 }
 
-#if !INIT_EEPROM_ONLY
 
 /*
  *   Command set:
@@ -2849,7 +2803,6 @@ void enterBootloaderUpdateMode(void)
 		return(entryError);
 	}
 
-#endif  /* #if !INIT_EEPROM_ONLY */
 
 
 void setupForFox(Fox_t* fox, EventAction_t action)
@@ -3414,9 +3367,6 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 {
 	BOOL enableAM = TRUE;
 
-#if INIT_EEPROM_ONLY
-	if(value) enableAM = FALSE; /* Remove compiler warning */
-#else
 	switch(value)
 	{
 		case AM_DISABLED:
@@ -3514,7 +3464,6 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 
 	g_AM_enabled = enableAM;
 	sei();
-#endif  /* INIT_EEPROM_ONLY */
 	return(enableAM);
 }
 

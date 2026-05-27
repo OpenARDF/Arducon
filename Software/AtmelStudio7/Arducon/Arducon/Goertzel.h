@@ -33,7 +33,6 @@
 /* include types & constants of Wiring core API */
 #include "defs.h"
 
-#if !INIT_EEPROM_ONLY
 
 #ifdef ATMEL_STUDIO_7
 #include "ardooweeno.h"
@@ -69,6 +68,5 @@ void ProcessSample(int);
 void ResetGoertzel(void);
 };
 
-#endif // !INIT_EEPROM_ONLY
 
 #endif
