@@ -23,6 +23,7 @@ if([string]::IsNullOrWhiteSpace($BootloaderHexPath))
 {
     $BootloaderHexPath = Join-Path $repoRoot 'Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex'
 }
+$bootloaderSourceDir = Join-Path $repoRoot 'Bootloaders/optiboot-atmega328p-arduino-1.8.6'
 
 function Get-DefineString {
     param(
@@ -175,16 +176,25 @@ $files = @()
 $files += Copy-PackageFile -SourcePath $HexPath -DestinationPath $updatePath -Kind 'update' -Purpose 'Application HEX for normal bootloader updates.'
 
 $bootloaderFile = ''
+$bootloaderSourceFile = ''
 $bootloaderSummary = $null
 if(-not (Test-Path -LiteralPath $BootloaderHexPath))
 {
     throw "Bootloader HEX not found: $BootloaderHexPath"
+}
+if(-not (Test-Path -LiteralPath $bootloaderSourceDir))
+{
+    throw "Bootloader source directory not found: $bootloaderSourceDir"
 }
 $bootloaderFile = 'Arducon-Bootloader-Optiboot-ATmega328P.hex'
 $bootloaderPath = Join-Path $OutputDir $bootloaderFile
 $files += Copy-PackageFile -SourcePath $BootloaderHexPath -DestinationPath $bootloaderPath -Kind 'bootloader' -Purpose 'Reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.'
 $bootloaderImage = Get-IntelHexBytes -Path $bootloaderPath
 $bootloaderSummary = Get-HexAddressSummary -Image $bootloaderImage
+$bootloaderSourceFile = 'Arducon-Bootloader-Optiboot-ATmega328P-Source.zip'
+$bootloaderSourcePath = Join-Path $OutputDir $bootloaderSourceFile
+Compress-Archive -Path (Join-Path $bootloaderSourceDir '*') -DestinationPath $bootloaderSourcePath -Force
+$files += Copy-PackageFile -SourcePath $bootloaderSourcePath -DestinationPath $bootloaderSourcePath -Kind 'bootloader-source' -Purpose 'Corresponding source and notices for the bundled Optiboot bootloader.'
 
 $image = Get-IntelHexBytes -Path $updatePath
 $updateSummary = Get-HexAddressSummary -Image $image
@@ -203,6 +213,7 @@ $manifest = [pscustomobject]@{
     }
     bootloader = [pscustomobject]@{
         fileName = $bootloaderFile
+        sourceArchiveFileName = $bootloaderSourceFile
         sourcePackage = 'arduino:avr@1.8.6'
         sourceFile = 'optiboot/optiboot_atmega328.hex'
         protocol = 'stk500v1'
@@ -243,6 +254,7 @@ Arducon $friendlyVersion ATmega328P firmware package
 Files:
 - ${updateFile}: application HEX for normal bootloader updates.
 - ${bootloaderFile}: reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.
+- ${bootloaderSourceFile}: corresponding source and notices for the bundled Optiboot bootloader.
 - ${manifestFile}: machine-readable update metadata.
 - ${checksumsFile}: SHA-256 checksums.
 

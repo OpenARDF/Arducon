@@ -20,4 +20,4 @@ Selection rationale:
 
 The application must remain below `0x7E00`; `check-firmware-size.ps1` enforces that limit.
 
-License note: the copied Optiboot source states GPL version 2 or later. Keep the source files with the HEX artifact so the bootloader binary is traceable.
+License note: the copied Optiboot source states GPL version 2 or later. Keep the source files with the HEX artifact so the bootloader binary is traceable. Release packages include a source archive beside the bootloader HEX for the same reason.

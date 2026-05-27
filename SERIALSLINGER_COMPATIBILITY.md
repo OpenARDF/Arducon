@@ -33,7 +33,7 @@ The Arducon bootloader can be provisioned and updated by tools that speak Optibo
 
 ## Compatibility Options
 
-### Preferred Path
+### Selected Path
 
 Add product-aware firmware-update support to SerialSlinger:
 
@@ -47,7 +47,9 @@ Add product-aware firmware-update support to SerialSlinger:
 
 This preserves a standard ATmega328P bootloader and keeps chip-specific updater logic out of Arducon firmware.
 
-### Alternative Path
+Licensing note: the vendored Optiboot source states GPL version 2 or later. Arducon keeps the copied source beside the HEX artifact, and release packages include a bootloader source archive beside the bootloader HEX.
+
+### Rejected Alternative
 
 Replace Optiboot with a small ATmega328P bootloader that speaks the SignalSlinger custom protocol.
 
