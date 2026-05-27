@@ -3,10 +3,19 @@
 ## Everyday Expectations
 
 - Before making firmware or workflow changes, state the current git branch to the user.
+- At the start of cross-environment work, fetch the current branch and read `CODEX_MAILBOX.md` before making changes.
 - Prefer `rg` for text search and `rg --files` or `fd` for file discovery.
 - Keep commits scoped. Do not include KiCad cache/session files, backup archives, or generated firmware outputs unless explicitly requested.
 - Treat the Atmel Studio 7 project under `Software/AtmelStudio7/Arducon` as the maintained firmware path.
 - The Arduino IDE source tree is legacy context only while bootloader cleanup is in progress.
+
+## Codex Mailbox
+
+- Use `CODEX_MAILBOX.md` for handoffs between Mac Codex and Windows Codex.
+- Address each message to the intended recipient and include author, date, branch, commits, validation results, and any local worktree caveats.
+- Preserve active messages from the other Codex until they are no longer needed.
+- Remove or replace your own older mailbox messages when they have been superseded.
+- Commit and push after writing or materially updating a mailbox message so the other environment can fetch it.
 
 ## Build And Verification
 
