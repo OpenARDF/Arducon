@@ -155,7 +155,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 			char c = *char_addr++;
 			int i = 0;
 
-			while(c)
+			while(c && (i < MAX_PATTERN_TEXT_LENGTH))
 			{
 				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]), (uint8_t)c);
 				c = *char_addr++;
@@ -389,6 +389,7 @@ BOOL EepromManager::readNonVols(void)
 				break;
 			}
 		}
+		g_messages_text[STATION_ID][MAX_PATTERN_TEXT_LENGTH] = '\0';
 
 		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
 		{
@@ -398,6 +399,7 @@ BOOL EepromManager::readNonVols(void)
 				break;
 			}
 		}
+		g_unlockCode[MAX_UNLOCK_CODE_LENGTH] = '\0';
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)    /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
@@ -532,7 +534,7 @@ BOOL EepromManager::initializeEEPROMVars(void)
 		for(i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
 			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.temperature_table[i]), val);
+			eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.temperature_table[i]), val);
 		}
 
 	for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
