@@ -73,6 +73,7 @@
 struct EE_prom
 {
 	uint16_t eeprom_initialization_flag;
+	uint16_t eeprom_layout_version;
 	uint16_t temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 	int16_t atmega_temp_calibration;
 	int16_t rv3028_offset;
@@ -165,6 +166,7 @@ protected:
 private:
 EepromManager( const EepromManager &c );
 EepromManager& operator=( const EepromManager &c );
+BOOL eepromLayoutIsCurrent(void);
 #if INIT_EEPROM_ONLY
 	void sendPROGMEMString(const char* fl_addr);
 #endif  /* INIT_EEPROM_ONLY */

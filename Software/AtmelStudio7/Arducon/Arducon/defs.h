@@ -401,6 +401,7 @@ typedef enum
 /******************************************************
  * EEPROM definitions */
 #define EEPROM_INITIALIZED_FLAG 0x00BB  /* Never set to 0xFFFF */
+#define EEPROM_LAYOUT_VERSION 0x0001    /* Increment when EEPROM layout/defaults intentionally reset old contents */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_START_TIME_DEFAULT 0

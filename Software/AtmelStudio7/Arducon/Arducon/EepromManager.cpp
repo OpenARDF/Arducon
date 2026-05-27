@@ -69,6 +69,7 @@ const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_T
 const struct EE_prom EEMEM EepromManager::ee_vars =
 {
 	/* .eeprom_initialization_flag = */ 0,
+	/* .eeprom_layout_version = */ 0,
 	/* .temperature_table = */ { 0 },
 	/* .atmega_temp_calibration = */ 0,
 	/* .rv3028_offset = */ 0,
@@ -359,9 +360,8 @@ BOOL EepromManager::readNonVols(void)
 {
 	BOOL failure = TRUE;
 	uint16_t i;
-	uint16_t initialization_flag = eeprom_read_word(&(EepromManager::ee_vars.eeprom_initialization_flag));
 
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
+	if(eepromLayoutIsCurrent())  /* EEPROM is initialized and matches this firmware layout */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
@@ -406,6 +406,14 @@ BOOL EepromManager::readNonVols(void)
 	}
 
 	return( failure);
+}
+
+BOOL EepromManager::eepromLayoutIsCurrent(void)
+{
+	uint16_t initialization_flag = eeprom_read_word(&(EepromManager::ee_vars.eeprom_initialization_flag));
+	uint16_t layout_version = eeprom_read_word(&(EepromManager::ee_vars.eeprom_layout_version));
+
+	return((initialization_flag == EEPROM_INITIALIZED_FLAG) && (layout_version == EEPROM_LAYOUT_VERSION));
 }
 
 #if INIT_EEPROM_ONLY
@@ -625,6 +633,7 @@ BOOL EepromManager::readNonVols(void)
 
 		/* Done */
 
+		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_layout_version), EEPROM_LAYOUT_VERSION);
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
 
 		return(err);
@@ -772,4 +781,3 @@ uint16_t EepromManager::readTemperatureTable(int i)
 {
 	return( (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i])));
 }
-
