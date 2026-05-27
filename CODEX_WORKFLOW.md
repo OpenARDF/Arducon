@@ -7,7 +7,7 @@
 - Prefer `rg` for text search and `rg --files` or `fd` for file discovery.
 - Keep commits scoped. Do not include KiCad cache/session files, backup archives, or generated firmware outputs unless explicitly requested.
 - Treat the Atmel Studio 7 project under `Software/AtmelStudio7/Arducon` as the maintained firmware path.
-- The Arduino IDE source tree is legacy context only while bootloader cleanup is in progress.
+- Arduino IDE builds are no longer supported.
 
 ## Codex Mailbox
 
@@ -38,7 +38,7 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 
 ## Generated And Hand-Maintained Files
 
-- Hand-maintained firmware files include `main.cpp`, `defs.h`, `EepromManager.*`, `linkbus.*`, `Goertzel.*`, `morse.*`, `f1975.*`, RTC helpers, and the root PowerShell workflow scripts.
+- Hand-maintained firmware files include the source files under `Software/AtmelStudio7/Arducon/Arducon` and the root PowerShell workflow scripts.
 - Treat `Debug\*`, `Release\*`, `.elf`, `.hex`, `.eep`, `.lss`, `.srec`, `.o`, `.d`, and `.map` as generated build output.
 - Treat `tmp\cli-release\*` as generated output from the repo-owned CLI Release build.
 - Existing checked-in generated artifacts are historical; do not remove them until a separate cleanup verifies reproducible builds.

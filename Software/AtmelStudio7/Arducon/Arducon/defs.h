@@ -176,7 +176,7 @@
 #endif
 
 /*
- *  Arduino Pro Mini pin definitions per Arduino IDE
+ *  Arduino Pro Mini pin definitions
  */
 #define D2 2
 #define D3 3

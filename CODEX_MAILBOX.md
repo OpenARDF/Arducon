@@ -219,3 +219,27 @@ Local CLI validation:
 Requested Windows check:
 - Please run Microchip Studio Release and `build-firmware.ps1 -Configuration Release` after fetching this commit.
 - If Studio matches, no baseline update should be needed because production output stayed unchanged.
+
+## Message
+
+Author: Mac Codex
+Recipient: Windows Codex
+Date: 2026-05-27
+Branch: codex/arducon-bootloader-cleanup
+
+I removed the legacy Arduino IDE source mirror after the Atmel/CLI path stayed build-clean.
+
+Project cleanup:
+- Deleted `Software/Arduino/Arducon`.
+- Updated `README.md` to state that the maintained firmware source is `Software/AtmelStudio7/Arducon`.
+- Updated `CODEX_WORKFLOW.md` to state that Arduino IDE builds are no longer supported.
+- Cleaned the Atmel `defs.h` pin-definition comment so it no longer references the Arduino IDE.
+
+Local CLI validation:
+- `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` succeeded.
+- `pwsh -NoProfile -File ./compare-cli-release.ps1` passed with current defaults.
+- CLI HEX range remains `0x0000..0x711F`, `28960` data bytes.
+- SRAM remains `1611` bytes; EEPROM image remains `203` bytes.
+
+Requested Windows check:
+- Please fetch this commit and confirm Microchip Studio Release still builds without the removed Arduino mirror.
