@@ -285,6 +285,14 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 #else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
+		if(eepromErr)
+		{
+			eepromErr = ee_mgr.initializeEEPROMVars();
+			if(!eepromErr)
+			{
+				eepromErr = ee_mgr.readNonVols();
+			}
+		}
 		setUpSampling(AUDIO_SAMPLING, TRUE);
 #endif
 

@@ -58,6 +58,14 @@ const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = TEXT_ERR_TIME_IN_PAST_TXT;
 const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_TXT;
 #endif // INIT_EEPROM_ONLY
 
+static const uint8_t DATA_MODULATION_DEFAULTS[SIZE_OF_DATA_MODULATION] PROGMEM =
+{
+	31, 31, 29, 27, 24, 21, 17, 14,
+	10, 8, 5, 3, 2, 1, 1, 0,
+	0, 0, 1, 1, 2, 3, 5, 7,
+	10, 13, 17, 20, 24, 27, 29, 31
+};
+
 /***********************************************************************
  * Global Variables & String Constants
  *
@@ -447,34 +455,35 @@ BOOL EepromManager::eepromLayoutIsCurrent(void)
 			}
 		}
 	}
+#endif  /* INIT_EEPROM_ONLY */
 
 /*
- * Set volatile variables to their values stored in EEPROM
+ * Initialize EEPROM defaults and mirror mutable defaults into RAM.
  */
-	BOOL EepromManager::initializeEEPROMVars(void)
-	{
-		BOOL err = FALSE;
-		uint16_t i;
+BOOL EepromManager::initializeEEPROMVars(void)
+{
+	BOOL err = FALSE;
+	uint16_t i;
 
 #ifndef ATMEL_STUDIO_7
-			/* Erase full EEPROM */
-			for(i = 0; i < 0x0400; i++)
-			{
-				eeprom_write_byte((uint8_t*)i, 0xFF);
-			}
+		/* Erase full EEPROM */
+		for(i = 0; i < 0x0400; i++)
+		{
+			eeprom_write_byte((uint8_t*)i, 0xFF);
+		}
 
-			for(i = 0; i < 0x0400; i++)
+		for(i = 0; i < 0x0400; i++)
+		{
+			uint8_t x = eeprom_read_byte((const uint8_t*)i);
+			if(x != 0xFF)
 			{
-				uint8_t x = eeprom_read_byte((const uint8_t*)i);
-				if(x != 0xFF)
-				{
-					err = TRUE;
-				}
+				err = TRUE;
 			}
+		}
 #endif  /* !ATMEL_STUDIO_7 */
 
-		g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
+	g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
 
 		g_fox = EEPROM_FOX_SETTING_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting), g_fox);
@@ -526,11 +535,10 @@ BOOL EepromManager::eepromLayoutIsCurrent(void)
 			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.temperature_table[i]), val);
 		}
 
-		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
-		{
-			float val = 5.5 * squaref((1.4 + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196))); /* Set maximum attenuation to fall at index 0 */
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
-		}
+	for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
+	{
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), pgm_read_byte(&DATA_MODULATION_DEFAULTS[i]));
+	}
 
 		/* Software Version String */
 		for(i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++)
@@ -636,9 +644,10 @@ BOOL EepromManager::eepromLayoutIsCurrent(void)
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_layout_version), EEPROM_LAYOUT_VERSION);
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
 
-		return(err);
-	}
+	return(err);
+}
 
+#if INIT_EEPROM_ONLY
 	void EepromManager::dumpEEPROMVars(void)
 	{
 		uint8_t byt;

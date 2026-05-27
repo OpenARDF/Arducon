@@ -34,11 +34,10 @@
 #endif
 
 /***********************************************************
- * IMPORTANT:                                               *
- * Compile for initializing EEPROM values                   *
- * Note: Build and run with the following compilation flag  *
- *       set to TRUE. Then build and run with the flag      *
- *       set to FALSE.                                      */
+ * LEGACY DIAGNOSTIC BUILD:                                 *
+ * The normal firmware initializes EEPROM on first boot when *
+ * the EEPROM marker is missing or the layout version        *
+ * changes. Leave this FALSE for production builds.          */
 /***********************************************************/
 #define INIT_EEPROM_ONLY FALSE
 /***********************************************************/
@@ -54,9 +53,8 @@
 
 
 /*************************************************************************
- * IMPORTANT: CHANGING ANY COMPILE SETTINGS BELOW THIS LINE WILL REQUIRE  *
- * BUILDING AND RUNNING THE PROGRAM WITH INIT_EEPROM_ONLY TRUE,           *
- * AND THEN BUILDING AND RUNNING THE PROGRAM WITH INIT_EEPROM_ONLY FALSE. */
+ * IMPORTANT: Changing persisted defaults or EEPROM-backed settings below  *
+ * this line may require incrementing EEPROM_LAYOUT_VERSION.               */
 /*************************************************************************/
 
 

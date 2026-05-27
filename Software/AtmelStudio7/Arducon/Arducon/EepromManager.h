@@ -68,7 +68,7 @@
 #define TEXT_ERR_INVALID_TIME_TXT "Err: Invalid time!\n"
 #define TEXT_ERR_TIME_IN_PAST_TXT "Err: Time in past!\n"
 
-#define TEXT_EEPROM_SUCCESS_MESSAGE_TXT "Success! EEPROM has been programmed. Program is done.\nReflash with #define INIT_EEPROM_ONLY FALSE\n"
+#define TEXT_EEPROM_SUCCESS_MESSAGE_TXT "Success! EEPROM has been programmed. Program is done.\n"
 
 struct EE_prom
 {
