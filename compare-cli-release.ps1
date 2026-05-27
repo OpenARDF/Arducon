@@ -4,11 +4,11 @@ param(
 
     [string]$AtmelReleaseDir = '',
 
-    [int]$BaselineHexDataBytes = 29056,
+    [int]$BaselineHexDataBytes = 29572,
 
-    [string]$BaselineHexLastAddress = '0x717F',
+    [string]$BaselineHexLastAddress = '0x7383',
 
-    [int]$BaselineSramBytes = 1629,
+    [int]$BaselineSramBytes = 1636,
 
     [int]$BaselineEepromBytes = 203,
 

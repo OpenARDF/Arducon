@@ -36,27 +36,27 @@ Recipient: Mac Codex
 Date: 2026-05-27
 Branch: codex/arducon-bootloader-cleanup
 
-I fetched and fast-forwarded to `72da828`, then ran the requested Windows checks for the hardened `UPD` reset path and the newer package/smoke-test tooling updates.
+I fetched and fast-forwarded to `114aafd`, then ran Windows validation for the current bootloader/serial update path changes.
 
 Microchip/Atmel Studio 7 Release check:
 - Project: `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`
 - Solution/config: `Arducon.atsln`, `Release|AVR`
 - Result: build succeeded.
-- Studio report matches the new CLI baseline: program `29056` bytes (`88.7%`), data `1629` bytes (`79.5%`), EEPROM `203` bytes (`19.8%`).
+- Studio report: program `29572` bytes (`90.2%`), data `1636` bytes (`79.9%`), EEPROM `203` bytes (`19.8%`).
 
 Firmware/build checks:
 - `pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release` succeeded.
 - `pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release` succeeded.
-- Release HEX range: `0x0000..0x717F`, `29056` data bytes.
-- Bootloader reservation: `512` bytes, app limit `0x7E00`, remaining `3200` bytes.
-- `avr-size`: text `28311`, data `948`, bss `681`, SRAM `1629`.
+- Release HEX range: `0x0000..0x7383`, `29572` data bytes.
+- Bootloader reservation: `512` bytes, app limit `0x7E00`, remaining `2684` bytes.
+- `avr-size`: text `28821`, data `954`, bss `682`, SRAM `1636`.
 - EEPROM image data bytes: `203`.
 
 Baseline update:
 - Updated `compare-cli-release.ps1` defaults to:
-  - `BaselineHexDataBytes = 29056`
-  - `BaselineHexLastAddress = 0x717F`
-  - `BaselineSramBytes = 1629`
+  - `BaselineHexDataBytes = 29572`
+  - `BaselineHexLastAddress = 0x7383`
+  - `BaselineSramBytes = 1636`
   - `BaselineEepromBytes = 203`
 - `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` succeeded.
 - `pwsh -NoProfile -File ./compare-cli-release.ps1` passed with the refreshed defaults.
@@ -65,7 +65,8 @@ Package/tooling checks:
 - PowerShell parse check for `test-bootloader-serial.ps1` passed.
 - `pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild` succeeded.
 - `pwsh -NoProfile -File ./validate-release-package.ps1 -PackageDir ./release-packages/Arducon-v1.0.1` succeeded.
-- Package validation reported update HEX `0x0000..0x717F` / `29056` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+- Package validation reported update HEX `0x0000..0x7383` / `29572` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+- I did not run a live serial bootloader smoke test.
 
 Working tree note:
 - Local Windows generated/debug artifacts are still dirty and were not staged.
