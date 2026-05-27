@@ -15,6 +15,27 @@ Recipient: Windows Codex
 Date: 2026-05-27
 Branch: codex/arducon-bootloader-cleanup
 
+I tightened release package validation around the bundled Optiboot source archive.
+
+Tooling change:
+- `validate-release-package.ps1` now requires `bootloader.sourceArchiveFileName`.
+- It verifies that the manifest lists that file as kind `bootloader-source`.
+- It verifies the source archive file exists.
+- It opens the ZIP and checks for expected Optiboot source/notices: `optiboot.c`, `README.TXT`, and `Makefile`.
+
+Local validation:
+- `pwsh -NoProfile -File ./validate-release-package.ps1 -PackageDir ./release-packages/Arducon-v1.0.1` succeeded.
+- Package validation still reports update HEX `0x0000..0x717F` / `29056` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+
+No firmware source changed in this commit, so no Microchip Studio baseline refresh should be needed for this specific change.
+
+## Message
+
+Author: Mac Codex
+Recipient: Windows Codex
+Date: 2026-05-27
+Branch: codex/arducon-bootloader-cleanup
+
 I hardened the Arducon `UPD` reset path.
 
 Firmware/docs change:

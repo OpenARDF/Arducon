@@ -65,6 +65,31 @@ function Get-IntelHexBytes {
     return $bytes
 }
 
+function Test-ZipContainsEntries {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string[]]$RequiredEntries
+    )
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($Path)
+    try
+    {
+        $entryNames = @($zip.Entries | ForEach-Object { $_.FullName })
+        foreach($entry in $RequiredEntries)
+        {
+            if($entryNames -notcontains $entry)
+            {
+                throw "Source archive $Path is missing $entry."
+            }
+        }
+    }
+    finally
+    {
+        $zip.Dispose()
+    }
+}
+
 if(-not (Test-Path -LiteralPath $PackageDir))
 {
     throw "Release package directory not found: $PackageDir"
@@ -130,11 +155,35 @@ $manifestPropertyNames = @($manifest.PSObject.Properties.Name)
 if($manifestPropertyNames -contains 'bootloader')
 {
     $bootloader = $manifest.bootloader
+    $bootloaderFileEntry = $manifest.files | Where-Object { $_.kind -eq 'bootloader' -and $_.fileName -eq $bootloader.fileName } | Select-Object -First 1
+    if(-not $bootloaderFileEntry)
+    {
+        throw "Manifest does not list bootloader file $($bootloader.fileName)."
+    }
+
     $bootloaderPath = Join-Path $PackageDir $bootloader.fileName
     if(-not (Test-Path -LiteralPath $bootloaderPath))
     {
         throw "Bootloader HEX not found: $bootloaderPath"
     }
+
+    $sourceArchiveFileName = $bootloader.sourceArchiveFileName
+    if([string]::IsNullOrWhiteSpace($sourceArchiveFileName))
+    {
+        throw 'Bootloader manifest is missing sourceArchiveFileName.'
+    }
+    $sourceArchiveFileEntry = $manifest.files | Where-Object { $_.kind -eq 'bootloader-source' -and $_.fileName -eq $sourceArchiveFileName } | Select-Object -First 1
+    if(-not $sourceArchiveFileEntry)
+    {
+        throw "Manifest does not list bootloader source archive $sourceArchiveFileName."
+    }
+    $sourceArchivePath = Join-Path $PackageDir $sourceArchiveFileName
+    if(-not (Test-Path -LiteralPath $sourceArchivePath))
+    {
+        throw "Bootloader source archive not found: $sourceArchivePath"
+    }
+    Test-ZipContainsEntries -Path $sourceArchivePath -RequiredEntries @('optiboot.c', 'README.TXT', 'Makefile')
+
     if($bootloader.protocol -ne 'stk500v1')
     {
         throw "Unexpected bootloader protocol: $($bootloader.protocol)"
