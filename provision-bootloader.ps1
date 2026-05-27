@@ -61,6 +61,10 @@ if([string]::IsNullOrWhiteSpace($ApplicationHexPath))
         $ApplicationHexPath = Join-Path $repoRoot 'Software/AtmelStudio7/Arducon/Arducon/Release/Arducon.hex'
     }
 }
+if([string]::IsNullOrWhiteSpace($BootloaderHexPath))
+{
+    $BootloaderHexPath = Join-Path $repoRoot 'Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex'
+}
 if([string]::IsNullOrWhiteSpace($CombinedHexPath))
 {
     $CombinedHexPath = Join-Path $repoRoot 'tmp/Arducon-bootloader-combined.hex'
@@ -122,7 +126,9 @@ function Get-IntelHexBytes {
             }
             1 { break }
             2 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 4) }
+            3 { }
             4 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 16) }
+            5 { }
             default { throw "Unsupported Intel HEX record type $recordType in $Path." }
         }
     }
@@ -164,7 +170,11 @@ function Write-IntelHex {
         if($upper -ne $currentUpper)
         {
             $currentUpper = $upper
-            $lines.Add((Write-IntelHexRecord -Address 0 -RecordType 4 -Data ([byte[]]@(($upper -shr 8) -band 0xFF, $upper -band 0xFF))))
+            $upperData = [byte[]]@(
+                [byte](($upper -shr 8) -band 0xFF),
+                [byte]($upper -band 0xFF)
+            )
+            $lines.Add((Write-IntelHexRecord -Address 0 -RecordType 4 -Data $upperData))
         }
         $chunkStart = $absolute -band 0xFFFF
         $chunk = New-Object System.Collections.Generic.List[byte]
@@ -395,7 +405,7 @@ if(-not $SkipFlash)
         {
             $flashArgs += '-D'
         }
-        $flashArgs += @('-U', "flash:w:$CombinedHexPath:i")
+        $flashArgs += @('-U', "flash:w:${CombinedHexPath}:i")
         Invoke-Avrdude -Arguments $flashArgs
     }
     else
@@ -413,12 +423,19 @@ if($ProgramFuses)
     $fuseArgs = (Get-AvrdudeBaseArguments) + @('-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse))
     Write-Warning ("Writing ATmega328P high fuse from 0x{0:X2} to 0x{1:X2}. Unrelated high-fuse bits are preserved." -f $oldHighFuse, $newHighFuse)
     Invoke-Avrdude -Arguments $fuseArgs
-    $verifiedHighFuse = Read-HighFuseAvrdude
-    if($verifiedHighFuse -ne $newHighFuse)
+    if($DryRun)
     {
-        throw ("High fuse verify failed. Expected 0x{0:X2}, read 0x{1:X2}." -f $newHighFuse, $verifiedHighFuse)
+        Write-Host 'Dry run: high fuse verify skipped.'
     }
-    Write-Host ("High fuse verified: 0x{0:X2}" -f $verifiedHighFuse)
+    else
+    {
+        $verifiedHighFuse = Read-HighFuseAvrdude
+        if($verifiedHighFuse -ne $newHighFuse)
+        {
+            throw ("High fuse verify failed. Expected 0x{0:X2}, read 0x{1:X2}." -f $newHighFuse, $verifiedHighFuse)
+        }
+        Write-Host ("High fuse verified: 0x{0:X2}" -f $verifiedHighFuse)
+    }
 }
 else
 {

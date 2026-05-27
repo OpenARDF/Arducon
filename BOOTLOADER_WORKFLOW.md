@@ -11,6 +11,14 @@ This project is moving toward an ATmega328P-native bootloader flow while retaini
 - Keep serial app communications at `57600` baud.
 - Use `115200` baud for the bootloader/update side unless the selected bootloader requires otherwise.
 
+The reviewed bootloader artifact is checked in at:
+
+```text
+Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex
+```
+
+It is copied from Arduino AVR Boards `arduino:avr@1.8.6` with its source subset and occupies `0x7E00..0x7FFF`.
+
 ## Application Commands
 
 Arducon exposes two serial-only LinkBus commands for updater tools:
@@ -69,12 +77,14 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 The package includes:
 
 - `Arducon-Update-...hex`
+- `Arducon-Bootloader-Optiboot-ATmega328P.hex`
 - `Arducon-Release-Info-...json`
 - `Arducon-Checksums-...txt`
 - `README-Arducon-...txt`
 - a zipped copy of the release files
 
 The manifest records the product, version, board, app baud, update baud, app start, app limit, flash size, page size, update command, and hashes.
+It also records the bootloader file, source package, protocol, baud rate, high-fuse target, address range, and image byte count.
 
 ## Provisioning
 
@@ -86,6 +96,7 @@ powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avr
 ```
 
 The first-install path should merge a reviewed ATmega328P bootloader HEX and Arducon application HEX, program the combined image with a programmer, and verify flash.
+By default, `provision-bootloader.ps1` uses the repo-owned Optiboot HEX above.
 
 For a 512-byte bootloader with `BOOTRST`, the high-fuse boot-bit transform is:
 
@@ -100,7 +111,7 @@ Example first-install review flow with an Atmel-ICE using `avrdude`:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -SkipFlash -ReadFusesOnly
-powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -BootloaderHexPath .\path\to\optiboot_atmega328p.hex -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite
 ```
 
 Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required, but it can erase EEPROM unless the EESAVE fuse is programmed.

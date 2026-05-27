@@ -56,7 +56,9 @@ function Get-IntelHexBytes {
             }
             1 { break }
             2 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 4) }
+            3 { }
             4 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 16) }
+            5 { }
             default { throw "Unsupported Intel HEX record type $recordType in $Path." }
         }
     }
@@ -124,6 +126,54 @@ if($hexBytes.Count -ne [int]$manifest.update.bytesInImage)
     throw "Update HEX byte count mismatch."
 }
 
+$manifestPropertyNames = @($manifest.PSObject.Properties.Name)
+if($manifestPropertyNames -contains 'bootloader')
+{
+    $bootloader = $manifest.bootloader
+    $bootloaderPath = Join-Path $PackageDir $bootloader.fileName
+    if(-not (Test-Path -LiteralPath $bootloaderPath))
+    {
+        throw "Bootloader HEX not found: $bootloaderPath"
+    }
+    if($bootloader.protocol -ne 'stk500v1')
+    {
+        throw "Unexpected bootloader protocol: $($bootloader.protocol)"
+    }
+    if([int]$bootloader.baud -ne [int]$settings.updateBaud)
+    {
+        throw "Bootloader baud does not match update baud."
+    }
+    if($bootloader.highFuseTarget -ne '0xDE')
+    {
+        throw "Unexpected bootloader high-fuse target: $($bootloader.highFuseTarget)"
+    }
+
+    $bootloaderBytes = Get-IntelHexBytes -Path $bootloaderPath
+    $bootloaderAddresses = @($bootloaderBytes.Keys | Sort-Object { [int]$_ })
+    $bootloaderFirst = [int]($bootloaderAddresses | Select-Object -First 1)
+    $bootloaderLast = [int]($bootloaderAddresses | Select-Object -Last 1)
+    $manifestBootloaderStart = ConvertFrom-HexAddress $bootloader.startAddress
+    $manifestBootloaderEnd = ConvertFrom-HexAddress $bootloader.endAddress
+    $expectedBootStart = $appLimit
+    $flashLast = [int]$settings.flashBytes - 1
+    if($bootloaderFirst -ne $expectedBootStart)
+    {
+        throw ("Bootloader HEX starts at 0x{0:X}; expected 0x{1:X}." -f $bootloaderFirst, $expectedBootStart)
+    }
+    if($bootloaderLast -gt $flashLast)
+    {
+        throw ("Bootloader HEX reaches 0x{0:X}; flash ends at 0x{1:X}." -f $bootloaderLast, $flashLast)
+    }
+    if($bootloaderFirst -ne $manifestBootloaderStart -or $bootloaderLast -ne $manifestBootloaderEnd)
+    {
+        throw "Bootloader HEX address range does not match manifest."
+    }
+    if($bootloaderBytes.Count -ne [int]$bootloader.bytesInImage)
+    {
+        throw "Bootloader HEX byte count mismatch."
+    }
+}
+
 foreach($file in $manifest.files)
 {
     $path = Join-Path $PackageDir $file.fileName
@@ -145,3 +195,7 @@ foreach($file in $manifest.files)
 
 Write-Host "Release package validated: $PackageDir"
 Write-Host ("Update HEX range: 0x{0:X4}..0x{1:X4}; bytes: {2}" -f $first, $last, $hexBytes.Count)
+if($manifestPropertyNames -contains 'bootloader')
+{
+    Write-Host ("Bootloader HEX range: 0x{0:X4}..0x{1:X4}; bytes: {2}" -f $bootloaderFirst, $bootloaderLast, $bootloaderBytes.Count)
+}

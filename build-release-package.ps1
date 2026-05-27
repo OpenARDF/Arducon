@@ -5,6 +5,8 @@ param(
 
     [string]$HexPath = '',
 
+    [string]$BootloaderHexPath = '',
+
     [string]$OutputDir = '',
 
     [switch]$SkipBuild,
@@ -17,6 +19,10 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = $PSScriptRoot
 $defsPath = Join-Path $repoRoot 'Software/AtmelStudio7/Arducon/Arducon/EepromManager.h'
+if([string]::IsNullOrWhiteSpace($BootloaderHexPath))
+{
+    $BootloaderHexPath = Join-Path $repoRoot 'Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex'
+}
 
 function Get-DefineString {
     param(
@@ -68,7 +74,9 @@ function Get-IntelHexBytes {
             }
             1 { break }
             2 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 4) }
+            3 { }
             4 { $upper = ((([int]$data[0] -shl 8) -bor [int]$data[1]) -shl 16) }
+            5 { }
             default { throw "Unsupported Intel HEX record type $recordType in $Path." }
         }
     }
@@ -94,6 +102,21 @@ function Copy-PackageFile {
         purpose = $Purpose
         sizeBytes = $bytes.Length
         sha256 = (Get-FileHash -LiteralPath $DestinationPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+}
+
+function Get-HexAddressSummary {
+    param([Parameter(Mandatory = $true)][hashtable]$Image)
+
+    $addresses = @($Image.Keys | Sort-Object { [int]$_ })
+    if($addresses.Count -eq 0)
+    {
+        throw 'HEX image contains no data records.'
+    }
+    [pscustomobject]@{
+        First = [int]($addresses | Select-Object -First 1)
+        Last = [int]($addresses | Select-Object -Last 1)
+        Count = $Image.Count
     }
 }
 
@@ -151,10 +174,22 @@ $updatePath = Join-Path $OutputDir $updateFile
 $files = @()
 $files += Copy-PackageFile -SourcePath $HexPath -DestinationPath $updatePath -Kind 'update' -Purpose 'Application HEX for normal bootloader updates.'
 
+$bootloaderFile = ''
+$bootloaderSummary = $null
+if(-not (Test-Path -LiteralPath $BootloaderHexPath))
+{
+    throw "Bootloader HEX not found: $BootloaderHexPath"
+}
+$bootloaderFile = 'Arducon-Bootloader-Optiboot-ATmega328P.hex'
+$bootloaderPath = Join-Path $OutputDir $bootloaderFile
+$files += Copy-PackageFile -SourcePath $BootloaderHexPath -DestinationPath $bootloaderPath -Kind 'bootloader' -Purpose 'Reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.'
+$bootloaderImage = Get-IntelHexBytes -Path $bootloaderPath
+$bootloaderSummary = Get-HexAddressSummary -Image $bootloaderImage
+
 $image = Get-IntelHexBytes -Path $updatePath
-$addresses = @($image.Keys | Sort-Object { [int]$_ })
-$first = [int]($addresses | Select-Object -First 1)
-$last = [int]($addresses | Select-Object -Last 1)
+$updateSummary = Get-HexAddressSummary -Image $image
+$first = $updateSummary.First
+$last = $updateSummary.Last
 
 $manifest = [pscustomobject]@{
     format = 'arducon-release-info-v1'
@@ -165,6 +200,17 @@ $manifest = [pscustomobject]@{
         fileName = $updateFile
         startAddress = ('0x{0:X4}' -f $first)
         bytesInImage = $image.Count
+    }
+    bootloader = [pscustomobject]@{
+        fileName = $bootloaderFile
+        sourcePackage = 'arduino:avr@1.8.6'
+        sourceFile = 'optiboot/optiboot_atmega328.hex'
+        protocol = 'stk500v1'
+        baud = 115200
+        highFuseTarget = '0xDE'
+        startAddress = ('0x{0:X4}' -f $bootloaderSummary.First)
+        endAddress = ('0x{0:X4}' -f $bootloaderSummary.Last)
+        bytesInImage = $bootloaderSummary.Count
     }
     firmwareUpdate = [pscustomobject]@{
         appBaud = 57600
@@ -196,10 +242,12 @@ Arducon $friendlyVersion ATmega328P firmware package
 
 Files:
 - ${updateFile}: application HEX for normal bootloader updates.
+- ${bootloaderFile}: reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.
 - ${manifestFile}: machine-readable update metadata.
 - ${checksumsFile}: SHA-256 checksums.
 
 Address range in update HEX: 0x$("{0:X4}" -f $first)..0x$("{0:X4}" -f $last)
+Address range in bootloader HEX: 0x$("{0:X4}" -f $bootloaderSummary.First)..0x$("{0:X4}" -f $bootloaderSummary.Last)
 Bootloader-safe app limit: 0x7DFF when reserving 512 bytes at top of flash.
 "@ | Set-Content -LiteralPath $readmePath -Encoding ASCII
 

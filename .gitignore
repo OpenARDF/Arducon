@@ -11,6 +11,7 @@ tmp/
 release-packages/
 **/*.elf
 **/*.hex
+!Bootloaders/**/*.hex
 **/*.eep
 **/*.lss
 **/*.srec
