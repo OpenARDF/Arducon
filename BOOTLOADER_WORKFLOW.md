@@ -78,21 +78,32 @@ The manifest records the product, version, board, app baud, update baud, app sta
 
 ## Provisioning
 
-Provisioning must remain guarded while the bootloader choice is being finalized.
+Provisioning remains guarded: first read and review fuses, then explicitly opt in to flash and fuse writes.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -CheckPrereqs
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -CheckPrereqs -SkipFlash
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -SkipFlash -ReadFusesOnly
 ```
 
 The first-install path should merge a reviewed ATmega328P bootloader HEX and Arducon application HEX, program the combined image with a programmer, and verify flash.
 
-Fuse writes are deliberately not automatic yet. Before production provisioning, read the ATmega328P high fuse and review the exact value. For a 512-byte bootloader with `BOOTRST`, the intended boot-bit transform is:
+For a 512-byte bootloader with `BOOTRST`, the high-fuse boot-bit transform is:
 
 ```text
 newHigh = (oldHigh & 0xF8) | 0x06
 ```
 
-Do not change unrelated fuse bits.
+The script applies that transform when `-ProgramFuses -ConfirmFuseWrite` are both supplied. Do not change unrelated fuse bits.
+
+Example first-install review flow with an Atmel-ICE using `avrdude`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -SkipFlash -ReadFusesOnly
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -BootloaderHexPath .\path\to\optiboot_atmega328p.hex -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite
+```
+
+Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required, but it can erase EEPROM unless the EESAVE fuse is programmed.
 
 ## Recovery
 
