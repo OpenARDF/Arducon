@@ -19,6 +19,8 @@ Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex
 
 It is copied from Arduino AVR Boards `arduino:avr@1.8.6` with its source subset and occupies `0x7E00..0x7FFF`.
 
+Important compatibility note: this Optiboot/STK500v1 artifact is not yet directly usable by SerialSlinger's existing firmware-update implementation, which currently speaks the custom SignalSlinger bootloader protocol. See `SERIALSLINGER_COMPATIBILITY.md` before treating an Arducon release package as SerialSlinger-updateable.
+
 ## Application Commands
 
 Arducon exposes two serial-only LinkBus commands for updater tools:
