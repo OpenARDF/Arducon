@@ -50,6 +50,32 @@ function Read-SerialText {
     return $text
 }
 
+function Read-SerialTextUntil {
+    param(
+        [System.IO.Ports.SerialPort]$SerialPort,
+        [int]$Milliseconds,
+        [string]$Pattern
+    )
+    $deadline = [DateTime]::UtcNow.AddMilliseconds($Milliseconds)
+    $text = ''
+    while([DateTime]::UtcNow -lt $deadline)
+    {
+        try
+        {
+            $text += $SerialPort.ReadExisting()
+        }
+        catch
+        {
+        }
+        if($text -match $Pattern)
+        {
+            return $text
+        }
+        Start-Sleep -Milliseconds 25
+    }
+    return $text
+}
+
 function Read-SerialBytes {
     param(
         [System.IO.Ports.SerialPort]$SerialPort,
@@ -111,37 +137,44 @@ if($RequestBootloaderFromApp -and $NoReset)
 }
 
 $entryText = ''
+$boot = $null
 if($RequestBootloaderFromApp)
 {
     Write-Host "Requesting Arducon bootloader from app on $Port at $AppBaud baud..."
-    $app = Open-SerialPort -PortName $Port -BaudRate $AppBaud
+    $boot = Open-SerialPort -PortName $Port -BaudRate $AppBaud
     try
     {
-        $app.DiscardInBuffer()
-        $app.Write("`r")
-        $entryText += Read-SerialText -SerialPort $app -Milliseconds 500
-        $app.Write("INF`r")
-        $entryText += Read-SerialText -SerialPort $app -Milliseconds 1000
+        $boot.DiscardInBuffer()
+        $boot.Write("`r")
+        $entryText += Read-SerialText -SerialPort $boot -Milliseconds 500
+        $boot.Write("INF`r")
+        $entryText += Read-SerialTextUntil -SerialPort $boot -Milliseconds 1000 -Pattern 'INF product=Arducon'
         if($entryText -notmatch 'INF product=Arducon')
         {
             throw "Arducon app did not respond to INF. Received: $entryText"
         }
-        $app.Write("UPD`r")
-        $entryText += Read-SerialText -SerialPort $app -Milliseconds 1500
+        $boot.Write("UPD`r")
+        $entryText += Read-SerialTextUntil -SerialPort $boot -Milliseconds 500 -Pattern 'Bootloader update mode'
         if($entryText -notmatch 'Bootloader update mode')
         {
             throw "Arducon app did not acknowledge UPD. Received: $entryText"
         }
+        $boot.BaudRate = $BootBaud
+        $boot.DiscardInBuffer()
+        Start-Sleep -Milliseconds 25
     }
-    finally
+    catch
     {
-        $app.Close()
+        $boot.Close()
+        throw
     }
-    Start-Sleep -Milliseconds 1200
 }
 
 Write-Host "Checking bootloader on $Port at $BootBaud baud..."
-$boot = Open-SerialPort -PortName $Port -BaudRate $BootBaud
+if(-not $boot)
+{
+    $boot = Open-SerialPort -PortName $Port -BaudRate $BootBaud
+}
 try
 {
     $boot.DiscardInBuffer()

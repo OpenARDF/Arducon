@@ -134,6 +134,8 @@ On macOS, pass the device path instead of `COM3`, for example `/dev/cu.usbserial
 
 The smoke test speaks binary STK500v1 to Optiboot. A passing test reports `Bootloader STK500v1 sync OK` and prints the ATmega328P signature bytes. It does not expect an ASCII bootloader banner.
 
+When `-RequestBootloaderFromApp` is used, the script stops waiting as soon as Arducon acknowledges `UPD`, switches the open serial port to the bootloader baud rate, and immediately starts STK500v1 sync attempts so it does not waste the short Optiboot timeout window.
+
 ## Recovery
 
 If a bootloader update fails:
