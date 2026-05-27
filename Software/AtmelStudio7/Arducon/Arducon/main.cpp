@@ -179,6 +179,8 @@ char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
  */
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
+void sendFirmwareInfo(void);
+void enterBootloaderUpdateMode(void);
 void setupForFox(Fox_t* fox, EventAction_t action);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
@@ -2130,6 +2132,18 @@ void handleLinkBusMsgs()
 			}
 			break;
 
+			case MESSAGE_INFO:
+			{
+				sendFirmwareInfo();
+			}
+			break;
+
+			case MESSAGE_UPDATE:
+			{
+				enterBootloaderUpdateMode();
+			}
+			break;
+
 			default:
 			{
 				ee_mgr.send_Help();
@@ -2142,6 +2156,33 @@ void handleLinkBusMsgs()
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
+	}
+}
+
+void sendFirmwareInfo(void)
+{
+	lb_send_string((char*)"* INF product=Arducon\n", TRUE);
+	lb_send_string((char*)"* INF update=UPD\n", TRUE);
+	sprintf(g_tempStr, "* INF sw=%s\n", ARDUCON_FIRMWARE_VERSION);
+	lb_send_string(g_tempStr, TRUE);
+	lb_send_string((char*)"* INF hw=ATmega328P-16\n", TRUE);
+	lb_send_string((char*)"* INF app=0x0000\n", TRUE);
+	sprintf(g_tempStr, "* INF baud=%lu\n", (uint32_t)BAUD);
+	lb_send_string(g_tempStr, TRUE);
+	lb_send_string((char*)"* INF bl=unknown\n", TRUE);
+	lb_send_string((char*)"* INF proto=stk500v1\n", TRUE);
+}
+
+void enterBootloaderUpdateMode(void)
+{
+	stopEventNow(PROGRAMMATIC);
+	lb_send_string((char*)"* Bootloader update mode\n", TRUE);
+	cli();
+	wdt_init(WD_FORCE_RESET);
+
+	while(1)
+	{
+		;
 	}
 }
 
