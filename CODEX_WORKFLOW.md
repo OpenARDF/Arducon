@@ -19,14 +19,16 @@
 
 ## Build And Verification
 
-- Use `.\build-firmware.ps1 -Configuration Release` as the standard firmware build entry point.
-- After executable firmware source or configuration changes, run:
+- Use `.\build-cli-release.ps1 -Clean` as the normal reproducible local Release build entry point.
+- Use `.\build-firmware.ps1 -Configuration Release` when verifying against Microchip/Atmel Studio generated makefiles.
+- After executable firmware source or configuration changes, run the CLI build and comparison:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
-powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1
+powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
 ```
 
+- Keep Windows Codex/Microchip Studio as the short-term authoritative Release build check until CLI and Microchip Studio artifacts have been compared across several firmware changes.
 - For documentation-only or ignore-only changes, a firmware build is optional.
 - For bootloader/release-package changes, run:
 
@@ -38,6 +40,7 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 
 - Hand-maintained firmware files include `main.cpp`, `defs.h`, `EepromManager.*`, `linkbus.*`, `Goertzel.*`, `morse.*`, `f1975.*`, RTC helpers, and the root PowerShell workflow scripts.
 - Treat `Debug\*`, `Release\*`, `.elf`, `.hex`, `.eep`, `.lss`, `.srec`, `.o`, `.d`, and `.map` as generated build output.
+- Treat `tmp\cli-release\*` as generated output from the repo-owned CLI Release build.
 - Existing checked-in generated artifacts are historical; do not remove them until a separate cleanup verifies reproducible builds.
 
 ## Bootloader Direction

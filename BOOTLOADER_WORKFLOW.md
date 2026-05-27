@@ -39,14 +39,23 @@ DTMF bootloader entry is intentionally out of scope for the first bootloader cle
 
 ## Local Build And Size Check
 
-Use the wrapper scripts from the repository root:
+Use the repo-owned CLI Release build from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
+```
+
+The CLI build invokes `avr-g++` directly, emits `tmp\cli-release\Arducon.elf`, `.hex`, `.map`, `.eep`, `.lss`, and `.srec`, then runs the size check. The comparison script checks the CLI output against the current Microchip Studio Release baseline from `CODEX_MAILBOX.md`.
+
+Microchip/Atmel Studio Release remains the short-term authoritative build check. Use it after material firmware changes until the CLI build has stayed aligned across several changes:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
-powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1
+powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuration Release
 ```
 
-The size check parses the generated HEX file and fails if the application overlaps the reserved bootloader area.
+The size check parses the generated HEX file, reports `avr-size` SRAM numbers and EEPROM image bytes when artifacts are present, and fails if the application overlaps the reserved bootloader area.
 
 ## Release Package
 

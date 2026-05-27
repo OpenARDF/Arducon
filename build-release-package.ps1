@@ -7,7 +7,9 @@ param(
 
     [string]$OutputDir = '',
 
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+
+    [switch]$UseMicrochipStudioBuild
 )
 
 Set-StrictMode -Version Latest
@@ -97,12 +99,30 @@ function Copy-PackageFile {
 
 if(-not $SkipBuild)
 {
-    & (Join-Path $repoRoot 'build-firmware.ps1') -Configuration $Configuration
+    if($UseMicrochipStudioBuild)
+    {
+        & (Join-Path $repoRoot 'build-firmware.ps1') -Configuration $Configuration
+    }
+    else
+    {
+        if($Configuration -ne 'Release')
+        {
+            throw 'The repo-owned CLI build currently supports Release only. Use -UseMicrochipStudioBuild for Debug packaging.'
+        }
+        & (Join-Path $repoRoot 'build-cli-release.ps1') -Clean
+    }
 }
 
 if([string]::IsNullOrWhiteSpace($HexPath))
 {
-    $HexPath = Join-Path $repoRoot "Software/AtmelStudio7/Arducon/Arducon/$Configuration/Arducon.hex"
+    if($UseMicrochipStudioBuild)
+    {
+        $HexPath = Join-Path $repoRoot "Software/AtmelStudio7/Arducon/Arducon/$Configuration/Arducon.hex"
+    }
+    else
+    {
+        $HexPath = Join-Path $repoRoot 'tmp/cli-release/Arducon.hex'
+    }
 }
 
 & (Join-Path $repoRoot 'check-firmware-size.ps1') -Configuration $Configuration -HexPath $HexPath
