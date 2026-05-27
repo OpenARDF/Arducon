@@ -457,7 +457,7 @@ BOOL EepromManager::readNonVols(void)
 
 			for(i = 0; i < 0x0400; i++)
 			{
-				uint8_t x = eeprom_read_byte((const uint8_t*)&i);
+				uint8_t x = eeprom_read_byte((const uint8_t*)i);
 				if(x != 0xFF)
 				{
 					err = TRUE;
