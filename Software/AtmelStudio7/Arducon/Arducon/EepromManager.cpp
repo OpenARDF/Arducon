@@ -736,7 +736,7 @@ void EepromManager::resetEEPROMValues(void)
 	for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
 	{
 		g_unlockCode[i] = *v;
-		eeprom_write_byte((uint8_t*)&(g_unlockCode[i]), *v++);
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), *v++);
 	}
 
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
