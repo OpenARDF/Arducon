@@ -44,6 +44,7 @@ function Resolve-AvrSize {
     foreach($candidate in $candidates)
     {
         if(Test-Path -LiteralPath $candidate) { return $candidate }
+        if($IsWindows -and (Test-Path -LiteralPath "$candidate.exe")) { return "$candidate.exe" }
     }
     $command = Get-Command avr-size -ErrorAction SilentlyContinue
     if($command) { return $command.Source }
