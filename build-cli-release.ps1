@@ -6,6 +6,8 @@ param(
 
     [string]$OutputDir = '',
 
+    [string[]]$Define = @(),
+
     [switch]$Clean
 )
 
@@ -204,6 +206,16 @@ $compileFlags = @(
     '-mmcu=atmega328p',
     '-c'
 )
+foreach($definitionValue in $Define)
+{
+    foreach($definition in ($definitionValue -split ','))
+    {
+        if(-not [string]::IsNullOrWhiteSpace($definition))
+        {
+            $compileFlags += "-D$($definition.Trim())"
+        }
+    }
+}
 
 foreach($source in $sources)
 {

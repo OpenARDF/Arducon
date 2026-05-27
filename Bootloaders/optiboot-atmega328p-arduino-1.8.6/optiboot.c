@@ -287,7 +287,7 @@ int main(void) {
   // Adaboot no-wait mod
   ch = MCUSR;
   MCUSR = 0;
-  if (!(ch & _BV(EXTRF))) appStart();
+  if (!(ch & _BV(WDRF))) appStart();
 
 #if LED_START_FLASHES > 0
   // Set up Timer 1 for timeout counter

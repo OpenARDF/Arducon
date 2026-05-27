@@ -9,6 +9,8 @@ param(
 
     [switch]$RequestBootloaderFromApp,
 
+    [switch]$SkipAppHandshake,
+
     [switch]$NoReset
 )
 
@@ -18,15 +20,30 @@ $ErrorActionPreference = 'Stop'
 function Open-SerialPort {
     param(
         [string]$PortName,
-        [int]$BaudRate
+        [int]$BaudRate,
+        [System.IO.Ports.StopBits]$StopBits = [System.IO.Ports.StopBits]::One
     )
-    $serial = [System.IO.Ports.SerialPort]::new($PortName, $BaudRate, [System.IO.Ports.Parity]::None, 8, [System.IO.Ports.StopBits]::One)
+    $serial = [System.IO.Ports.SerialPort]::new($PortName, $BaudRate, [System.IO.Ports.Parity]::None, 8, $StopBits)
     $serial.ReadTimeout = 100
     $serial.WriteTimeout = 2000
     $serial.DtrEnable = $false
     $serial.RtsEnable = $false
     $serial.Open()
     return $serial
+}
+
+function Invoke-BootloaderReset {
+    param([System.IO.Ports.SerialPort]$SerialPort)
+    $SerialPort.DtrEnable = $false
+    $SerialPort.RtsEnable = $false
+    Start-Sleep -Milliseconds 50
+    $SerialPort.DtrEnable = $true
+    $SerialPort.RtsEnable = $true
+    Start-Sleep -Milliseconds 120
+    $SerialPort.DtrEnable = $false
+    $SerialPort.RtsEnable = $false
+    Start-Sleep -Milliseconds 50
+    $SerialPort.DiscardInBuffer()
 }
 
 function Read-SerialText {
@@ -91,7 +108,7 @@ function Read-SerialBytes {
         }
         Start-Sleep -Milliseconds 10
     }
-    return $bytes.ToArray()
+    return ,$bytes.ToArray()
 }
 
 function Format-ByteList {
@@ -108,12 +125,41 @@ function Invoke-Stk500Command {
     )
     $SerialPort.DiscardInBuffer()
     $SerialPort.Write($Command, 0, $Command.Length)
-    return Read-SerialBytes -SerialPort $SerialPort -Milliseconds $ReadMilliseconds
+    return ,(Read-SerialBytes -SerialPort $SerialPort -Milliseconds $ReadMilliseconds)
+}
+
+function Invoke-Stk500CommandUntilInSync {
+    param(
+        [System.IO.Ports.SerialPort]$SerialPort,
+        [byte[]]$Command,
+        [int]$ReadMilliseconds = 300
+    )
+    $SerialPort.DiscardInBuffer()
+    $SerialPort.Write($Command, 0, $Command.Length)
+    $deadline = [DateTime]::UtcNow.AddMilliseconds($ReadMilliseconds)
+    $bytes = [System.Collections.Generic.List[byte]]::new()
+    while([DateTime]::UtcNow -lt $deadline)
+    {
+        while($SerialPort.BytesToRead -gt 0 -and [DateTime]::UtcNow -lt $deadline -and $bytes.Count -lt 256)
+        {
+            $bytes.Add([byte]$SerialPort.ReadByte())
+            if($bytes.Count -ge 2 -and $bytes[0] -eq 0x14 -and $bytes[$bytes.Count - 1] -eq 0x10)
+            {
+                return ,$bytes.ToArray()
+            }
+        }
+        if($bytes.Count -ge 256)
+        {
+            break
+        }
+        Start-Sleep -Milliseconds 2
+    }
+    return ,$bytes.ToArray()
 }
 
 function Test-Stk500Sync {
     param([System.IO.Ports.SerialPort]$SerialPort)
-    $response = Invoke-Stk500Command -SerialPort $SerialPort -Command ([byte[]]@(0x30, 0x20))
+    $response = Invoke-Stk500CommandUntilInSync -SerialPort $SerialPort -Command ([byte[]]@(0x30, 0x20))
     if($response.Length -lt 2 -or $response[0] -ne 0x14 -or $response[$response.Length - 1] -ne 0x10)
     {
         throw "Bootloader did not answer STK500 GET_SYNC. Response: $(Format-ByteList $response)"
@@ -123,7 +169,7 @@ function Test-Stk500Sync {
 
 function Read-Stk500Signature {
     param([System.IO.Ports.SerialPort]$SerialPort)
-    $response = Invoke-Stk500Command -SerialPort $SerialPort -Command ([byte[]]@(0x75, 0x20))
+    $response = Invoke-Stk500CommandUntilInSync -SerialPort $SerialPort -Command ([byte[]]@(0x75, 0x20))
     if($response.Length -lt 5 -or $response[0] -ne 0x14 -or $response[$response.Length - 1] -ne 0x10)
     {
         throw "Bootloader did not answer STK500 READ_SIGN. Response: $(Format-ByteList $response)"
@@ -141,21 +187,29 @@ $boot = $null
 if($RequestBootloaderFromApp)
 {
     Write-Host "Requesting Arducon bootloader from app on $Port at $AppBaud baud..."
-    $boot = Open-SerialPort -PortName $Port -BaudRate $AppBaud
+        $boot = Open-SerialPort -PortName $Port -BaudRate $AppBaud -StopBits ([System.IO.Ports.StopBits]::Two)
     try
     {
         $boot.DiscardInBuffer()
-        $boot.Write("`r")
-        $entryText += Read-SerialText -SerialPort $boot -Milliseconds 500
-        $boot.Write("INF`r")
-        $entryText += Read-SerialTextUntil -SerialPort $boot -Milliseconds 1000 -Pattern 'INF product=Arducon'
-        if($entryText -notmatch 'INF product=Arducon')
+        if(-not $SkipAppHandshake)
         {
-            throw "Arducon app did not respond to INF. Received: $entryText"
+            $boot.Write("`r")
+            $entryText += Read-SerialText -SerialPort $boot -Milliseconds 500
+            $boot.Write("INF`r")
+            $entryText += Read-SerialTextUntil -SerialPort $boot -Milliseconds 1000 -Pattern 'INF product=Arducon'
+            if($entryText -notmatch 'INF product=Arducon')
+            {
+                throw "Arducon app did not respond to INF. Received: $entryText"
+            }
+        }
+        else
+        {
+            $entryText += Read-SerialText -SerialPort $boot -Milliseconds 500
+            $boot.DiscardInBuffer()
         }
         $boot.Write("UPD`r")
         $entryText += Read-SerialTextUntil -SerialPort $boot -Milliseconds 500 -Pattern 'Bootloader update mode'
-        if($entryText -notmatch 'Bootloader update mode')
+        if(-not $SkipAppHandshake -and $entryText -notmatch 'Bootloader update mode')
         {
             throw "Arducon app did not acknowledge UPD. Received: $entryText"
         }
@@ -174,6 +228,10 @@ Write-Host "Checking bootloader on $Port at $BootBaud baud..."
 if(-not $boot)
 {
     $boot = Open-SerialPort -PortName $Port -BaudRate $BootBaud
+    if(-not $NoReset)
+    {
+        Invoke-BootloaderReset -SerialPort $boot
+    }
 }
 try
 {

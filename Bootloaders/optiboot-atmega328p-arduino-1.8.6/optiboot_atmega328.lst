@@ -45,8 +45,8 @@ int main(void) {
     7e02:	84 b7       	in	r24, 0x34	; 52
   MCUSR = 0;
     7e04:	14 be       	out	0x34, r1	; 52
-  if (!(ch & _BV(EXTRF))) appStart();
-    7e06:	81 ff       	sbrs	r24, 1
+  if (!(ch & _BV(WDRF))) appStart();
+    7e06:	83 ff       	sbrs	r24, 3
     7e08:	f0 d0       	rcall	.+480    	; 0x7fea <appStart>
 
 #if LED_START_FLASHES > 0

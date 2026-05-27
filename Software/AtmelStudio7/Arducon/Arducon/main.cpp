@@ -82,6 +82,7 @@ volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 volatile int8_t g_utc_offset = 0;
 volatile BOOL g_ptt_periodic_reset_enabled;
+volatile uint8_t g_linkbusRxRestoreADIE = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile AM_Tone_Freq_t g_AM_audio_frequency;
@@ -174,6 +175,9 @@ void sendMorseTone(BOOL onOff);
 void sendFirmwareInfo(void);
 void enterBootloaderUpdateMode(void);
 void setupForFox(Fox_t* fox, EventAction_t action);
+uint8_t suspendADCInterrupts(void);
+void restoreADCInterrupts(uint8_t restoreADIE);
+BOOL isSupportedLinkbusCommand(int msg_ID, const char* text);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
@@ -367,7 +371,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		RTC_1s_sqw(ON);
 #endif
 
-
+		uint8_t restoreADIE = suspendADCInterrupts();
 		ee_mgr.send_Help();
 
 #if INCLUDE_RV3028_SUPPORT
@@ -396,6 +400,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
+		restoreADCInterrupts(restoreADIE);
 
 
 	startEventNow(POWER_UP);
@@ -586,6 +591,11 @@ ISR(USART_RX_vect)
 
 	rx_char = UDR0;
 
+	if(linkbusTxInProgress())
+	{
+		return;
+	}
+
 	if(!buff)
 	{
 		buff = nextEmptyRxBuffer();
@@ -619,21 +629,28 @@ ISR(USART_RX_vect)
 				if(charIndex > 0)
 				{
 					buff->type = LINKBUS_MSG_QUERY;
-					buff->id = (LBMessageID)msg_ID;
+					textBuff[charIndex] = '\0'; /* terminate last-message buffer */
+
+					if(isSupportedLinkbusCommand(msg_ID, textBuff))
+					{
+						buff->id = (LBMessageID)msg_ID;
+					}
+					else
+					{
+						buff->id = MESSAGE_EMPTY;
+					}
 
 					if(field_index > 0) /* terminate the last field */
 					{
 						buff->fields[field_index - 1][field_len] = 0;
 					}
-
-					textBuff[charIndex] = '\0'; /* terminate last-message buffer */
 				}
 
 				lb_send_NewLine();
 			}
 			else
 			{
-				buff->id = INVALID_MESSAGE; /* print help message */
+				buff->id = MESSAGE_EMPTY; /* Ignore empty lines/noise terminators. */
 			}
 
 			charIndex = 0;
@@ -641,6 +658,11 @@ ISR(USART_RX_vect)
 			msg_ID = MESSAGE_EMPTY;
 
 			field_index = 0;
+			if((buff->id == MESSAGE_EMPTY) && g_linkbusRxRestoreADIE)
+			{
+				ADCSRA |= (1 << ADIE);
+				g_linkbusRxRestoreADIE = 0;
+			}
 			buff = NULL;
 
 			receiving_msg = FALSE;
@@ -702,7 +724,7 @@ ISR(USART_RX_vect)
 							charIndex = MIN(charIndex + 1, (LINKBUS_MAX_COMMANDLINE_LENGTH - 1));
 						}
 					}
-					else if(field_len < LINKBUS_MAX_MSG_FIELD_LENGTH)
+					else if(field_len < (LINKBUS_MAX_MSG_FIELD_LENGTH - 1))
 					{
 						if(field_index == 0)    /* message ID received */
 						{
@@ -743,6 +765,11 @@ ISR(USART_RX_vect)
 					uint8_t i;
 					field_index = 0;
 					msg_ID = rx_char;
+					if(!g_linkbusRxRestoreADIE)
+					{
+						g_linkbusRxRestoreADIE = (ADCSRA & (1 << ADIE));
+						ADCSRA &= ~(1 << ADIE);
+					}
 
 					/* Empty the field buffers */
 					for(i = 0; i < LINKBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
@@ -779,6 +806,12 @@ ISR(USART_UDRE_vect)
 	if(!buff)
 	{
 		buff = nextFullTxBuffer();
+	}
+
+	if(!buff)
+	{
+		linkbus_end_tx();
+		return;
 	}
 
 	if((*buff)[charIndex])
@@ -1684,6 +1717,12 @@ void handleLinkBusMsgs()
 
 	while((lb_buff = nextFullRxBuffer()))
 	{
+		uint8_t restoreADIE = g_linkbusRxRestoreADIE;
+		g_linkbusRxRestoreADIE = 0;
+		if(!restoreADIE)
+		{
+			restoreADIE = suspendADCInterrupts();
+		}
 		LBMessageID msg_id = lb_buff->id;
 
 		switch(msg_id)
@@ -2121,9 +2160,67 @@ void handleLinkBusMsgs()
 
 		lb_buff->id = (LBMessageID)MESSAGE_EMPTY;
 		lb_send_NewPrompt();
+		restoreADCInterrupts(restoreADIE);
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
+	}
+}
+
+uint8_t suspendADCInterrupts(void)
+{
+	uint8_t sreg = SREG;
+	uint8_t restoreADIE = (ADCSRA & (1 << ADIE));
+
+	cli();
+	ADCSRA &= ~(1 << ADIE);
+	SREG = sreg;
+
+	return(restoreADIE);
+}
+
+void restoreADCInterrupts(uint8_t restoreADIE)
+{
+	if(restoreADIE)
+	{
+		uint8_t sreg = SREG;
+		cli();
+		ADCSRA |= (1 << ADIE);
+		SREG = sreg;
+	}
+}
+
+BOOL isSupportedLinkbusCommand(int msg_ID, const char* text)
+{
+	if((text[0] == '?') || (strcmp(text, "HELP") == 0))
+	{
+		return(TRUE);
+	}
+
+	switch(msg_ID)
+	{
+		case MESSAGE_SET_FOX:
+#if !SUPPORT_ONLY_80M
+		case MESSAGE_SET_AM_TONE:
+#endif
+		case MESSAGE_UTIL:
+		case MESSAGE_SET_STATION_ID:
+		case MESSAGE_SYNC:
+		case MESSAGE_CODE_SETTINGS:
+		case MESSAGE_CLOCK:
+		case MESSAGE_PASSWORD:
+		case MESSAGE_INFO:
+		case MESSAGE_UPDATE:
+		{
+			return(TRUE);
+		}
+		break;
+
+		default:
+		{
+			return(FALSE);
+		}
+		break;
 	}
 }
 

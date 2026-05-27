@@ -37,6 +37,7 @@
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -111,6 +112,8 @@ extern uint8_t g_dataModulation[];
 extern uint8_t g_unlockCode[];
 
 extern char g_tempStr[];
+
+#define EEPROM_TEXT_TX_IDLE_WAIT_LIMIT 1000
 
 /* default constructor */
 EepromManager::EepromManager()
@@ -336,16 +339,25 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 	if(fl_addr)
 	{
 		char c = pgm_read_byte(fl_addr++);
+		uint16_t tries = EEPROM_TEXT_TX_IDLE_WAIT_LIMIT;
 
 		while(c)
 		{
 			lb_echo_char(c);
 			c = pgm_read_byte(fl_addr++);
 
-			while(linkbusTxInProgress())
+			while(linkbusTxInProgress() && tries)
 			{
-				;
+				wdt_reset();
+				tries--;
 			}
+
+			if(!tries)
+			{
+				break;
+			}
+
+			tries = EEPROM_TEXT_TX_IDLE_WAIT_LIMIT;
 		}
 	}
 }
