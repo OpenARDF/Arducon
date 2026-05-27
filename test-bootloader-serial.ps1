@@ -50,6 +50,61 @@ function Read-SerialText {
     return $text
 }
 
+function Read-SerialBytes {
+    param(
+        [System.IO.Ports.SerialPort]$SerialPort,
+        [int]$Milliseconds
+    )
+    $deadline = [DateTime]::UtcNow.AddMilliseconds($Milliseconds)
+    $bytes = [System.Collections.Generic.List[byte]]::new()
+    while([DateTime]::UtcNow -lt $deadline)
+    {
+        while($SerialPort.BytesToRead -gt 0)
+        {
+            $bytes.Add([byte]$SerialPort.ReadByte())
+        }
+        Start-Sleep -Milliseconds 10
+    }
+    return $bytes.ToArray()
+}
+
+function Format-ByteList {
+    param([byte[]]$Bytes)
+    if(-not $Bytes -or $Bytes.Count -eq 0) { return '<none>' }
+    return (($Bytes | ForEach-Object { '0x{0:X2}' -f $_ }) -join ' ')
+}
+
+function Invoke-Stk500Command {
+    param(
+        [System.IO.Ports.SerialPort]$SerialPort,
+        [byte[]]$Command,
+        [int]$ReadMilliseconds = 500
+    )
+    $SerialPort.DiscardInBuffer()
+    $SerialPort.Write($Command, 0, $Command.Length)
+    return Read-SerialBytes -SerialPort $SerialPort -Milliseconds $ReadMilliseconds
+}
+
+function Test-Stk500Sync {
+    param([System.IO.Ports.SerialPort]$SerialPort)
+    $response = Invoke-Stk500Command -SerialPort $SerialPort -Command ([byte[]]@(0x30, 0x20))
+    if($response.Length -lt 2 -or $response[0] -ne 0x14 -or $response[$response.Length - 1] -ne 0x10)
+    {
+        throw "Bootloader did not answer STK500 GET_SYNC. Response: $(Format-ByteList $response)"
+    }
+    return $response
+}
+
+function Read-Stk500Signature {
+    param([System.IO.Ports.SerialPort]$SerialPort)
+    $response = Invoke-Stk500Command -SerialPort $SerialPort -Command ([byte[]]@(0x75, 0x20))
+    if($response.Length -lt 5 -or $response[0] -ne 0x14 -or $response[$response.Length - 1] -ne 0x10)
+    {
+        throw "Bootloader did not answer STK500 READ_SIGN. Response: $(Format-ByteList $response)"
+    }
+    return [byte[]]@($response[1], $response[2], $response[3])
+}
+
 if($RequestBootloaderFromApp -and $NoReset)
 {
     throw '-RequestBootloaderFromApp and -NoReset cannot be combined.'
@@ -90,22 +145,31 @@ $boot = Open-SerialPort -PortName $Port -BaudRate $BootBaud
 try
 {
     $boot.DiscardInBuffer()
-    if(-not $NoReset)
+    if($NoReset)
     {
-        $boot.Write('0 ')
-        Start-Sleep -Milliseconds 100
-    }
-    $boot.Write('?')
-    $text = $entryText + (Read-SerialText -SerialPort $boot -Milliseconds 1500)
-    if($text -notmatch 'Optiboot|BOOT|STK|AVR')
-    {
-        Write-Warning "Bootloader did not return a recognizable banner. Raw response follows."
-        Write-Host $text
+        Test-Stk500Sync -SerialPort $boot | Out-Null
+        $signature = Read-Stk500Signature -SerialPort $boot
+        Write-Host "Bootloader STK500v1 sync OK. Signature: $(Format-ByteList $signature)"
     }
     else
     {
-        Write-Host 'Bootloader serial smoke test received a recognizable response.'
-        Write-Host $text
+        $lastFailure = $null
+        for($attempt = 1; $attempt -le 8; $attempt++)
+        {
+            try
+            {
+                Test-Stk500Sync -SerialPort $boot | Out-Null
+                $signature = Read-Stk500Signature -SerialPort $boot
+                Write-Host "Bootloader STK500v1 sync OK. Signature: $(Format-ByteList $signature)"
+                return
+            }
+            catch
+            {
+                $lastFailure = $_
+                Start-Sleep -Milliseconds 100
+            }
+        }
+        throw $lastFailure
     }
 }
 finally

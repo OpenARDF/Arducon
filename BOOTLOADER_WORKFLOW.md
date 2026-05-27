@@ -122,11 +122,23 @@ powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avr
 
 Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required, but it can erase EEPROM unless the EESAVE fuse is programmed.
 
+## Serial Smoke Test
+
+After bootloader installation, verify the serial bootloader path with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\test-bootloader-serial.ps1 -Port COM3 -RequestBootloaderFromApp
+```
+
+On macOS, pass the device path instead of `COM3`, for example `/dev/cu.usbserial-...`.
+
+The smoke test speaks binary STK500v1 to Optiboot. A passing test reports `Bootloader STK500v1 sync OK` and prints the ATmega328P signature bytes. It does not expect an ASCII bootloader banner.
+
 ## Recovery
 
 If a bootloader update fails:
 
 1. Connect the serial adapter at the bootloader baud rate.
-2. Try the selected bootloader's normal sync/info command.
+2. Try the selected bootloader's STK500v1 sync/signature command.
 3. If serial recovery fails, use an ISP programmer to restore the bootloader and application.
 4. Re-read fuses before changing them.
