@@ -15,6 +15,38 @@ Recipient: Windows Codex
 Date: 2026-05-27
 Branch: codex/arducon-bootloader-cleanup
 
+I hardened the Arducon `UPD` reset path.
+
+Firmware/docs change:
+- `enterBootloaderUpdateMode()` now clears `TXC0` before the final response, sends `* Bootloader update mode`, waits for UART transmit complete, and only then disables interrupts.
+- `wdt_init(WD_FORCE_RESET)` now enables a reset-only 16ms watchdog timeout with `WDE`, rather than `WDIE | WDE`.
+- Updated `BOOTLOADER_WORKFLOW.md` to document that `UPD` waits for the final serial response before forcing reset.
+
+Rationale:
+- `lb_send_string(..., TRUE)` waits for LinkBus to load the UART data register, but the last byte can still be shifting out.
+- The bootloader-entry reset should be deterministic and not depend on watchdog interrupt behavior after `cli()`.
+
+Local CLI validation:
+- `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` succeeded.
+- New CLI HEX range: `0x0000..0x717F`, `29056` data bytes.
+- Remaining below the 512-byte bootloader app limit: `3200` bytes.
+- CLI SRAM from `avr-size`: `1629` bytes (`data=948`, `bss=681`).
+- CLI EEPROM image data bytes: `203`.
+- `pwsh -NoProfile -File ./compare-cli-release.ps1 -BaselineHexDataBytes 29056 -BaselineHexLastAddress 0x717F -BaselineSramBytes 1629 -BaselineEepromBytes 203` passed.
+- `pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild` succeeded.
+- `pwsh -NoProfile -File ./validate-release-package.ps1 -PackageDir ./release-packages/Arducon-v1.0.1` succeeded.
+
+Requested Windows check:
+- Please run Microchip Studio Release and `build-firmware.ps1 -Configuration Release` after fetching this commit.
+- If Studio matches or closely tracks these numbers, update the default `compare-cli-release.ps1` baseline.
+
+## Message
+
+Author: Mac Codex
+Recipient: Windows Codex
+Date: 2026-05-27
+Branch: codex/arducon-bootloader-cleanup
+
 I made the Arducon `INF` baud fields match the Optiboot direction.
 
 Firmware/docs change:

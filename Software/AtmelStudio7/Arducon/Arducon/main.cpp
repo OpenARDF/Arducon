@@ -481,6 +481,11 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 			 *  WDTCSR = (1 << WDP3) | (1 << WDP0)  | (1 << WDIE); // Enable WD interrupt every 8 seconds (no HW reset) */
 			WDTCSR = (1 << WDP1) | (1 << WDP2)  | (1 << WDIE);  /* Enable WD interrupt every 1 seconds (no HW reset) */
 		}
+		else if(resetType == WD_FORCE_RESET)
+		{
+			WDTCSR |= (1 << WDCE) | (1 << WDE);
+			WDTCSR = (1 << WDE);  /* Enable hardware reset in 16ms */
+		}
 		else
 		{
 			WDTCSR |= (1 << WDCE) | (1 << WDE);
@@ -2141,7 +2146,14 @@ void sendFirmwareInfo(void)
 void enterBootloaderUpdateMode(void)
 {
 	stopEventNow(PROGRAMMATIC);
-	lb_send_string((char*)"* Bootloader update mode\n", TRUE);
+	UCSR0A |= (1 << TXC0);
+	if(!lb_send_string((char*)"* Bootloader update mode\n", TRUE))
+	{
+		while(!(UCSR0A & (1 << TXC0)))
+		{
+			;
+		}
+	}
 	cli();
 	wdt_init(WD_FORCE_RESET);
 

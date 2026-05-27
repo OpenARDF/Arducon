@@ -46,7 +46,7 @@ UPD
 * INF proto=stk500v1
 ```
 
-`UPD` stops active transmissions, prints `* Bootloader update mode`, then forces a watchdog reset so the bootloader can accept the update.
+`UPD` stops active transmissions, prints `* Bootloader update mode`, waits for the UART transmitter to finish sending that response, then forces a watchdog reset so the bootloader can accept the update.
 
 DTMF bootloader entry is intentionally out of scope for the first bootloader cleanup.
 
