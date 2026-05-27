@@ -49,6 +49,7 @@
 #define LINKBUS_MIN_TX_INTERVAL_MS 100
 
 #define BAUD 57600
+#define UPDATE_BAUD 115200
 #define MYUBRR(b) ((F_CPU + b * 8L) / (b * 16L) - 1)
 
 typedef enum

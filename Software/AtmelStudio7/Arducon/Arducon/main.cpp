@@ -2130,7 +2130,9 @@ void sendFirmwareInfo(void)
 	lb_send_string(g_tempStr, TRUE);
 	lb_send_string((char*)"* INF hw=ATmega328P-16\n", TRUE);
 	lb_send_string((char*)"* INF app=0x0000\n", TRUE);
-	sprintf(g_tempStr, "* INF baud=%lu\n", (uint32_t)BAUD);
+	sprintf(g_tempStr, "* INF appbaud=%lu\n", (uint32_t)BAUD);
+	lb_send_string(g_tempStr, TRUE);
+	sprintf(g_tempStr, "* INF baud=%lu\n", (uint32_t)UPDATE_BAUD);
 	lb_send_string(g_tempStr, TRUE);
 	lb_send_string((char*)"* INF bl=unknown\n", TRUE);
 	lb_send_string((char*)"* INF proto=stk500v1\n", TRUE);

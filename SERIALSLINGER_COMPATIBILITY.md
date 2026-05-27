@@ -25,7 +25,7 @@ The current SerialSlinger update implementation expects:
 - 512-byte update pages
 - a nonzero app start address
 
-Optiboot/STK500v1 does not expose the SignalSlinger identity line and does not implement the custom `E/W/C/R` framed protocol. SerialSlinger also currently parses `* INF baud=...` as the update baud, while Arducon currently reports its app serial baud there.
+Optiboot/STK500v1 does not expose the SignalSlinger identity line and does not implement the custom `E/W/C/R` framed protocol. Arducon reports `appbaud` for normal LinkBus serial and `baud` for the Optiboot update side so future SerialSlinger support can distinguish them cleanly.
 
 ## Consequence
 
@@ -55,19 +55,13 @@ Replace Optiboot with a small ATmega328P bootloader that speaks the SignalSlinge
 
 This would reduce SerialSlinger changes, but it is riskier because it requires new bootloader work on ATmega328P and gives up the main advantage of using a proven Optiboot-compatible bootloader.
 
-## Arducon Firmware Follow-Up
+## Arducon Firmware Schema
 
-Before SerialSlinger compatibility testing, decide the final app `INF` schema for Arducon. If SerialSlinger keeps using `baud` as update baud, Arducon should report:
-
-```text
-* INF baud=115200
-```
-
-If we want to expose both bauds cleanly, add explicit fields such as:
+Arducon exposes both serial rates explicitly:
 
 ```text
 * INF appbaud=57600
 * INF baud=115200
 ```
 
-SerialSlinger should parse those fields product-aware rather than assuming SignalSlinger semantics for all products.
+SerialSlinger should parse those fields product-aware rather than assuming SignalSlinger semantics for all products. For Arducon, `baud` is the Optiboot update baud and `appbaud` is the normal LinkBus app baud.

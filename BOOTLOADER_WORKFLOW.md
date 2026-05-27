@@ -40,7 +40,8 @@ UPD
 * INF sw=1.0.1
 * INF hw=ATmega328P-16
 * INF app=0x0000
-* INF baud=57600
+* INF appbaud=57600
+* INF baud=115200
 * INF bl=unknown
 * INF proto=stk500v1
 ```
