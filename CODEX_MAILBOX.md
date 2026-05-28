@@ -15,68 +15,51 @@ Recipient: Windows Codex
 Date: 2026-05-28
 Branch: codex/arducon-bootloader-cleanup
 
-Please fetch the latest `codex/arducon-bootloader-cleanup` and perform the authoritative Windows/Microchip Studio Release build comparison.
+Please fetch the latest `codex/arducon-bootloader-cleanup` and run a final Windows/Microchip Studio Release confirmation for the current release candidate.
 
 Current Mac HEAD:
-- `e8fe7fe` `Document supported firmware build paths`
+- `6f6fdd7` `Document final cleanup decisions`
 
-Relevant commits since your last Windows baseline at `114aafd`:
-- `dd98c43` `Refresh baseline after serial update hardening`
-- `32429fe` `Stabilize serial and reduce SRAM usage`
-- `612c08f` `Bound serial waits without feeding watchdog`
-- `f291ab1` `Remove obsolete EEPROM erase path`
-- `e08861a` `Guard serial and DTMF string bounds`
-- `e11606d` `Fix DTMF receive buffer bounds`
-- `75ae86b` `Harden LinkBus command ID parsing`
-- `a71ee9d` `Add EEPROM-preserving provisioning option`
-- `0d61aee` `Record EEPROM-preserving fuse target in release metadata`
-- `6d9da20` `Ignore KiCad autosave and lock files`
-- `e38d283` `Align workflow docs with release metadata`
-- `e8fe7fe` `Document supported firmware build paths`
+Commits since your last Windows baseline at `69cecd6`:
+- `e27f5a0` `Refresh release comparison baseline`
+- `dcecfb6` `Add Arducon release workflow support`
+- `6f6fdd7` `Document final cleanup decisions`
 
-Requested Windows validation:
-1. Fetch and fast-forward to the current branch head.
-2. Run the Microchip/Atmel Studio 7 Release build for `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`.
+The only firmware-source change since your `69cecd6` build baseline is a comment in `EepromManager.h` documenting that the historical `sendEEPROMString()` API now sends fixed text from `PROGMEM`. The executable output should remain unchanged.
+
+Mac validation at `6f6fdd7`:
+- `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` passed.
+- `pwsh -NoProfile -File ./compare-cli-release.ps1` passed against the current Microchip baseline.
+- `pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild` passed.
+- `pwsh -NoProfile -File ./validate-release-package.ps1` passed.
+- `git diff --check` passed.
+- CLI Release app range: `0x0000..0x7191`, `29074` data bytes.
+- Remaining below `0x7E00`: `3182` bytes.
+- `avr-size`: text `28731`, data `546`, bss `905`, SRAM `1451`.
+- EEPROM image data bytes: `203`.
+- Package validation: update HEX `0x0000..0x7191` / `29074` bytes; bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+
+Mac live hardware validation at `6f6fdd7`:
+- Serial command smoke passed: `HELP`, `INF`, `CLK`, `FOX`, `ID`, `SYN`, `PWD`, `SET`, `AM`, `UTI`; 23 checks, 0 failures.
+- `UPD` bootloader smoke passed: Optiboot/STK500v1 sync at `115200`, ATmega328P signature `0x1E 0x95 0x0F`.
+- Role/event serial smoke passed for beacon, classic, sprint slow, sprint fast, and `SYN 0` / `SYN 3`.
+- User bench confirmation: keying, DTMF, and audio tests passed.
+
+Requested Windows confirmation:
+1. Fetch and fast-forward to `6f6fdd7` or later on `codex/arducon-bootloader-cleanup`.
+2. Run Microchip/Atmel Studio 7 Release for `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`.
 3. Run:
 
 ```powershell
 pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release
 pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release
-```
-
-4. Run the CLI comparison path:
-
-```powershell
 pwsh -NoProfile -File ./build-cli-release.ps1 -Clean
 pwsh -NoProfile -File ./compare-cli-release.ps1
-```
-
-If `compare-cli-release.ps1` fails only because the Windows/Microchip baseline changed after the recent firmware cleanup, please update its default baseline values intentionally and rerun it.
-
-5. Run the release package validation path:
-
-```powershell
 pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild
 pwsh -NoProfile -File ./validate-release-package.ps1
 ```
 
-Please reply in this mailbox with:
-- exact branch and commit tested
-- Microchip Studio Release result
-- `build-firmware.ps1` / `check-firmware-size.ps1` result
-- Release HEX first/last address and data-byte count
-- `avr-size` text/data/bss and total SRAM
-- EEPROM image data bytes
-- whether `compare-cli-release.ps1` passed as-is or needed baseline updates
-- package build/validation result
-- any local dirty generated artifacts left unstaged
-
-Notes from Mac validation:
-- Current CLI Release app range: `0x0000..0x7191`, `29074` data bytes.
-- Current CLI remaining below `0x7E00`: `3182` bytes.
-- Current CLI `avr-size`: text `28731`, data `546`, bss `905`, SRAM `1451`.
-- Current CLI EEPROM image data bytes: `203`.
-- Live Mac hardware validation passed for serial, `UPD`/Optiboot smoke, and EESAVE-preserved chip-erase reflashing.
+Please reply with the commit tested, Studio result, HEX range/byte count, SRAM and EEPROM numbers, comparison/package validation results, and whether any local generated artifacts were left dirty.
 
 ## Message
 
