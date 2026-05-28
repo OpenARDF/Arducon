@@ -42,7 +42,6 @@
 /* Global Variables */
 static volatile BOOL g_bus_disabled = TRUE;
 static const char crlf[] = "\n";
-static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
 
 static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
@@ -192,7 +191,6 @@ BOOL linkbus_start_tx(void)
 	if(success) /* message will be lost if transmit is busy */
 	{
 		linkbus_tx_active = TRUE;
-		UCSR0B &= ~((1 << RXEN0) | (1 << RXCIE0));
 		UCSR0B |= (1 << UDRIE0);
 	}
 
@@ -205,15 +203,6 @@ void linkbus_end_tx(void)
 	{
 		UCSR0B &= ~(1 << UDRIE0);
 		linkbus_tx_active = FALSE;
-		while(UCSR0A & (1 << RXC0))
-		{
-			volatile uint8_t discard = UDR0;
-			(void)discard;
-		}
-		if(!g_bus_disabled)
-		{
-			UCSR0B |= (1 << RXEN0) | (1 << RXCIE0);
-		}
 	}
 }
 
@@ -432,7 +421,7 @@ void lb_send_value(uint16_t value, char* label)
 		return;
 	}
 
-	sprintf(g_tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
+	sprintf(g_tempMsgBuff, "> %s=%d\n", label, value);
 	err = linkbus_send_text(g_tempMsgBuff);
 	if(err)
 	{

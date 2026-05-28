@@ -42,6 +42,7 @@
 #ifdef ATMEL_STUDIO_7
 #include <avr/io.h>
 #include <avr/eeprom.h>
+#include <avr/pgmspace.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -70,7 +71,7 @@ volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
 volatile int g_dtmf_error_countdown = 0;
 
-	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
+	const char g_morsePatterns[][5] PROGMEM = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
 
 volatile BOOL g_callsign_sent = TRUE;
 
@@ -151,8 +152,8 @@ volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 	const int N = Goertzel_N;
 	const float threshold = 500000. * (Goertzel_N / 100);
 	const float sampling_freq = SAMPLE_RATE;
-	const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
-	const float y_frequencies[4] = { 697., 770., 852., 941. };
+	const float x_frequencies[4] PROGMEM = { 1209., 1336., 1477., 1633. };
+	const float y_frequencies[4] PROGMEM = { 697., 770., 852., 941. };
 #ifdef DEBUG_DTMF
 		const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 #endif  /* DEBUG_DTMF */
@@ -178,6 +179,8 @@ void setupForFox(Fox_t* fox, EventAction_t action);
 uint8_t suspendADCInterrupts(void);
 void restoreADCInterrupts(uint8_t restoreADIE);
 BOOL isSupportedLinkbusCommand(int msg_ID, const char* text);
+float readProgmemFloat(const float* value);
+void copyFoxMorsePattern(Fox_t fox, char* destination);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
@@ -590,11 +593,6 @@ ISR(USART_RX_vect)
 	uint8_t rx_char;
 
 	rx_char = UDR0;
-
-	if(linkbusTxInProgress())
-	{
-		return;
-	}
 
 	if(!buff)
 	{
@@ -1230,11 +1228,11 @@ ISR( TIMER2_COMPB_vect )
 						}
 						else
 						{
-							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
 							repeat = TRUE;
 						}
 #else
-							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
 							repeat = TRUE;
 #endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
@@ -1409,7 +1407,8 @@ void loop()
 
 				for(int i = 0; i < 4; i++)
 				{
-					g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+					float yFrequency = readProgmemFloat(&y_frequencies[i]);
+					g_goertzel.SetTargetFrequency(yFrequency);          /* Initialize the object with the sampling frequency, # of samples and target freq */
 					magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
 
 					if(magnitudeY > largestY)                           /* Use only the greatest Y value */
@@ -1424,7 +1423,7 @@ void loop()
 #ifdef DEBUG_DTMF
 						if(magnitudeY > threshold)
 						{
-							dtostrf((double)y_frequencies[i], 4, 0, s);
+							dtostrf((double)yFrequency, 4, 0, s);
 							sprintf(g_tempStr, "Y(%s)=", s);
 							lb_send_string(g_tempStr, TRUE);
 							dtostrf((double)magnitudeY, 4, 0, s);
@@ -1438,7 +1437,8 @@ void loop()
 				{
 					for(int i = 0; i < 4; i++)
 					{
-						g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+						float xFrequency = readProgmemFloat(&x_frequencies[i]);
+						g_goertzel.SetTargetFrequency(xFrequency);          /* Initialize the object with the sampling frequency, # of samples and target freq */
 						magnitudeX = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
 
 						if(magnitudeX > largestX)                           /* Use only the greatest X value */
@@ -1453,7 +1453,7 @@ void loop()
 #ifdef DEBUG_DTMF
 							if(magnitudeX > threshold)
 							{
-								dtostrf((double)x_frequencies[i], 4, 0, s);
+								dtostrf((double)xFrequency, 4, 0, s);
 								sprintf(g_tempStr, "X(%s)=", s);
 								lb_send_string(g_tempStr, TRUE);
 								dtostrf((double)magnitudeX, 4, 0, s);
@@ -2188,6 +2188,18 @@ void restoreADCInterrupts(uint8_t restoreADIE)
 		ADCSRA |= (1 << ADIE);
 		SREG = sreg;
 	}
+}
+
+float readProgmemFloat(const float* value)
+{
+	float result;
+	memcpy_P(&result, value, sizeof(result));
+	return(result);
+}
+
+void copyFoxMorsePattern(Fox_t fox, char* destination)
+{
+	strcpy_P(destination, (PGM_P)g_morsePatterns[fox]);
 }
 
 BOOL isSupportedLinkbusCommand(int msg_ID, const char* text)
