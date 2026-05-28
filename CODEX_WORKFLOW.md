@@ -37,6 +37,8 @@ powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1 -SkipBuild
 powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 ```
 
+- For deployment work, follow `RELEASE_WORKFLOW.md`. Arducon firmware release versions use plain `x.y.z` in `ARDUCON_FIRMWARE_VERSION`, tags use `vX.Y.Z`, and release assets are published to GitHub Releases under `OpenARDF/Arducon`.
+
 ## Generated And Hand-Maintained Files
 
 - Hand-maintained firmware files include the source files under `Software/AtmelStudio7/Arducon/Arducon` and the root PowerShell workflow scripts.

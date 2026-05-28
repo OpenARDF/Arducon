@@ -121,6 +121,15 @@ function Get-HexAddressSummary {
     }
 }
 
+function Assert-ReleaseVersion {
+    param([Parameter(Mandatory = $true)][string]$Version)
+
+    if($Version -notmatch '^\d+\.\d+\.\d+$')
+    {
+        throw "ARDUCON_FIRMWARE_VERSION must be a plain x.y.z release version. Got '$Version'."
+    }
+}
+
 if(-not $SkipBuild)
 {
     if($UseMicrochipStudioBuild)
@@ -153,6 +162,7 @@ if([string]::IsNullOrWhiteSpace($HexPath))
 
 $defsText = Get-Content -LiteralPath $defsPath -Raw
 $version = Get-DefineString -Text $defsText -Name 'ARDUCON_FIRMWARE_VERSION'
+Assert-ReleaseVersion -Version $version
 $friendlyVersion = "v$version"
 
 if([string]::IsNullOrWhiteSpace($OutputDir))

@@ -92,6 +92,8 @@ The package includes:
 The manifest records the product, version, board, app baud, update baud, app start, app limit, flash size, page size, update command, and hashes.
 It also records the bootloader file, source package, protocol, baud rate, normal and EEPROM-preserving high-fuse targets, address range, and image byte count.
 
+See `RELEASE_WORKFLOW.md` for the GitHub release checklist, version policy, and release asset upload commands.
+
 ## Provisioning
 
 Provisioning remains guarded: first read and review fuses, then explicitly opt in to flash and fuse writes.

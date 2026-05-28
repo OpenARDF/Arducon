@@ -32,3 +32,4 @@ powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuratio
 ```
 
 See `BOOTLOADER_WORKFLOW.md` for Optiboot provisioning, release packaging, fuse handling, and serial bootloader smoke tests.
+See `RELEASE_WORKFLOW.md` for GitHub release publishing and version-number policy.

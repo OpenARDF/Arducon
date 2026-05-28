@@ -90,6 +90,15 @@ function Test-ZipContainsEntries {
     }
 }
 
+function Assert-ReleaseVersion {
+    param([Parameter(Mandatory = $true)][string]$Version)
+
+    if($Version -notmatch '^\d+\.\d+\.\d+$')
+    {
+        throw "Release version must be a plain x.y.z version. Got '$Version'."
+    }
+}
+
 if(-not (Test-Path -LiteralPath $PackageDir))
 {
     throw "Release package directory not found: $PackageDir"
@@ -111,6 +120,7 @@ if($manifest.product -ne 'Arducon')
 {
     throw "Unexpected product: $($manifest.product)"
 }
+Assert-ReleaseVersion -Version $manifest.version
 
 $settings = $manifest.firmwareUpdate
 $appStart = ConvertFrom-HexAddress $settings.appStartAddress
