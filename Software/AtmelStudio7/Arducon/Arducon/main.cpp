@@ -2254,13 +2254,15 @@ void sendFirmwareInfo(void)
 
 void enterBootloaderUpdateMode(void)
 {
+	uint16_t tries = UINT16_MAX;
+
 	stopEventNow(PROGRAMMATIC);
 	UCSR0A |= (1 << TXC0);
 	if(!lb_send_string((char*)"* Bootloader update mode\n", TRUE))
 	{
-		while(!(UCSR0A & (1 << TXC0)))
+		while(!(UCSR0A & (1 << TXC0)) && tries)
 		{
-			;
+			tries--;
 		}
 	}
 	cli();

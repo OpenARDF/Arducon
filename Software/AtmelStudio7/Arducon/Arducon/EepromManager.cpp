@@ -38,6 +38,7 @@
 #ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
 #include <avr/wdt.h>
+#include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -348,7 +349,7 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 
 			while(linkbusTxInProgress() && tries)
 			{
-				wdt_reset();
+				_delay_us(100);
 				tries--;
 			}
 

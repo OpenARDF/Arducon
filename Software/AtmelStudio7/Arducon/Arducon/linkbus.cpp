@@ -32,6 +32,7 @@
 #ifdef ATMEL_STUDIO_7
 #include <avr/eeprom.h>
 #include <avr/wdt.h>
+#include <util/delay.h>
 #endif  /* ATMEL_STUDIO_7 */
 
 #ifdef ATMEL_STUDIO_7
@@ -53,6 +54,7 @@ BOOL linkbus_wait_for_tx_idle(void);
 
 #define LINKBUS_TX_PAYLOAD_LENGTH (LINKBUS_MAX_TX_MSG_LENGTH - 1)
 #define LINKBUS_TX_IDLE_WAIT_LIMIT 1000
+#define LINKBUS_TX_IDLE_WAIT_US 100
 
 /* Module global variables */
 static volatile BOOL linkbus_tx_active = FALSE; /* volatile is required to ensure optimizer handles this properly */
@@ -282,16 +284,23 @@ BOOL linkbus_send_text(char* text)
 	{
 		LinkbusTxBuffer* buff = nextEmptyTxBuffer();
 
+		if(!buff && !(SREG & (1 << SREG_I)))
+		{
+			return(err);
+		}
+
 		while(!buff && tries)
 		{
-			while(linkbusTxInProgress() && tries)
+			if(linkbusTxInProgress())
 			{
-				if(tries)
-				{
-					wdt_reset();
-					tries--;    /* wait until transmit finishes */
-				}
+				_delay_us(LINKBUS_TX_IDLE_WAIT_US); /* Wait for ISR-driven transmit progress without feeding the watchdog. */
+				tries--;
 			}
+			else
+			{
+				tries = 0;
+			}
+
 			buff = nextEmptyTxBuffer();
 		}
 
@@ -312,9 +321,14 @@ BOOL linkbus_wait_for_tx_idle(void)
 {
 	uint16_t tries = LINKBUS_TX_IDLE_WAIT_LIMIT;
 
+	if(!(SREG & (1 << SREG_I)))
+	{
+		return(linkbusTxInProgress());
+	}
+
 	while(linkbusTxInProgress() && tries)
 	{
-		wdt_reset();
+		_delay_us(LINKBUS_TX_IDLE_WAIT_US);
 		tries--;
 	}
 
