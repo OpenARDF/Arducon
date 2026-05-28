@@ -431,25 +431,7 @@ BOOL EepromManager::eepromLayoutIsCurrent(void)
  */
 BOOL EepromManager::initializeEEPROMVars(void)
 {
-	BOOL err = FALSE;
 	uint16_t i;
-
-#ifndef ATMEL_STUDIO_7
-		/* Erase full EEPROM */
-		for(i = 0; i < 0x0400; i++)
-		{
-			eeprom_write_byte((uint8_t*)i, 0xFF);
-		}
-
-		for(i = 0; i < 0x0400; i++)
-		{
-			uint8_t x = eeprom_read_byte((const uint8_t*)i);
-			if(x != 0xFF)
-			{
-				err = TRUE;
-			}
-		}
-#endif  /* !ATMEL_STUDIO_7 */
 
 	g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
@@ -514,7 +496,7 @@ BOOL EepromManager::initializeEEPROMVars(void)
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_layout_version), EEPROM_LAYOUT_VERSION);
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
 
-	return(err);
+	return(FALSE);
 }
 
 
