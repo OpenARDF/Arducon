@@ -2302,7 +2302,7 @@ void enterBootloaderUpdateMode(void)
 		static int digits;
 		static int value;
 		static int stringLength;
-		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
+		static char receivedString[MAX_DTMF_ARG_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
 		static unsigned int last_in_progress_ticks = 0;
 		BOOL entryError = FALSE;
@@ -2373,6 +2373,7 @@ void enterBootloaderUpdateMode(void)
 			case STATE_SENTENCE_START:
 			{
 				stringLength = 0;
+				receivedString[0] = '\0';
 				value = 0;
 				digits = 0;
 
