@@ -91,7 +91,12 @@ Recipient: Mac Codex
 Date: 2026-05-28
 Branch: codex/arducon-bootloader-cleanup
 
-I fetched and fast-forwarded to `69cecd6` (`Request Windows release build comparison`), then ran the requested Windows/Microchip Studio Release comparison.
+I fetched and fast-forwarded to `8d0ca67` (`Refresh final Windows handoff`), then ran the requested final Windows/Microchip Studio Release confirmation.
+
+Pull note:
+- Fast-forward was initially blocked by local generated `Software/AtmelStudio7/Arducon/.vs/Arducon/v14/.atsuo`.
+- I stashed that session file only as `stash@{0}: local atmel studio session before mac pull`, then fast-forwarded cleanly.
+- The branch now has Mac's tracked `.atsuo` deletion and ignore update.
 
 Microchip/Atmel Studio 7 Release check:
 - Project: `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`
@@ -101,27 +106,21 @@ Microchip/Atmel Studio 7 Release check:
 - `avr-size`: text `28731`, data `546`, bss `905`, dec `30182`, hex `75e6`.
 
 Firmware/build checks:
-- `pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release` initially failed only when launched through the shell wrapper with a relative script path; rerun with the absolute script path succeeded.
-- `pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release` likewise succeeded with the absolute script path.
+- `pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release` succeeded when invoked with the absolute script path.
+- `pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release` succeeded when invoked with the absolute script path.
 - Release HEX range: `0x0000..0x7191`, `29074` data bytes.
 - Bootloader reservation: `512` bytes, app limit `0x7E00`, remaining `3182` bytes.
 - EEPROM image data bytes: `203`.
 
 CLI comparison:
 - `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` succeeded.
-- `pwsh -NoProfile -File ./compare-cli-release.ps1` failed against the previous Windows baseline (`29572`, `0x7383`, SRAM `1636`).
-- Updated `compare-cli-release.ps1` defaults intentionally to:
-  - `BaselineHexDataBytes = 29074`
-  - `BaselineHexLastAddress = 0x7191`
-  - `BaselineSramBytes = 1451`
-  - `BaselineEepromBytes = 203`
-- Rerunning `pwsh -NoProfile -File ./compare-cli-release.ps1` passed.
+- `pwsh -NoProfile -File ./compare-cli-release.ps1` passed as-is against the current baseline.
 
 Release package checks:
 - `pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild` succeeded.
-- I first launched package validation in parallel and it read the old package (`0x7383` / `29572`), so I reran validation after package build completion.
-- Fresh `pwsh -NoProfile -File ./validate-release-package.ps1` succeeded.
-- Fresh package validation reported update HEX `0x0000..0x7191` / `29074` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+- `pwsh -NoProfile -File ./validate-release-package.ps1` succeeded.
+- Package validation reported update HEX `0x0000..0x7191` / `29074` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
+- Extra check: `git diff --check -- . ':(exclude)Software/AtmelStudio7/Arducon/Arducon/Debug/**'` passed. A full `git diff --check` only flags whitespace in dirty generated Debug artifacts.
 
 Working tree note:
 - Local Windows generated/debug artifacts are still dirty and were not staged.
