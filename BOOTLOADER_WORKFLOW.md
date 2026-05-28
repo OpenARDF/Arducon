@@ -111,6 +111,11 @@ newHigh = (oldHigh & 0xF8) | 0x06
 ```
 
 The script applies that transform when `-ProgramFuses -ConfirmFuseWrite` are both supplied. Do not change unrelated fuse bits.
+If chip erase will be used during development or provisioning and EEPROM settings should survive it, add `-PreserveEeprom`. That programs the active-low EESAVE high-fuse bit while preserving the other high-fuse bits:
+
+```text
+newHigh = ((oldHigh & 0xF8) | 0x06) & 0xF7
+```
 
 Example first-install review flow with an Atmel-ICE using `avrdude`:
 
@@ -118,9 +123,10 @@ Example first-install review flow with an Atmel-ICE using `avrdude`:
 powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -SkipFlash -ReadFusesOnly
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite -PreserveEeprom
 ```
 
-Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required, but it can erase EEPROM unless the EESAVE fuse is programmed.
+Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required. It can erase EEPROM unless the EESAVE fuse is programmed; use `-PreserveEeprom -ProgramFuses -ConfirmFuseWrite` before relying on EEPROM retention across chip erase.
 
 ## Serial Smoke Test
 

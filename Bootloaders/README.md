@@ -17,6 +17,7 @@ Selection rationale:
 - Uses `115200` baud, matching the planned updater flow.
 - Occupies `0x7E00..0x7FFF`, matching a 512-byte boot section.
 - Matches the ATmega328P high-fuse target `0xDE` when the existing high fuse is transformed with `(oldHigh & 0xF8) | 0x06`.
+- If EEPROM must survive chip erase, program EESAVE as well; the corresponding high-fuse target from `0xDE` is `0xD6`.
 
 The application must remain below `0x7E00`; `check-firmware-size.ps1` enforces that limit.
 

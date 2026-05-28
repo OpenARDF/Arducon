@@ -37,6 +37,8 @@ param(
 
     [switch]$ChipErase,
 
+    [switch]$PreserveEeprom,
+
     [switch]$SkipFlash,
 
     [switch]$DryRun
@@ -48,6 +50,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = $PSScriptRoot
 $device = 'atmega328p'
 $desiredHighFuseBootBits = 0x06
+$highFuseEesaveBit = 0x08
 
 if([string]::IsNullOrWhiteSpace($ApplicationHexPath))
 {
@@ -371,8 +374,20 @@ if($selectedBackend -eq 'Avrdude')
     if($null -ne $oldHighFuse)
     {
         $newHighFuse = ($oldHighFuse -band 0xF8) -bor $desiredHighFuseBootBits
+        if($PreserveEeprom)
+        {
+            $newHighFuse = $newHighFuse -band 0xF7
+        }
+
         Write-Host ("ATmega328P high fuse: current=0x{0:X2}; bootloader target=0x{1:X2}" -f $oldHighFuse, $newHighFuse)
-        Write-Host ("Transform: newHigh = (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+        if($PreserveEeprom)
+        {
+            Write-Host ("Transform: newHigh = ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7  # 512-byte bootloader, BOOTRST, EESAVE" -f $desiredHighFuseBootBits)
+        }
+        else
+        {
+            Write-Host ("Transform: newHigh = (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+        }
     }
     else
     {
@@ -398,7 +413,15 @@ if(-not $SkipFlash)
         $flashArgs = Get-AvrdudeBaseArguments
         if($ChipErase)
         {
-            Write-Warning 'Chip erase can erase EEPROM unless the EESAVE fuse is programmed.'
+            $effectiveHighFuse = if($ProgramFuses -and ($null -ne $newHighFuse)) { $newHighFuse } else { $oldHighFuse }
+            if(($null -ne $effectiveHighFuse) -and (($effectiveHighFuse -band $highFuseEesaveBit) -eq 0))
+            {
+                Write-Host ("Chip erase requested; EESAVE is programmed in the effective high fuse 0x{0:X2}, so EEPROM should be preserved." -f $effectiveHighFuse)
+            }
+            else
+            {
+                Write-Warning 'Chip erase can erase EEPROM unless the EESAVE fuse is programmed. Use -PreserveEeprom with -ProgramFuses -ConfirmFuseWrite to program EESAVE.'
+            }
             $flashArgs += '-e'
         }
         else
@@ -422,6 +445,10 @@ if($ProgramFuses)
     }
     $fuseArgs = (Get-AvrdudeBaseArguments) + @('-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse))
     Write-Warning ("Writing ATmega328P high fuse from 0x{0:X2} to 0x{1:X2}. Unrelated high-fuse bits are preserved." -f $oldHighFuse, $newHighFuse)
+    if($PreserveEeprom)
+    {
+        Write-Warning 'EESAVE will be programmed so future chip erase operations preserve EEPROM.'
+    }
     Invoke-Avrdude -Arguments $fuseArgs
     if($DryRun)
     {
@@ -440,5 +467,13 @@ if($ProgramFuses)
 else
 {
     Write-Host 'Fuse writes skipped.'
-    Write-Host ("Desired high-fuse boot bits: (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+    if($PreserveEeprom)
+    {
+        Write-Host ("Desired high-fuse boot bits plus EESAVE: ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7" -f $desiredHighFuseBootBits)
+        Write-Warning '-PreserveEeprom only takes effect when fuse writes are enabled with -ProgramFuses -ConfirmFuseWrite.'
+    }
+    else
+    {
+        Write-Host ("Desired high-fuse boot bits: (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+    }
 }
