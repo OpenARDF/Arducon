@@ -178,7 +178,7 @@ void enterBootloaderUpdateMode(void);
 void setupForFox(Fox_t* fox, EventAction_t action);
 uint8_t suspendADCInterrupts(void);
 void restoreADCInterrupts(uint8_t restoreADIE);
-BOOL isSupportedLinkbusCommand(int msg_ID, const char* text);
+BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text);
 float readProgmemFloat(const float* value);
 void copyFoxMorsePattern(Fox_t fox, char* destination);
 
@@ -588,7 +588,7 @@ ISR(USART_RX_vect)
 	static uint8_t charIndex = 0;
 	static uint8_t field_index = 0;
 	static uint8_t field_len = 0;
-	static int msg_ID = 0;
+	static uint16_t msg_ID = 0;
 	static BOOL receiving_msg = FALSE;
 	uint8_t rx_char;
 
@@ -676,8 +676,11 @@ ISR(USART_RX_vect)
 					charIndex--;
 					if(field_index == 0)
 					{
-						msg_ID -= textBuff[charIndex];
-						msg_ID /= 10;
+						if(msg_ID != INVALID_MESSAGE)
+						{
+							msg_ID -= textBuff[charIndex];
+							msg_ID /= 10;
+						}
 					}
 					else if(field_len)
 					{
@@ -726,7 +729,15 @@ ISR(USART_RX_vect)
 					{
 						if(field_index == 0)    /* message ID received */
 						{
-							msg_ID = msg_ID * 10 + rx_char;
+							if(field_len < 3)
+							{
+								msg_ID = msg_ID * 10 + rx_char;
+							}
+							else
+							{
+								msg_ID = INVALID_MESSAGE;
+							}
+
 							field_len++;
 						}
 						else
@@ -2208,7 +2219,7 @@ void copyFoxMorsePattern(Fox_t fox, char* destination)
 	strcpy_P(destination, (PGM_P)g_morsePatterns[fox]);
 }
 
-BOOL isSupportedLinkbusCommand(int msg_ID, const char* text)
+BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text)
 {
 	if((text[0] == '?') || (strcmp(text, "HELP") == 0))
 	{
