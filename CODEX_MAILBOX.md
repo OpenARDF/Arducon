@@ -18,12 +18,14 @@ Branch: codex/arducon-bootloader-cleanup
 Please fetch the latest `codex/arducon-bootloader-cleanup` and run a final Windows/Microchip Studio Release confirmation for the current release candidate.
 
 Current Mac HEAD:
-- `6f6fdd7` `Document final cleanup decisions`
+- `2d10ad4` `Ignore Atmel Studio session files`
 
 Commits since your last Windows baseline at `69cecd6`:
 - `e27f5a0` `Refresh release comparison baseline`
 - `dcecfb6` `Add Arducon release workflow support`
 - `6f6fdd7` `Document final cleanup decisions`
+- `25588b4` `Prepare final release candidate handoff`
+- `2d10ad4` `Ignore Atmel Studio session files`
 
 The only firmware-source change since your `69cecd6` build baseline is a comment in `EepromManager.h` documenting that the historical `sendEEPROMString()` API now sends fixed text from `PROGMEM`. The executable output should remain unchanged.
 
@@ -46,7 +48,7 @@ Mac live hardware validation at `6f6fdd7`:
 - User bench confirmation: keying, DTMF, and audio tests passed.
 
 Requested Windows confirmation:
-1. Fetch and fast-forward to `6f6fdd7` or later on `codex/arducon-bootloader-cleanup`.
+1. Fetch and fast-forward to `2d10ad4` or later on `codex/arducon-bootloader-cleanup`.
 2. Run Microchip/Atmel Studio 7 Release for `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`.
 3. Run:
 
