@@ -1884,17 +1884,23 @@ void handleLinkBusMsgs()
 			{
 				if(lb_buff->fields[FIELD1][0])
 				{
-					strcpy(g_tempStr, " "); /* Space before ID gets sent */
-					strcat(g_tempStr, lb_buff->fields[FIELD1]);
-
+					uint8_t idLength = 1 + strlen(lb_buff->fields[FIELD1]); /* Space before ID gets sent */
 					if(lb_buff->fields[FIELD2][0])
 					{
-						strcat(g_tempStr, " ");
-						strcat(g_tempStr, lb_buff->fields[FIELD2]);
+						idLength += 1 + strlen(lb_buff->fields[FIELD2]);
 					}
 
-					if(strlen(g_tempStr) <= MAX_PATTERN_TEXT_LENGTH)
+					if(idLength <= MAX_PATTERN_TEXT_LENGTH)
 					{
+						strcpy(g_tempStr, " ");
+						strcat(g_tempStr, lb_buff->fields[FIELD1]);
+
+						if(lb_buff->fields[FIELD2][0])
+						{
+							strcat(g_tempStr, " ");
+							strcat(g_tempStr, lb_buff->fields[FIELD2]);
+						}
+
 						strcpy((char*)g_messages_text[STATION_ID], g_tempStr);
 						ee_mgr.updateEEPROMVar(StationID_text, (void*)g_tempStr);
 					}
@@ -2559,7 +2565,7 @@ void enterBootloaderUpdateMode(void)
 				}
 				else if((key >= '0') && (key <= '9'))
 				{
-					if(stringLength <= MAX_UNLOCK_CODE_LENGTH)
+					if(stringLength < MAX_UNLOCK_CODE_LENGTH)
 					{
 						receivedString[stringLength++] = key;
 						receivedString[stringLength] = '\0';
