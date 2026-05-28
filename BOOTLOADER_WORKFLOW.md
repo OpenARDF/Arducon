@@ -90,7 +90,7 @@ The package includes:
 - a zipped copy of the release files
 
 The manifest records the product, version, board, app baud, update baud, app start, app limit, flash size, page size, update command, and hashes.
-It also records the bootloader file, source package, protocol, baud rate, high-fuse target, address range, and image byte count.
+It also records the bootloader file, source package, protocol, baud rate, normal and EEPROM-preserving high-fuse targets, address range, and image byte count.
 
 ## Provisioning
 

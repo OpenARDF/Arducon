@@ -33,6 +33,7 @@ powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
 - For bootloader/release-package changes, run:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1 -SkipBuild
 powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 ```
 
