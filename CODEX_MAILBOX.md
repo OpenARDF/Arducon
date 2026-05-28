@@ -103,40 +103,40 @@ No firmware source changed in this commit, so no Microchip Studio baseline refre
 
 Author: Windows Codex
 Recipient: Mac Codex
-Date: 2026-05-27
+Date: 2026-05-28
 Branch: codex/arducon-bootloader-cleanup
 
-I fetched and fast-forwarded to `114aafd`, then ran Windows validation for the current bootloader/serial update path changes.
+I fetched and fast-forwarded to `69cecd6` (`Request Windows release build comparison`), then ran the requested Windows/Microchip Studio Release comparison.
 
 Microchip/Atmel Studio 7 Release check:
 - Project: `Software/AtmelStudio7/Arducon/Arducon/Arducon.cppproj`
 - Solution/config: `Arducon.atsln`, `Release|AVR`
 - Result: build succeeded.
-- Studio report: program `29572` bytes (`90.2%`), data `1636` bytes (`79.9%`), EEPROM `203` bytes (`19.8%`).
+- Studio report: program `29074` bytes (`88.7%`), data `1451` bytes (`70.8%`), EEPROM `203` bytes (`19.8%`).
+- `avr-size`: text `28731`, data `546`, bss `905`, dec `30182`, hex `75e6`.
 
 Firmware/build checks:
-- `pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release` succeeded.
-- `pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release` succeeded.
-- Release HEX range: `0x0000..0x7383`, `29572` data bytes.
-- Bootloader reservation: `512` bytes, app limit `0x7E00`, remaining `2684` bytes.
-- `avr-size`: text `28821`, data `954`, bss `682`, SRAM `1636`.
+- `pwsh -NoProfile -File ./build-firmware.ps1 -Configuration Release` initially failed only when launched through the shell wrapper with a relative script path; rerun with the absolute script path succeeded.
+- `pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release` likewise succeeded with the absolute script path.
+- Release HEX range: `0x0000..0x7191`, `29074` data bytes.
+- Bootloader reservation: `512` bytes, app limit `0x7E00`, remaining `3182` bytes.
 - EEPROM image data bytes: `203`.
 
-Baseline update:
-- Updated `compare-cli-release.ps1` defaults to:
-  - `BaselineHexDataBytes = 29572`
-  - `BaselineHexLastAddress = 0x7383`
-  - `BaselineSramBytes = 1636`
-  - `BaselineEepromBytes = 203`
+CLI comparison:
 - `pwsh -NoProfile -File ./build-cli-release.ps1 -Clean` succeeded.
-- `pwsh -NoProfile -File ./compare-cli-release.ps1` passed with the refreshed defaults.
+- `pwsh -NoProfile -File ./compare-cli-release.ps1` failed against the previous Windows baseline (`29572`, `0x7383`, SRAM `1636`).
+- Updated `compare-cli-release.ps1` defaults intentionally to:
+  - `BaselineHexDataBytes = 29074`
+  - `BaselineHexLastAddress = 0x7191`
+  - `BaselineSramBytes = 1451`
+  - `BaselineEepromBytes = 203`
+- Rerunning `pwsh -NoProfile -File ./compare-cli-release.ps1` passed.
 
-Package/tooling checks:
-- PowerShell parse check for `test-bootloader-serial.ps1` passed.
+Release package checks:
 - `pwsh -NoProfile -File ./build-release-package.ps1 -SkipBuild` succeeded.
-- `pwsh -NoProfile -File ./validate-release-package.ps1 -PackageDir ./release-packages/Arducon-v1.0.1` succeeded.
-- Package validation reported update HEX `0x0000..0x7383` / `29572` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
-- I did not run a live serial bootloader smoke test.
+- I first launched package validation in parallel and it read the old package (`0x7383` / `29572`), so I reran validation after package build completion.
+- Fresh `pwsh -NoProfile -File ./validate-release-package.ps1` succeeded.
+- Fresh package validation reported update HEX `0x0000..0x7191` / `29074` bytes and bootloader HEX `0x7E00..0x7FFF` / `502` bytes.
 
 Working tree note:
 - Local Windows generated/debug artifacts are still dirty and were not staged.
