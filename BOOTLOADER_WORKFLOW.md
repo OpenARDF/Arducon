@@ -37,7 +37,7 @@ UPD
 ```text
 * INF product=Arducon
 * INF update=UPD
-* INF sw=1.0.1
+* INF sw=2.0.0
 * INF hw=ATmega328P-16
 * INF app=0x0000
 * INF appbaud=57600

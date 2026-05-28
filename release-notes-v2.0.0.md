@@ -1,4 +1,4 @@
-# Arducon v1.0.1
+# Arducon v2.0.0
 
 Firmware release candidate for Arduino Pro Mini / ATmega328P Arducon controllers.
 
