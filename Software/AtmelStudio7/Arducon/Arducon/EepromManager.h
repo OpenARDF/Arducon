@@ -139,6 +139,8 @@ static const struct EE_prom ee_vars;
 BOOL initializeEEPROMVars(void);
 BOOL readNonVols(void);
 void send_Help(void);
+// Historical API name retained for low-risk call-site stability. Fixed text now
+// lives in PROGMEM; this helper no longer reads command response text from EEPROM.
 void sendEEPROMString(EE_var_t v);
 void updateEEPROMVar(EE_var_t v, void* val);
 uint16_t readTemperatureTable(int i);

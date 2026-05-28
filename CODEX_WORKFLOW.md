@@ -44,7 +44,7 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 - Hand-maintained firmware files include the source files under `Software/AtmelStudio7/Arducon/Arducon` and the root PowerShell workflow scripts.
 - Treat `Debug\*`, `Release\*`, `.elf`, `.hex`, `.eep`, `.lss`, `.srec`, `.o`, `.d`, and `.map` as generated build output.
 - Treat `tmp\cli-release\*` as generated output from the repo-owned CLI Release build.
-- Existing checked-in generated artifacts are historical; do not remove them until a separate cleanup verifies reproducible builds.
+- Existing checked-in generated artifacts are historical; keep them out of routine commits and remove them only in a separate artifact-cleanup change after release acceptance.
 
 ## Bootloader Direction
 
