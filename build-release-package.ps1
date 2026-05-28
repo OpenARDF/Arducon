@@ -219,6 +219,7 @@ $manifest = [pscustomobject]@{
         protocol = 'stk500v1'
         baud = 115200
         highFuseTarget = '0xDE'
+        highFuseTargetPreserveEeprom = '0xD6'
         startAddress = ('0x{0:X4}' -f $bootloaderSummary.First)
         endAddress = ('0x{0:X4}' -f $bootloaderSummary.Last)
         bytesInImage = $bootloaderSummary.Count
@@ -261,6 +262,7 @@ Files:
 Address range in update HEX: 0x$("{0:X4}" -f $first)..0x$("{0:X4}" -f $last)
 Address range in bootloader HEX: 0x$("{0:X4}" -f $bootloaderSummary.First)..0x$("{0:X4}" -f $bootloaderSummary.Last)
 Bootloader-safe app limit: 0x7DFF when reserving 512 bytes at top of flash.
+High fuse target: 0xDE, or 0xD6 when programming EESAVE to preserve EEPROM across chip erase.
 "@ | Set-Content -LiteralPath $readmePath -Encoding ASCII
 
 Compress-Archive -Path (Join-Path $OutputDir '*') -DestinationPath (Join-Path $OutputDir "Arducon-$friendlyVersion-ATmega328P-Release-Files.zip") -Force

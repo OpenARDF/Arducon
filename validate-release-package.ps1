@@ -196,6 +196,14 @@ if($manifestPropertyNames -contains 'bootloader')
     {
         throw "Unexpected bootloader high-fuse target: $($bootloader.highFuseTarget)"
     }
+    $bootloaderPropertyNames = @($bootloader.PSObject.Properties.Name)
+    if($bootloaderPropertyNames -contains 'highFuseTargetPreserveEeprom')
+    {
+        if($bootloader.highFuseTargetPreserveEeprom -ne '0xD6')
+        {
+            throw "Unexpected EEPROM-preserving bootloader high-fuse target: $($bootloader.highFuseTargetPreserveEeprom)"
+        }
+    }
 
     $bootloaderBytes = Get-IntelHexBytes -Path $bootloaderPath
     $bootloaderAddresses = @($bootloaderBytes.Keys | Sort-Object { [int]$_ })
