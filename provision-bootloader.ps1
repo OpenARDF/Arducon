@@ -29,6 +29,8 @@ param(
 
     [switch]$CheckPrereqs,
 
+    [switch]$CheckProgrammer,
+
     [switch]$ProgramFuses,
 
     [switch]$ConfirmFuseWrite,
@@ -41,6 +43,8 @@ param(
 
     [switch]$SkipFlash,
 
+    [switch]$SkipSerialValidation,
+
     [switch]$DryRun
 )
 
@@ -51,6 +55,15 @@ $repoRoot = $PSScriptRoot
 $device = 'atmega328p'
 $desiredHighFuseBootBits = 0x06
 $highFuseEesaveBit = 0x08
+$exitCodes = @{
+    Prereqs = 2
+    Programmer = 3
+    Args = 4
+    Flash = 5
+    Fuses = 6
+    Serial = 7
+    Unexpected = 20
+}
 
 if([string]::IsNullOrWhiteSpace($ApplicationHexPath))
 {
@@ -101,6 +114,35 @@ function Add-Prereq {
         Required = $Required
         Install = $Install
     })
+}
+
+function Convert-StatusValue {
+    param([object]$Value)
+    if($null -eq $Value) { return '' }
+    return ([string]$Value) -replace '\s+', '_'
+}
+
+function Write-SetupOk {
+    param(
+        [Parameter(Mandatory = $true)][string]$Step,
+        [hashtable]$Fields = @{}
+    )
+    $parts = [System.Collections.Generic.List[string]]::new()
+    $parts.Add("SS_SETUP_OK step=$(Convert-StatusValue $Step)")
+    foreach($key in @($Fields.Keys | Sort-Object))
+    {
+        $parts.Add("$key=$(Convert-StatusValue $Fields[$key])")
+    }
+    Write-Host ($parts -join ' ')
+}
+
+function Write-SetupError {
+    param(
+        [Parameter(Mandatory = $true)][string]$Step,
+        [Parameter(Mandatory = $true)][string]$Code,
+        [Parameter(Mandatory = $true)][string]$Detail
+    )
+    Write-Host "SS_SETUP_ERROR step=$(Convert-StatusValue $Step) code=$(Convert-StatusValue $Code) detail=$(Convert-StatusValue $Detail)"
 }
 
 function Get-IntelHexBytes {
@@ -284,6 +326,20 @@ function Invoke-AvrdudeCapture {
     return $text
 }
 
+function Test-ProgrammerAvrdude {
+    $output = Invoke-AvrdudeCapture -Arguments (Get-AvrdudeBaseArguments)
+    if($output -match 'Device signature\s*=\s*(0x[0-9a-fA-F]+)')
+    {
+        return $Matches[1]
+    }
+    return 'unknown'
+}
+
+function Test-ProgrammerAtprogram {
+    Invoke-Atprogram -Arguments @('-t', $Tool, '-i', $Interface, '-d', $device, 'info')
+    return 'unknown'
+}
+
 function Read-HighFuseAvrdude {
     $output = Invoke-AvrdudeCapture -Arguments ((Get-AvrdudeBaseArguments) + @('-U', 'hfuse:r:-:h'))
     $match = [regex]::Matches($output, '0x[0-9a-fA-F]{2}|(?m)^[0-9a-fA-F]{2}$') | Select-Object -Last 1
@@ -315,165 +371,228 @@ function Get-SelectedBackend {
     return 'Atprogram'
 }
 
-$selectedBackend = Get-SelectedBackend
-$prereqs = [System.Collections.Generic.List[object]]::new()
-Add-Prereq -Results $prereqs -Name 'PowerShell' -Present ($PSVersionTable.PSVersion.Major -ge 5) -Required $true -Install 'Windows: included or install PowerShell 7. macOS: brew install --cask powershell.'
-Add-Prereq -Results $prereqs -Name 'avrdude' -Present (Test-CommandOrPath $AvrdudePath) -Required ($selectedBackend -eq 'Avrdude') -Install 'Install avrdude or pass -AvrdudePath.'
-Add-Prereq -Results $prereqs -Name 'atprogram' -Present (Test-CommandOrPath $AtprogramPath) -Required ($selectedBackend -eq 'Atprogram') -Install 'Install Atmel Studio 7 or pass -AtprogramPath.'
-Add-Prereq -Results $prereqs -Name 'Application HEX' -Present (Test-Path -LiteralPath $ApplicationHexPath) -Required (-not $SkipFlash) -Install 'Build Release firmware first.'
-Add-Prereq -Results $prereqs -Name 'Bootloader HEX' -Present ((-not [string]::IsNullOrWhiteSpace($BootloaderHexPath)) -and (Test-Path -LiteralPath $BootloaderHexPath)) -Required (-not $SkipFlash) -Install 'Provide an ATmega328P Optiboot-compatible bootloader HEX with -BootloaderHexPath.'
-
-if($CheckPrereqs)
+try
 {
-    $prereqs | Format-Table -AutoSize
-    $missing = @($prereqs | Where-Object { $_.Required -and -not $_.Present })
-    if($missing.Count) { throw 'Required prerequisites are missing.' }
-    return
-}
+    $selectedBackend = Get-SelectedBackend
+    $prereqs = [System.Collections.Generic.List[object]]::new()
+    Add-Prereq -Results $prereqs -Name 'PowerShell' -Present ($PSVersionTable.PSVersion.Major -ge 5) -Required $true -Install 'Windows: included or install PowerShell 7. macOS: brew install --cask powershell.'
+    Add-Prereq -Results $prereqs -Name 'avrdude' -Present (Test-CommandOrPath $AvrdudePath) -Required ($selectedBackend -eq 'Avrdude') -Install 'Install avrdude or pass -AvrdudePath.'
+    Add-Prereq -Results $prereqs -Name 'atprogram' -Present (Test-CommandOrPath $AtprogramPath) -Required ($selectedBackend -eq 'Atprogram') -Install 'Install Atmel Studio 7 or pass -AtprogramPath.'
+    Add-Prereq -Results $prereqs -Name 'Application HEX' -Present (Test-Path -LiteralPath $ApplicationHexPath) -Required (-not $SkipFlash -and -not $CheckProgrammer) -Install 'Build Release firmware first.'
+    Add-Prereq -Results $prereqs -Name 'Bootloader HEX' -Present ((-not [string]::IsNullOrWhiteSpace($BootloaderHexPath)) -and (Test-Path -LiteralPath $BootloaderHexPath)) -Required (-not $SkipFlash -and -not $CheckProgrammer) -Install 'Provide an ATmega328P Optiboot-compatible bootloader HEX with -BootloaderHexPath.'
 
-foreach($item in $prereqs)
-{
-    if($item.Required -and -not $item.Present)
+    if($CheckPrereqs)
     {
-        throw "$($item.Name) missing. $($item.Install)"
-    }
-}
-
-if($ProgramFuses -and -not $ConfirmFuseWrite)
-{
-    throw 'Fuse writes require both -ProgramFuses and -ConfirmFuseWrite.'
-}
-
-if($ReadFusesOnly -and $selectedBackend -ne 'Avrdude')
-{
-    throw '-ReadFusesOnly currently requires -Backend Avrdude.'
-}
-
-if($ProgramFuses -and $selectedBackend -ne 'Avrdude')
-{
-    throw 'Automatic high-fuse rewriting currently requires -Backend Avrdude.'
-}
-
-if($selectedBackend -eq 'Avrdude')
-{
-    $oldHighFuse = $null
-    $newHighFuse = $null
-    if(-not [string]::IsNullOrWhiteSpace($HighFuseValue))
-    {
-        $oldHighFuse = Convert-HexByte -Value $HighFuseValue -Name 'HighFuseValue'
-    }
-    elseif(-not $DryRun)
-    {
-        $oldHighFuse = Read-HighFuseAvrdude
-    }
-    elseif($ProgramFuses -or $ReadFusesOnly)
-    {
-        throw 'Dry-run fuse operations require -HighFuseValue because hardware is not read in dry-run mode.'
-    }
-
-    if($null -ne $oldHighFuse)
-    {
-        $newHighFuse = ($oldHighFuse -band 0xF8) -bor $desiredHighFuseBootBits
-        if($PreserveEeprom)
+        $prereqs | Format-Table -AutoSize
+        $missing = @($prereqs | Where-Object { $_.Required -and -not $_.Present })
+        if($missing.Count)
         {
-            $newHighFuse = $newHighFuse -band 0xF7
+            Write-SetupError -Step 'check-prereqs' -Code 'missing_prereq' -Detail ($missing[0].Name)
+            exit $exitCodes.Prereqs
         }
+        Write-SetupOk -Step 'check-prereqs' -Fields @{ backend = $selectedBackend }
+        exit 0
+    }
 
-        Write-Host ("ATmega328P high fuse: current=0x{0:X2}; bootloader target=0x{1:X2}" -f $oldHighFuse, $newHighFuse)
-        if($PreserveEeprom)
+    foreach($item in $prereqs)
+    {
+        if($item.Required -and -not $item.Present)
         {
-            Write-Host ("Transform: newHigh = ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7  # 512-byte bootloader, BOOTRST, EESAVE" -f $desiredHighFuseBootBits)
-        }
-        else
-        {
-            Write-Host ("Transform: newHigh = (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+            Write-SetupError -Step 'check-prereqs' -Code 'missing_prereq' -Detail "$($item.Name): $($item.Install)"
+            exit $exitCodes.Prereqs
         }
     }
-    else
+
+    if($CheckProgrammer)
     {
-        Write-Host ("Dry run: high fuse not read. Pass -HighFuseValue to preview the exact bootloader high fuse.")
+        $signature = if($selectedBackend -eq 'Avrdude') { Test-ProgrammerAvrdude } else { Test-ProgrammerAtprogram }
+        Write-SetupOk -Step 'check-programmer' -Fields @{ backend = $selectedBackend; signature = $signature }
+        exit 0
     }
 
-    if($ReadFusesOnly)
+    if($ProgramFuses -and -not $ConfirmFuseWrite)
     {
-        return
+        Write-SetupError -Step 'program-fuses' -Code 'confirm_required' -Detail 'Fuse writes require both -ProgramFuses and -ConfirmFuseWrite.'
+        exit $exitCodes.Args
     }
-}
-elseif($ReadFusesOnly)
-{
-    return
-}
 
-if(-not $SkipFlash)
-{
-    $summary = Merge-IntelHex -BootloaderPath $BootloaderHexPath -ApplicationPath $ApplicationHexPath -OutputPath $CombinedHexPath
-    Write-Host ("Combined HEX: {0} bytes ({1} bootloader + {2} app) -> {3}" -f $summary.CombinedBytes, $summary.BootloaderBytes, $summary.ApplicationBytes, $CombinedHexPath)
+    if($ReadFusesOnly -and $selectedBackend -ne 'Avrdude')
+    {
+        Write-SetupError -Step 'read-fuses' -Code 'unsupported_backend' -Detail '-ReadFusesOnly currently requires -Backend Avrdude.'
+        exit $exitCodes.Args
+    }
+
+    if($ProgramFuses -and $selectedBackend -ne 'Avrdude')
+    {
+        Write-SetupError -Step 'program-fuses' -Code 'unsupported_backend' -Detail 'Automatic high-fuse rewriting currently requires -Backend Avrdude.'
+        exit $exitCodes.Args
+    }
+
     if($selectedBackend -eq 'Avrdude')
     {
-        $flashArgs = Get-AvrdudeBaseArguments
-        if($ChipErase)
+        $oldHighFuse = $null
+        $newHighFuse = $null
+        if(-not [string]::IsNullOrWhiteSpace($HighFuseValue))
         {
-            $effectiveHighFuse = if($ProgramFuses -and ($null -ne $newHighFuse)) { $newHighFuse } else { $oldHighFuse }
-            if(($null -ne $effectiveHighFuse) -and (($effectiveHighFuse -band $highFuseEesaveBit) -eq 0))
+            $oldHighFuse = Convert-HexByte -Value $HighFuseValue -Name 'HighFuseValue'
+        }
+        elseif(-not $DryRun)
+        {
+            $oldHighFuse = Read-HighFuseAvrdude
+        }
+        elseif($ProgramFuses -or $ReadFusesOnly)
+        {
+            Write-SetupError -Step 'read-fuses' -Code 'high_fuse_required' -Detail 'Dry-run fuse operations require -HighFuseValue because hardware is not read in dry-run mode.'
+            exit $exitCodes.Args
+        }
+
+        if($null -ne $oldHighFuse)
+        {
+            $newHighFuse = ($oldHighFuse -band 0xF8) -bor $desiredHighFuseBootBits
+            if($PreserveEeprom)
             {
-                Write-Host ("Chip erase requested; EESAVE is programmed in the effective high fuse 0x{0:X2}, so EEPROM should be preserved." -f $effectiveHighFuse)
+                $newHighFuse = $newHighFuse -band 0xF7
+            }
+
+            Write-Host ("ATmega328P high fuse: current=0x{0:X2}; bootloader target=0x{1:X2}" -f $oldHighFuse, $newHighFuse)
+            if($PreserveEeprom)
+            {
+                Write-Host ("Transform: newHigh = ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7  # 512-byte bootloader, BOOTRST, EESAVE" -f $desiredHighFuseBootBits)
             }
             else
             {
-                Write-Warning 'Chip erase can erase EEPROM unless the EESAVE fuse is programmed. Use -PreserveEeprom with -ProgramFuses -ConfirmFuseWrite to program EESAVE.'
+                Write-Host ("Transform: newHigh = (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
             }
-            $flashArgs += '-e'
+            Write-SetupOk -Step 'read-fuses' -Fields @{ highFuse = ('0x{0:X2}' -f $oldHighFuse); targetHighFuse = ('0x{0:X2}' -f $newHighFuse) }
         }
         else
         {
-            $flashArgs += '-D'
+            Write-Host ("Dry run: high fuse not read. Pass -HighFuseValue to preview the exact bootloader high fuse.")
+            Write-SetupOk -Step 'read-fuses' -Fields @{ highFuse = 'skipped' }
         }
-        $flashArgs += @('-U', "flash:w:${CombinedHexPath}:i")
-        Invoke-Avrdude -Arguments $flashArgs
-    }
-    else
-    {
-        Invoke-Atprogram -Arguments @('-t', $Tool, '-i', $Interface, '-d', $device, 'program', '-fl', '--verify', '-f', $CombinedHexPath)
-    }
-}
 
-if($ProgramFuses)
-{
-    if($null -eq $newHighFuse)
-    {
-        throw 'No high-fuse value is available. Read the fuse from hardware or pass -HighFuseValue.'
+        if($ReadFusesOnly)
+        {
+            exit 0
+        }
     }
-    $fuseArgs = (Get-AvrdudeBaseArguments) + @('-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse))
-    Write-Warning ("Writing ATmega328P high fuse from 0x{0:X2} to 0x{1:X2}. Unrelated high-fuse bits are preserved." -f $oldHighFuse, $newHighFuse)
-    if($PreserveEeprom)
+    elseif($ReadFusesOnly)
     {
-        Write-Warning 'EESAVE will be programmed so future chip erase operations preserve EEPROM.'
+        exit 0
     }
-    Invoke-Avrdude -Arguments $fuseArgs
-    if($DryRun)
+
+    if(-not $SkipFlash)
     {
-        Write-Host 'Dry run: high fuse verify skipped.'
+        $summary = Merge-IntelHex -BootloaderPath $BootloaderHexPath -ApplicationPath $ApplicationHexPath -OutputPath $CombinedHexPath
+        Write-Host ("Combined HEX: {0} bytes ({1} bootloader + {2} app) -> {3}" -f $summary.CombinedBytes, $summary.BootloaderBytes, $summary.ApplicationBytes, $CombinedHexPath)
+        if($selectedBackend -eq 'Avrdude')
+        {
+            $flashArgs = Get-AvrdudeBaseArguments
+            if($ChipErase)
+            {
+                $effectiveHighFuse = if($ProgramFuses -and ($null -ne $newHighFuse)) { $newHighFuse } else { $oldHighFuse }
+                if(($null -ne $effectiveHighFuse) -and (($effectiveHighFuse -band $highFuseEesaveBit) -eq 0))
+                {
+                    Write-Host ("Chip erase requested; EESAVE is programmed in the effective high fuse 0x{0:X2}, so EEPROM should be preserved." -f $effectiveHighFuse)
+                }
+                else
+                {
+                    Write-Warning 'Chip erase can erase EEPROM unless the EESAVE fuse is programmed. Use -PreserveEeprom with -ProgramFuses -ConfirmFuseWrite to program EESAVE.'
+                }
+                $flashArgs += '-e'
+            }
+            else
+            {
+                $flashArgs += '-D'
+            }
+            $flashArgs += @('-U', "flash:w:${CombinedHexPath}:i")
+            Invoke-Avrdude -Arguments $flashArgs
+        }
+        else
+        {
+            Invoke-Atprogram -Arguments @('-t', $Tool, '-i', $Interface, '-d', $device, 'program', '-fl', '--verify', '-f', $CombinedHexPath)
+        }
+        Write-SetupOk -Step 'program-flash' -Fields @{ backend = $selectedBackend; bytes = $summary.CombinedBytes }
     }
     else
     {
-        $verifiedHighFuse = Read-HighFuseAvrdude
-        if($verifiedHighFuse -ne $newHighFuse)
+        Write-SetupOk -Step 'program-flash' -Fields @{ status = 'skipped' }
+    }
+
+    if($ProgramFuses)
+    {
+        if($null -eq $newHighFuse)
         {
-            throw ("High fuse verify failed. Expected 0x{0:X2}, read 0x{1:X2}." -f $newHighFuse, $verifiedHighFuse)
+            Write-SetupError -Step 'program-fuses' -Code 'high_fuse_unavailable' -Detail 'No high-fuse value is available. Read the fuse from hardware or pass -HighFuseValue.'
+            exit $exitCodes.Fuses
         }
-        Write-Host ("High fuse verified: 0x{0:X2}" -f $verifiedHighFuse)
+        $fuseArgs = (Get-AvrdudeBaseArguments) + @('-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse))
+        Write-Warning ("Writing ATmega328P high fuse from 0x{0:X2} to 0x{1:X2}. Unrelated high-fuse bits are preserved." -f $oldHighFuse, $newHighFuse)
+        if($PreserveEeprom)
+        {
+            Write-Warning 'EESAVE will be programmed so future chip erase operations preserve EEPROM.'
+        }
+        Invoke-Avrdude -Arguments $fuseArgs
+        if($DryRun)
+        {
+            Write-Host 'Dry run: high fuse verify skipped.'
+        }
+        else
+        {
+            $verifiedHighFuse = Read-HighFuseAvrdude
+            if($verifiedHighFuse -ne $newHighFuse)
+            {
+                Write-SetupError -Step 'program-fuses' -Code 'verify_failed' -Detail ("Expected 0x{0:X2}, read 0x{1:X2}." -f $newHighFuse, $verifiedHighFuse)
+                exit $exitCodes.Fuses
+            }
+            Write-Host ("High fuse verified: 0x{0:X2}" -f $verifiedHighFuse)
+        }
+        Write-SetupOk -Step 'program-fuses' -Fields @{ highFuse = ('0x{0:X2}' -f $newHighFuse) }
+    }
+    else
+    {
+        Write-Host 'Fuse writes skipped.'
+        if($PreserveEeprom)
+        {
+            Write-Host ("Desired high-fuse boot bits plus EESAVE: ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7" -f $desiredHighFuseBootBits)
+            Write-Warning '-PreserveEeprom only takes effect when fuse writes are enabled with -ProgramFuses -ConfirmFuseWrite.'
+        }
+        else
+        {
+            Write-Host ("Desired high-fuse boot bits: (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+        }
+        Write-SetupOk -Step 'program-fuses' -Fields @{ status = 'skipped' }
+    }
+
+    if($SkipSerialValidation)
+    {
+        Write-SetupOk -Step 'serial-validation' -Fields @{ status = 'skipped' }
     }
 }
-else
+catch
 {
-    Write-Host 'Fuse writes skipped.'
-    if($PreserveEeprom)
+    $step = 'setup'
+    $code = 'unexpected'
+    $exitCode = $exitCodes.Unexpected
+    $message = $_.Exception.Message
+    if($message -match 'avrdude|atprogram|programmer|Device signature')
     {
-        Write-Host ("Desired high-fuse boot bits plus EESAVE: ((oldHigh & 0xF8) | 0x{0:X2}) & 0xF7" -f $desiredHighFuseBootBits)
-        Write-Warning '-PreserveEeprom only takes effect when fuse writes are enabled with -ProgramFuses -ConfirmFuseWrite.'
+        $step = 'check-programmer'
+        $code = 'programmer_failed'
+        $exitCode = $exitCodes.Programmer
     }
-    else
+    elseif($message -match 'HEX|flash|program')
     {
-        Write-Host ("Desired high-fuse boot bits: (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
+        $step = 'program-flash'
+        $code = 'flash_failed'
+        $exitCode = $exitCodes.Flash
     }
+    elseif($message -match 'fuse')
+    {
+        $step = 'program-fuses'
+        $code = 'fuse_failed'
+        $exitCode = $exitCodes.Fuses
+    }
+    Write-SetupError -Step $step -Code $code -Detail $message
+    exit $exitCode
 }

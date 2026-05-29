@@ -7,6 +7,7 @@ Firmware release for Arduino Pro Mini / ATmega328P Arducon controllers.
 - Keeps the Arducon 2.x Optiboot/STK500v1 update path and `INF` metadata introduced for product-aware updater tools.
 - Updates the release package contents to match the SignalSlinger update/setup package structure, except that Arducon has one ATmega328P hardware target instead of multiple hardware-option packages.
 - Adds a combined first-install HEX and package-local setup/serial-validation scripts to the complete release ZIP.
+- Reissued the release ZIP with SerialSlinger-compatible setup launcher options and stable `SS_SETUP_OK` / `SS_SETUP_ERROR` automation status lines.
 
 ## Package Contents
 

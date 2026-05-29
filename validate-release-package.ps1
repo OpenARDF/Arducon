@@ -226,6 +226,10 @@ if($manifestPropertyNames -contains 'firstInstall')
         throw 'First-install HEX byte count mismatch.'
     }
 }
+else
+{
+    throw 'Manifest is missing firstInstall metadata.'
+}
 
 if($manifestPropertyNames -contains 'bootloader')
 {
@@ -323,6 +327,84 @@ if($manifestPropertyNames -contains 'bootloader')
                 throw ("First-install HEX does not match bootloader HEX at 0x{0:X}." -f $intAddress)
             }
         }
+    }
+}
+else
+{
+    throw 'Manifest is missing bootloader metadata.'
+}
+
+if($manifestPropertyNames -notcontains 'workshopSetup')
+{
+    throw 'Manifest is missing workshopSetup metadata.'
+}
+
+$workshopSetup = $manifest.workshopSetup
+$setupLauncherFileName = $workshopSetup.setupLauncherFileName
+$provisioningScriptFileName = $workshopSetup.provisioningScriptFileName
+$serialValidationScriptFileName = $workshopSetup.serialValidationScriptFileName
+foreach($scriptFileName in @($setupLauncherFileName, $provisioningScriptFileName, $serialValidationScriptFileName))
+{
+    if([string]::IsNullOrWhiteSpace($scriptFileName))
+    {
+        throw 'Workshop setup script metadata is missing a file name.'
+    }
+    $scriptPath = Join-Path $PackageDir $scriptFileName
+    if(-not (Test-Path -LiteralPath $scriptPath))
+    {
+        throw "Workshop setup script not found: $scriptFileName"
+    }
+}
+
+$setupLauncherEntry = $manifest.files | Where-Object { $_.kind -eq 'workshop-setup-launcher' -and $_.fileName -eq $setupLauncherFileName } | Select-Object -First 1
+if(-not $setupLauncherEntry)
+{
+    throw "Manifest does not list setup launcher file $setupLauncherFileName."
+}
+
+$provisioningEntry = $manifest.files | Where-Object { $_.fileName -eq $provisioningScriptFileName } | Select-Object -First 1
+if(-not $provisioningEntry)
+{
+    throw "Manifest does not list provisioning script $provisioningScriptFileName."
+}
+
+$serialValidationEntry = $manifest.files | Where-Object { $_.fileName -eq $serialValidationScriptFileName } | Select-Object -First 1
+if(-not $serialValidationEntry)
+{
+    throw "Manifest does not list serial validation script $serialValidationScriptFileName."
+}
+
+if($workshopSetup.highFuseTarget -ne '0xDE')
+{
+    throw "Unexpected workshop high-fuse target: $($workshopSetup.highFuseTarget)"
+}
+if($workshopSetup.highFuseTargetPreserveEeprom -ne '0xD6')
+{
+    throw "Unexpected workshop EEPROM-preserving high-fuse target: $($workshopSetup.highFuseTargetPreserveEeprom)"
+}
+
+$supportedProgrammers = @($workshopSetup.supportedProgrammers)
+foreach($programmer in @('atmelice_isp', 'atmelice', 'avrisp2', 'usbasp'))
+{
+    if($supportedProgrammers -notcontains $programmer)
+    {
+        throw "Workshop setup metadata is missing supported programmer $programmer."
+    }
+}
+
+$setupLauncherText = Get-Content -LiteralPath (Join-Path $PackageDir $setupLauncherFileName) -Raw
+foreach($requiredOption in @('CheckPrereqs', 'CheckProgrammer', 'ProgramFuses', 'ConfirmFuseWrite', 'SkipSerialValidation', 'Backend', 'Port'))
+{
+    if($setupLauncherText -notmatch [regex]::Escape($requiredOption))
+    {
+        throw "Setup launcher is missing option $requiredOption."
+    }
+}
+foreach($requiredStatus in @('SS_SETUP_OK', 'SS_SETUP_ERROR'))
+{
+    if($setupLauncherText -notmatch $requiredStatus)
+    {
+        throw "Setup launcher is missing status marker $requiredStatus."
     }
 }
 

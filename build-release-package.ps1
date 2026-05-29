@@ -248,9 +248,13 @@ param(
 
     [switch]`$CheckPrereqs,
 
+    [switch]`$CheckProgrammer,
+
     [switch]`$ProgramFuses,
 
     [switch]`$ConfirmFuseWrite,
+
+    [switch]`$SkipSerialValidation,
 
     [switch]`$PreserveEeprom,
 
@@ -282,12 +286,59 @@ Set-StrictMode -Version Latest
 `$bootloaderHex = Join-Path `$scriptRoot '$BootloaderFileName'
 `$applicationHex = Join-Path `$scriptRoot '$ApplicationFileName'
 `$combinedHex = Join-Path `$scriptRoot '$FirstInstallFileName'
+`$exitCodes = @{
+    Package = 8
+    Prereqs = 2
+    Programmer = 3
+    Args = 4
+    Serial = 7
+    Unexpected = 20
+}
+
+function Convert-StatusValue {
+    param([object]`$Value)
+    if(`$null -eq `$Value) { return '' }
+    return ([string]`$Value) -replace '\s+', '_'
+}
+
+function Write-SetupOk {
+    param(
+        [Parameter(Mandatory = `$true)][string]`$Step,
+        [hashtable]`$Fields = @{}
+    )
+    `$parts = [System.Collections.Generic.List[string]]::new()
+    `$parts.Add("SS_SETUP_OK step=`$(Convert-StatusValue `$Step)")
+    foreach(`$key in @(`$Fields.Keys | Sort-Object))
+    {
+        `$parts.Add("`$key=`$(Convert-StatusValue `$Fields[`$key])")
+    }
+    Write-Host (`$parts -join ' ')
+}
+
+function Write-SetupError {
+    param(
+        [Parameter(Mandatory = `$true)][string]`$Step,
+        [Parameter(Mandatory = `$true)][string]`$Code,
+        [Parameter(Mandatory = `$true)][string]`$Detail
+    )
+    Write-Host "SS_SETUP_ERROR step=`$(Convert-StatusValue `$Step) code=`$(Convert-StatusValue `$Code) detail=`$(Convert-StatusValue `$Detail)"
+}
+
+function Get-LastExitCodeOrZero {
+    `$lastExitCodeVariable = Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue
+    if(`$lastExitCodeVariable)
+    {
+        return [int]`$lastExitCodeVariable.Value
+    }
+    return 0
+}
 
 foreach(`$required in @(`$provisionScript, `$serialTestScript, `$bootloaderHex, `$applicationHex, `$combinedHex))
 {
     if(-not (Test-Path -LiteralPath `$required))
     {
-        throw "Required setup file not found: `$required"
+        Write-SetupError -Step 'package' -Code 'missing_file' -Detail "Required setup file not found: `$required"
+        exit `$exitCodes.Package
     }
 }
 
@@ -302,6 +353,12 @@ if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
     Write-Host 'To check this computer without touching the Arducon, run with -CheckPrereqs.'
     Write-Host 'To prepare a connected Arducon, run again with -ProgramFuses -ConfirmFuseWrite.'
     Write-Host ''
+}
+
+if(`$CheckProgrammer -and `$CheckPrereqs)
+{
+    Write-SetupError -Step 'arguments' -Code 'exclusive_modes' -Detail '-CheckPrereqs and -CheckProgrammer cannot be combined.'
+    exit `$exitCodes.Args
 }
 
 `$provisionArgs = @{
@@ -323,8 +380,10 @@ if(-not [string]::IsNullOrWhiteSpace(`$Port))
     `$provisionArgs.Port = `$Port
 }
 if(`$CheckPrereqs) { `$provisionArgs.CheckPrereqs = `$true }
+if(`$CheckProgrammer) { `$provisionArgs.CheckProgrammer = `$true }
 if(`$ProgramFuses) { `$provisionArgs.ProgramFuses = `$true }
 if(`$ConfirmFuseWrite) { `$provisionArgs.ConfirmFuseWrite = `$true }
+if(`$SkipSerialValidation) { `$provisionArgs.SkipSerialValidation = `$true }
 if(`$PreserveEeprom) { `$provisionArgs.PreserveEeprom = `$true }
 if(`$SkipFlash) { `$provisionArgs.SkipFlash = `$true }
 if(`$DryRun) { `$provisionArgs.DryRun = `$true }
@@ -332,12 +391,45 @@ if(`$DryRun) { `$provisionArgs.DryRun = `$true }
 try
 {
     & `$provisionScript @provisionArgs
+    `$provisionExitCode = Get-LastExitCodeOrZero
+    if(`$provisionExitCode -ne 0)
+    {
+        exit `$provisionExitCode
+    }
+
+    if(`$CheckPrereqs -or `$CheckProgrammer)
+    {
+        exit 0
+    }
+
+    if(`$SkipSerialValidation)
+    {
+        Write-SetupOk -Step 'setup-complete' -Fields @{ serialValidation = 'skipped' }
+        exit 0
+    }
+
+    if([string]::IsNullOrWhiteSpace(`$Port))
+    {
+        Write-SetupError -Step 'serial-validation' -Code 'missing_port' -Detail 'Pass -Port for serial validation, or pass -SkipSerialValidation.'
+        exit `$exitCodes.Serial
+    }
+
+    & `$serialTestScript -Port `$Port -RequestBootloaderFromApp
+    `$serialExitCode = Get-LastExitCodeOrZero
+    if(`$serialExitCode -ne 0)
+    {
+        Write-SetupError -Step 'serial-validation' -Code 'validation_failed' -Detail "Serial validation failed with exit code `$serialExitCode."
+        exit `$exitCodes.Serial
+    }
+
+    Write-SetupOk -Step 'serial-validation' -Fields @{ port = `$Port }
+    Write-SetupOk -Step 'setup-complete' -Fields @{ serialValidation = 'ok' }
     exit 0
 }
 catch
 {
-    Write-Host ("Setup failed: {0}" -f `$_.Exception.Message)
-    exit 1
+    Write-SetupError -Step 'setup' -Code 'unexpected' -Detail `$_.Exception.Message
+    exit `$exitCodes.Unexpected
 }
 "@
 
