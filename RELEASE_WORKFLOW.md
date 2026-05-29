@@ -30,21 +30,23 @@ git log -1 --oneline
 
 2. Confirm the intended firmware version in `EepromManager.h`.
 
-3. Run the reproducible CLI Release build and comparison:
+3. Run the reproducible CLI Release build and size check:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
-powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
+powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuration Release -HexPath .\tmp\cli-release\Arducon.hex
 ```
 
-4. Get the Windows/Microchip Studio Release cross-check before publishing:
+Record the program bytes, SRAM, EEPROM image bytes, HEX range, and remaining bytes below `0x7E00`.
+
+4. For releases from `codex/arducon-bootloader-cleanup`, the Windows/Microchip Studio baseline refresh is not required before publishing. The Mac reproducible CLI build has agreed closely enough with Windows/Microchip Studio builds on this branch that the release gate is the CLI build, size check, package validation, and any hardware regression status recorded below.
+
+If a future branch changes the build system, compiler/toolchain, project configuration, or other release-build assumptions, get a Windows/Microchip Studio Release cross-check before publishing:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
 powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuration Release
 ```
-
-Record the program bytes, SRAM, EEPROM image bytes, HEX range, and remaining bytes below `0x7E00`.
 
 5. Run or confirm hardware regression for the release candidate:
 
