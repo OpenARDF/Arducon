@@ -65,8 +65,12 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 7. Verify expected package outputs under `release-packages\Arducon-vX.Y.Z`:
 
 - `Arducon-Update-vX.Y.Z-ATmega328P.hex`
+- `Arducon-First-Install-vX.Y.Z-ATmega328P.hex`
 - `Arducon-Bootloader-Optiboot-ATmega328P.hex`
 - `Arducon-Bootloader-Optiboot-ATmega328P-Source.zip`
+- `Prepare-Arducon-Updates-vX.Y.Z-ATmega328P.ps1`
+- `provision-bootloader.ps1`
+- `test-bootloader-serial.ps1`
 - `Arducon-Release-Info-vX.Y.Z-ATmega328P.json`
 - `Arducon-Checksums-vX.Y.Z-ATmega328P.txt`
 - `README-Arducon-vX.Y.Z-ATmega328P.txt`
@@ -88,7 +92,7 @@ gh release create vX.Y.Z `
   --notes-file .\release-notes-vX.Y.Z.md
 ```
 
-Upload the release ZIP and the standalone update HEX. The ZIP contains the bootloader HEX, Optiboot source archive, manifest, checksums, and package README.
+Upload the release ZIP and the standalone update HEX. The ZIP contains the same update HEX plus the first-install combined HEX, bootloader HEX, setup scripts, Optiboot source archive, manifest, checksums, and package README.
 
 10. Verify the published release:
 
@@ -103,5 +107,6 @@ Confirm the release page shows the expected title, notes, tag, standalone update
 ## Notes
 
 - Release package directories and ZIPs are generated artifacts and are ignored by Git. Upload them to GitHub Releases; do not commit them unless explicitly requested.
+- Arducon release packages should provide the same user-facing update/setup contents as SignalSlinger packages, except that Arducon has one ATmega328P package instead of multiple hardware-option packages. Keep the standalone update HEX plus the complete release ZIP.
 - Normal Arducon release packages are not yet directly updateable by SerialSlinger. SerialSlinger needs product-aware Arducon/STK500v1 support before automatic Arducon updates can consume these packages.
 - `BOOTLOADER_WORKFLOW.md` remains the source of truth for Optiboot provisioning, EESAVE, and serial bootloader smoke testing.

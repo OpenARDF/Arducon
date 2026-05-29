@@ -121,6 +121,105 @@ function Get-HexAddressSummary {
     }
 }
 
+function New-IntelHexRecord {
+    param(
+        [Parameter(Mandatory = $true)][byte]$RecordType,
+        [Parameter(Mandatory = $true)][UInt16]$Address,
+        [byte[]]$Data = [byte[]]::new(0)
+    )
+
+    $sum = $Data.Length + (($Address -shr 8) -band 0xFF) + ($Address -band 0xFF) + $RecordType
+    $hex = ':' + ('{0:X2}{1:X4}{2:X2}' -f $Data.Length, $Address, $RecordType)
+    foreach($byte in $Data)
+    {
+        $sum += $byte
+        $hex += ('{0:X2}' -f $byte)
+    }
+    $checksum = ((-$sum) -band 0xFF)
+    return $hex + ('{0:X2}' -f $checksum)
+}
+
+function Write-IntelHex {
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$BytesByAddress,
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+
+    $parent = Split-Path -Parent $Path
+    if(-not [string]::IsNullOrWhiteSpace($parent))
+    {
+        New-Item -ItemType Directory -Force -Path $parent | Out-Null
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $currentUpper = -1
+    $addresses = @($BytesByAddress.Keys | Sort-Object { [int]$_ })
+    $index = 0
+
+    while($index -lt $addresses.Count)
+    {
+        $startAddress = [int]$addresses[$index]
+        $upper = ($startAddress -shr 16) -band 0xFFFF
+        if($upper -ne $currentUpper)
+        {
+            $lines.Add((New-IntelHexRecord -RecordType 4 -Address 0 -Data ([byte[]]@([byte](($upper -shr 8) -band 0xFF), [byte]($upper -band 0xFF)))))
+            $currentUpper = $upper
+        }
+
+        $chunkStart = $startAddress
+        $chunk = [System.Collections.Generic.List[byte]]::new()
+        while($index -lt $addresses.Count -and $chunk.Count -lt 16)
+        {
+            $address = [int]$addresses[$index]
+            if($address -ne ($chunkStart + $chunk.Count) -or (($address -shr 16) -band 0xFFFF) -ne $currentUpper)
+            {
+                break
+            }
+            $chunk.Add([byte]$BytesByAddress[$address])
+            $index++
+        }
+
+        $lines.Add((New-IntelHexRecord -RecordType 0 -Address ([UInt16]($chunkStart -band 0xFFFF)) -Data $chunk.ToArray()))
+    }
+
+    $lines.Add(':00000001FF')
+    Set-Content -LiteralPath $Path -Value $lines -Encoding ASCII
+}
+
+function Merge-HexFiles {
+    param(
+        [Parameter(Mandatory = $true)][string]$BootloaderPath,
+        [Parameter(Mandatory = $true)][string]$ApplicationPath,
+        [Parameter(Mandatory = $true)][string]$OutputPath
+    )
+
+    $bootBytes = Get-IntelHexBytes -Path $BootloaderPath
+    $appBytes = Get-IntelHexBytes -Path $ApplicationPath
+    $combined = @{}
+
+    foreach($address in $bootBytes.Keys)
+    {
+        $combined[[int]$address] = [byte]$bootBytes[$address]
+    }
+
+    foreach($address in $appBytes.Keys)
+    {
+        $intAddress = [int]$address
+        if($combined.ContainsKey($intAddress) -and [byte]$combined[$intAddress] -ne [byte]$appBytes[$address])
+        {
+            throw ("HEX overlap at 0x{0:X} between bootloader and app." -f $intAddress)
+        }
+        $combined[$intAddress] = [byte]$appBytes[$address]
+    }
+
+    Write-IntelHex -BytesByAddress $combined -Path $OutputPath
+    return [pscustomobject]@{
+        BootloaderBytes = $bootBytes.Count
+        ApplicationBytes = $appBytes.Count
+        CombinedBytes = $combined.Count
+    }
+}
+
 function Assert-ReleaseVersion {
     param([Parameter(Mandatory = $true)][string]$Version)
 
@@ -128,6 +227,121 @@ function Assert-ReleaseVersion {
     {
         throw "ARDUCON_FIRMWARE_VERSION must be a plain x.y.z release version. Got '$Version'."
     }
+}
+
+function New-WorkshopSetupScript {
+    param(
+        [Parameter(Mandatory = $true)][string]$OutputPath,
+        [Parameter(Mandatory = $true)][string]$Version,
+        [Parameter(Mandatory = $true)][string]$BootloaderFileName,
+        [Parameter(Mandatory = $true)][string]$ApplicationFileName,
+        [Parameter(Mandatory = $true)][string]$FirstInstallFileName
+    )
+
+    $script = @"
+[CmdletBinding()]
+param(
+    [string]`$Port = '',
+
+    [ValidateSet('Auto', 'Avrdude', 'Atprogram')]
+    [string]`$Backend = 'Auto',
+
+    [switch]`$CheckPrereqs,
+
+    [switch]`$ProgramFuses,
+
+    [switch]`$ConfirmFuseWrite,
+
+    [switch]`$PreserveEeprom,
+
+    [switch]`$SkipFlash,
+
+    [switch]`$DryRun,
+
+    [string]`$AvrdudePath = 'avrdude',
+
+    [string]`$AvrdudeProgrammer = 'atmelice_isp',
+
+    [string]`$AvrdudePort = '',
+
+    [string]`$AvrdudeBitClock = '',
+
+    [string]`$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
+
+    [string]`$Tool = 'atmelice',
+
+    [string]`$Interface = 'isp'
+)
+
+Set-StrictMode -Version Latest
+`$ErrorActionPreference = 'Stop'
+
+`$scriptRoot = `$PSScriptRoot
+`$provisionScript = Join-Path `$scriptRoot 'provision-bootloader.ps1'
+`$serialTestScript = Join-Path `$scriptRoot 'test-bootloader-serial.ps1'
+`$bootloaderHex = Join-Path `$scriptRoot '$BootloaderFileName'
+`$applicationHex = Join-Path `$scriptRoot '$ApplicationFileName'
+`$combinedHex = Join-Path `$scriptRoot '$FirstInstallFileName'
+
+foreach(`$required in @(`$provisionScript, `$serialTestScript, `$bootloaderHex, `$applicationHex, `$combinedHex))
+{
+    if(-not (Test-Path -LiteralPath `$required))
+    {
+        throw "Required setup file not found: `$required"
+    }
+}
+
+Write-Host 'Arducon update-support setup'
+Write-Host 'Board: ATmega328P'
+Write-Host 'Firmware: $Version'
+Write-Host ''
+
+if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
+{
+    Write-Warning 'This script will not write fuses unless both -ProgramFuses and -ConfirmFuseWrite are provided.'
+    Write-Host 'To check this computer without touching the Arducon, run with -CheckPrereqs.'
+    Write-Host 'To prepare a connected Arducon, run again with -ProgramFuses -ConfirmFuseWrite.'
+    Write-Host ''
+}
+
+`$provisionArgs = @{
+    ApplicationHexPath = `$applicationHex
+    BootloaderHexPath = `$bootloaderHex
+    CombinedHexPath = `$combinedHex
+    Backend = `$Backend
+    AvrdudePath = `$AvrdudePath
+    AvrdudeProgrammer = `$AvrdudeProgrammer
+    AvrdudePort = `$AvrdudePort
+    AvrdudeBitClock = `$AvrdudeBitClock
+    AtprogramPath = `$AtprogramPath
+    Tool = `$Tool
+    Interface = `$Interface
+}
+
+if(-not [string]::IsNullOrWhiteSpace(`$Port))
+{
+    `$provisionArgs.Port = `$Port
+}
+if(`$CheckPrereqs) { `$provisionArgs.CheckPrereqs = `$true }
+if(`$ProgramFuses) { `$provisionArgs.ProgramFuses = `$true }
+if(`$ConfirmFuseWrite) { `$provisionArgs.ConfirmFuseWrite = `$true }
+if(`$PreserveEeprom) { `$provisionArgs.PreserveEeprom = `$true }
+if(`$SkipFlash) { `$provisionArgs.SkipFlash = `$true }
+if(`$DryRun) { `$provisionArgs.DryRun = `$true }
+
+try
+{
+    & `$provisionScript @provisionArgs
+    exit 0
+}
+catch
+{
+    Write-Host ("Setup failed: {0}" -f `$_.Exception.Message)
+    exit 1
+}
+"@
+
+    $script | Set-Content -LiteralPath $OutputPath -Encoding UTF8
 }
 
 if(-not $SkipBuild)
@@ -177,11 +391,19 @@ if(Test-Path -LiteralPath $OutputDir)
 New-Item -ItemType Directory -Path $OutputDir | Out-Null
 
 $updateFile = "Arducon-Update-$friendlyVersion-ATmega328P.hex"
+$firstInstallFile = "Arducon-First-Install-$friendlyVersion-ATmega328P.hex"
 $manifestFile = "Arducon-Release-Info-$friendlyVersion-ATmega328P.json"
 $checksumsFile = "Arducon-Checksums-$friendlyVersion-ATmega328P.txt"
 $readmeFile = "README-Arducon-$friendlyVersion-ATmega328P.txt"
+$releaseZipFile = "Arducon-$friendlyVersion-ATmega328P-Release-Files.zip"
+$setupLauncherFile = "Prepare-Arducon-Updates-$friendlyVersion-ATmega328P.ps1"
 
 $updatePath = Join-Path $OutputDir $updateFile
+$firstInstallPath = Join-Path $OutputDir $firstInstallFile
+$setupLauncherPath = Join-Path $OutputDir $setupLauncherFile
+$provisionScriptPath = Join-Path $OutputDir 'provision-bootloader.ps1'
+$serialTestScriptPath = Join-Path $OutputDir 'test-bootloader-serial.ps1'
+$releaseZipPath = Join-Path $OutputDir $releaseZipFile
 $files = @()
 $files += Copy-PackageFile -SourcePath $HexPath -DestinationPath $updatePath -Kind 'update' -Purpose 'Application HEX for normal bootloader updates.'
 
@@ -201,10 +423,16 @@ $bootloaderPath = Join-Path $OutputDir $bootloaderFile
 $files += Copy-PackageFile -SourcePath $BootloaderHexPath -DestinationPath $bootloaderPath -Kind 'bootloader' -Purpose 'Reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.'
 $bootloaderImage = Get-IntelHexBytes -Path $bootloaderPath
 $bootloaderSummary = Get-HexAddressSummary -Image $bootloaderImage
+$mergeSummary = Merge-HexFiles -BootloaderPath $bootloaderPath -ApplicationPath $updatePath -OutputPath $firstInstallPath
+$files += Copy-PackageFile -SourcePath $firstInstallPath -DestinationPath $firstInstallPath -Kind 'first-install' -Purpose 'Combined application and bootloader HEX for programming a new board with an ISP programmer.'
 $bootloaderSourceFile = 'Arducon-Bootloader-Optiboot-ATmega328P-Source.zip'
 $bootloaderSourcePath = Join-Path $OutputDir $bootloaderSourceFile
 Compress-Archive -Path (Join-Path $bootloaderSourceDir '*') -DestinationPath $bootloaderSourcePath -Force
 $files += Copy-PackageFile -SourcePath $bootloaderSourcePath -DestinationPath $bootloaderSourcePath -Kind 'bootloader-source' -Purpose 'Corresponding source and notices for the bundled Optiboot bootloader.'
+New-WorkshopSetupScript -OutputPath $setupLauncherPath -Version $friendlyVersion -BootloaderFileName $bootloaderFile -ApplicationFileName $updateFile -FirstInstallFileName $firstInstallFile
+$files += Copy-PackageFile -SourcePath $setupLauncherPath -DestinationPath $setupLauncherPath -Kind 'workshop-setup-launcher' -Purpose 'Friendly setup launcher for adding software-update support with a programmer.'
+$files += Copy-PackageFile -SourcePath (Join-Path $repoRoot 'provision-bootloader.ps1') -DestinationPath $provisionScriptPath -Kind 'workshop-setup-tool' -Purpose 'Advanced setup tool used by the friendly setup launcher.'
+$files += Copy-PackageFile -SourcePath (Join-Path $repoRoot 'test-bootloader-serial.ps1') -DestinationPath $serialTestScriptPath -Kind 'workshop-setup-tool' -Purpose 'Serial verification tool used after adding software-update support.'
 
 $image = Get-IntelHexBytes -Path $updatePath
 $updateSummary = Get-HexAddressSummary -Image $image
@@ -220,6 +448,10 @@ $manifest = [pscustomobject]@{
         fileName = $updateFile
         startAddress = ('0x{0:X4}' -f $first)
         bytesInImage = $image.Count
+    }
+    firstInstall = [pscustomobject]@{
+        fileName = $firstInstallFile
+        bytesInImage = $mergeSummary.CombinedBytes
     }
     bootloader = [pscustomobject]@{
         fileName = $bootloaderFile
@@ -248,6 +480,14 @@ $manifest = [pscustomobject]@{
         flashBytes = 32768
         appLimitAddress = '0x7E00'
     }
+    workshopSetup = [pscustomobject]@{
+        setupLauncherFileName = $setupLauncherFile
+        provisioningScriptFileName = 'provision-bootloader.ps1'
+        serialValidationScriptFileName = 'test-bootloader-serial.ps1'
+        highFuseTarget = '0xDE'
+        highFuseTargetPreserveEeprom = '0xD6'
+        supportedProgrammers = @('atmelice_isp', 'atmelice', 'avrisp2', 'usbasp')
+    }
     files = $files
 }
 
@@ -256,7 +496,6 @@ $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -En
 $files += Copy-PackageFile -SourcePath $manifestPath -DestinationPath $manifestPath -Kind 'release-info' -Purpose 'Information updater tools read to choose and verify files.'
 
 $checksumsPath = Join-Path $OutputDir $checksumsFile
-$files | ForEach-Object { "$($_.sha256)  $($_.fileName)" } | Set-Content -LiteralPath $checksumsPath -Encoding ASCII
 
 $readmePath = Join-Path $OutputDir $readmeFile
 @"
@@ -264,8 +503,12 @@ Arducon $friendlyVersion ATmega328P firmware package
 
 Files:
 - ${updateFile}: application HEX for normal bootloader updates.
+- ${firstInstallFile}: combined application and bootloader HEX for programming a new board with an ISP programmer.
 - ${bootloaderFile}: reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.
 - ${bootloaderSourceFile}: corresponding source and notices for the bundled Optiboot bootloader.
+- ${setupLauncherFile}: friendly setup launcher for adding software-update support with a programmer.
+- provision-bootloader.ps1: advanced setup tool used by the friendly setup launcher.
+- test-bootloader-serial.ps1: serial verification tool used after adding software-update support.
 - ${manifestFile}: machine-readable update metadata.
 - ${checksumsFile}: SHA-256 checksums.
 
@@ -276,8 +519,26 @@ High fuse target: 0xDE, or 0xD6 when programming EESAVE to preserve EEPROM acros
 
 Updating from Arducon 1.x to $friendlyVersion requires a programming device, such as an Atmel-ICE or compatible ISP programmer, because 1.x units do not already have the new Optiboot update path installed.
 "@ | Set-Content -LiteralPath $readmePath -Encoding ASCII
+$files += Copy-PackageFile -SourcePath $readmePath -DestinationPath $readmePath -Kind 'readme' -Purpose 'Plain-language notes for the release folder.'
 
-Compress-Archive -Path (Join-Path $OutputDir '*') -DestinationPath (Join-Path $OutputDir "Arducon-$friendlyVersion-ATmega328P-Release-Files.zip") -Force
+$files | ForEach-Object { "$($_.sha256)  $($_.fileName)" } | Set-Content -LiteralPath $checksumsPath -Encoding ASCII
+
+$zipSourcePaths = @(
+    $updatePath,
+    $firstInstallPath,
+    $bootloaderPath,
+    $bootloaderSourcePath,
+    $setupLauncherPath,
+    $provisionScriptPath,
+    $serialTestScriptPath,
+    $manifestPath,
+    $checksumsPath,
+    $readmePath
+)
+Compress-Archive -LiteralPath $zipSourcePaths -DestinationPath $releaseZipPath -Force
 
 Write-Host "Release package written to $OutputDir"
 Write-Host "Manifest: $manifestPath"
+Write-Host "Update file: $updateFile"
+Write-Host "Complete release zip: $releaseZipFile"
+Write-Host "First-install file: $firstInstallFile"

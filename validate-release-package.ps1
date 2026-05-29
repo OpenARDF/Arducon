@@ -65,6 +65,21 @@ function Get-IntelHexBytes {
     return $bytes
 }
 
+function Get-HexAddressSummary {
+    param([Parameter(Mandatory = $true)][hashtable]$Image)
+
+    $addresses = @($Image.Keys | Sort-Object { [int]$_ })
+    if($addresses.Count -eq 0)
+    {
+        throw 'HEX image contains no data records.'
+    }
+    [pscustomobject]@{
+        First = [int]($addresses | Select-Object -First 1)
+        Last = [int]($addresses | Select-Object -Last 1)
+        Count = $Image.Count
+    }
+}
+
 function Test-ZipContainsEntries {
     param(
         [Parameter(Mandatory = $true)][string]$Path,
@@ -122,6 +137,20 @@ if($manifest.product -ne 'Arducon')
 }
 Assert-ReleaseVersion -Version $manifest.version
 
+$checksumsPath = @(Get-ChildItem -LiteralPath $PackageDir -Filter 'Arducon-Checksums-*.txt' -File)
+if($checksumsPath.Count -ne 1)
+{
+    throw "Expected exactly one Arducon checksums file, found $($checksumsPath.Count)."
+}
+$checksumsPath = $checksumsPath[0].FullName
+
+$releaseZipPath = @(Get-ChildItem -LiteralPath $PackageDir -Filter 'Arducon-*-Release-Files.zip' -File)
+if($releaseZipPath.Count -ne 1)
+{
+    throw "Expected exactly one Arducon release zip file, found $($releaseZipPath.Count)."
+}
+$releaseZipPath = $releaseZipPath[0].FullName
+
 $settings = $manifest.firmwareUpdate
 $appStart = ConvertFrom-HexAddress $settings.appStartAddress
 $appLimit = ConvertFrom-HexAddress $settings.appLimitAddress
@@ -161,7 +190,43 @@ if($hexBytes.Count -ne [int]$manifest.update.bytesInImage)
     throw "Update HEX byte count mismatch."
 }
 
+$firstInstallPath = $null
+$firstInstallBytes = $null
+$firstInstallSummary = $null
 $manifestPropertyNames = @($manifest.PSObject.Properties.Name)
+if($manifestPropertyNames -contains 'firstInstall')
+{
+    $firstInstallFileName = $manifest.firstInstall.fileName
+    if([string]::IsNullOrWhiteSpace($firstInstallFileName))
+    {
+        throw 'First-install manifest is missing fileName.'
+    }
+    $firstInstallFileEntry = $manifest.files | Where-Object { $_.kind -eq 'first-install' -and $_.fileName -eq $firstInstallFileName } | Select-Object -First 1
+    if(-not $firstInstallFileEntry)
+    {
+        throw "Manifest does not list first-install file $firstInstallFileName."
+    }
+    $firstInstallPath = Join-Path $PackageDir $firstInstallFileName
+    if(-not (Test-Path -LiteralPath $firstInstallPath))
+    {
+        throw "First-install HEX not found: $firstInstallPath"
+    }
+    $firstInstallBytes = Get-IntelHexBytes -Path $firstInstallPath
+    $firstInstallSummary = Get-HexAddressSummary -Image $firstInstallBytes
+    if($firstInstallSummary.First -ne 0)
+    {
+        throw ("First-install HEX starts at 0x{0:X}; expected 0x0000." -f $firstInstallSummary.First)
+    }
+    if($firstInstallSummary.Last -lt $last)
+    {
+        throw 'First-install HEX does not include the full update image.'
+    }
+    if($firstInstallBytes.Count -ne [int]$manifest.firstInstall.bytesInImage)
+    {
+        throw 'First-install HEX byte count mismatch.'
+    }
+}
+
 if($manifestPropertyNames -contains 'bootloader')
 {
     $bootloader = $manifest.bootloader
@@ -239,6 +304,26 @@ if($manifestPropertyNames -contains 'bootloader')
     {
         throw "Bootloader HEX byte count mismatch."
     }
+
+    if($null -ne $firstInstallBytes)
+    {
+        foreach($address in $hexBytes.Keys)
+        {
+            $intAddress = [int]$address
+            if(-not $firstInstallBytes.ContainsKey($intAddress) -or [byte]$firstInstallBytes[$intAddress] -ne [byte]$hexBytes[$address])
+            {
+                throw ("First-install HEX does not match update HEX at 0x{0:X}." -f $intAddress)
+            }
+        }
+        foreach($address in $bootloaderBytes.Keys)
+        {
+            $intAddress = [int]$address
+            if(-not $firstInstallBytes.ContainsKey($intAddress) -or [byte]$firstInstallBytes[$intAddress] -ne [byte]$bootloaderBytes[$address])
+            {
+                throw ("First-install HEX does not match bootloader HEX at 0x{0:X}." -f $intAddress)
+            }
+        }
+    }
 }
 
 foreach($file in $manifest.files)
@@ -260,9 +345,82 @@ foreach($file in $manifest.files)
     }
 }
 
+$checksums = @{}
+foreach($line in Get-Content -LiteralPath $checksumsPath)
+{
+    if([string]::IsNullOrWhiteSpace($line)) { continue }
+    if($line -notmatch '^([0-9A-Fa-f]{64})\s+(.+)$')
+    {
+        throw "Invalid checksum line: $line"
+    }
+    $checksums[$Matches[2]] = $Matches[1].ToLowerInvariant()
+}
+
+foreach($name in $checksums.Keys)
+{
+    $path = Join-Path $PackageDir $name
+    if(-not (Test-Path -LiteralPath $path))
+    {
+        throw "Checksum-listed file missing: $name"
+    }
+    $actualHash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    if($actualHash -ne $checksums[$name])
+    {
+        throw "Checksum file hash mismatch for $name."
+    }
+}
+
+foreach($file in $manifest.files)
+{
+    if(-not $checksums.ContainsKey($file.fileName))
+    {
+        throw "Checksum file does not list manifest file $($file.fileName)."
+    }
+}
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zipArchive = [System.IO.Compression.ZipFile]::OpenRead($releaseZipPath)
+try
+{
+    $zipEntryNames = @($zipArchive.Entries | ForEach-Object { $_.Name })
+    foreach($entry in $manifest.files)
+    {
+        if($zipEntryNames -notcontains $entry.fileName)
+        {
+            throw "Release zip does not contain $($entry.fileName)."
+        }
+    }
+    foreach($name in $checksums.Keys)
+    {
+        if($zipEntryNames -notcontains $name)
+        {
+            throw "Release zip does not contain checksum-listed file $name."
+        }
+    }
+    foreach($requiredFile in @((Split-Path -Leaf $manifestPath), (Split-Path -Leaf $checksumsPath)))
+    {
+        if($zipEntryNames -notcontains $requiredFile)
+        {
+            throw "Release zip does not contain $requiredFile."
+        }
+    }
+}
+finally
+{
+    if($null -ne $zipArchive)
+    {
+        $zipArchive.Dispose()
+    }
+}
+
 Write-Host "Release package validated: $PackageDir"
 Write-Host ("Update HEX range: 0x{0:X4}..0x{1:X4}; bytes: {2}" -f $first, $last, $hexBytes.Count)
+if($null -ne $firstInstallSummary)
+{
+    Write-Host ("First-install HEX range: 0x{0:X4}..0x{1:X4}; bytes: {2}" -f $firstInstallSummary.First, $firstInstallSummary.Last, $firstInstallBytes.Count)
+}
 if($manifestPropertyNames -contains 'bootloader')
 {
     Write-Host ("Bootloader HEX range: 0x{0:X4}..0x{1:X4}; bytes: {2}" -f $bootloaderFirst, $bootloaderLast, $bootloaderBytes.Count)
 }
+Write-Host ("Release zip OK: {0}" -f (Split-Path -Leaf $releaseZipPath))
