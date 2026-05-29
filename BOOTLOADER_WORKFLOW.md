@@ -90,13 +90,14 @@ The package includes:
 - a zipped copy of the release files
 
 The manifest records the product, version, board, app baud, update baud, app start, app limit, flash size, page size, update command, and hashes.
-It also records the bootloader file, source package, protocol, baud rate, normal and EEPROM-preserving high-fuse targets, address range, and image byte count.
+It also records the bootloader file, source package, protocol, baud rate, normal and EEPROM-preserving high-fuse targets, the extended-fuse BODLEVEL target, address range, and image byte count.
 
 See `RELEASE_WORKFLOW.md` for the GitHub release checklist, version policy, and release asset upload commands.
 
 ## Provisioning
 
-Provisioning remains guarded: first read and review fuses, then explicitly opt in to flash and fuse writes.
+Provisioning remains guarded: first read and review fuses, then explicitly opt in to flash and fuse writes. Bootloader installation requires confirmed fuse programming so `BOOTRST`, boot size, and `BODLEVEL=2.7V` are set together. Automatic fuse programming currently requires the `Avrdude` backend.
+On Windows, install `avrdude` for the automatic bootloader-install path. The `Atprogram` backend is not used for automatic fuse writes until equivalent read/write/verify behavior is added and tested.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -CheckPrereqs -SkipFlash
@@ -119,16 +120,22 @@ If chip erase will be used during development or provisioning and EEPROM setting
 newHigh = ((oldHigh & 0xF8) | 0x06) & 0xF7
 ```
 
+The same guarded fuse-write step also programs the ATmega328P extended-fuse `BODLEVEL[2:0]` bits for brown-out detection at VCC=2.7 V while preserving unrelated extended-fuse bits:
+
+```text
+newExtended = (oldExtended & 0xF8) | 0x05
+```
+
 Example first-install review flow with an Atmel-ICE using `avrdude`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -SkipFlash -ReadFusesOnly
-powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite
-powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ProgramFuses -ConfirmFuseWrite -PreserveEeprom
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ExtendedFuseValue 0xFF -ProgramFuses -ConfirmFuseWrite
+powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -DryRun -HighFuseValue 0xDA -ExtendedFuseValue 0xFF -ProgramFuses -ConfirmFuseWrite -PreserveEeprom
 ```
 
-Only after reviewing the exact combined image path and fuse value should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required. It can erase EEPROM unless the EESAVE fuse is programmed; use `-PreserveEeprom -ProgramFuses -ConfirmFuseWrite` before relying on EEPROM retention across chip erase.
+Only after reviewing the exact combined image path and fuse values should the real flash/fuse command be run. `-ChipErase` is available when a full chip erase is intentionally required. It can erase EEPROM unless the EESAVE fuse is programmed; use `-PreserveEeprom -ProgramFuses -ConfirmFuseWrite` before relying on EEPROM retention across chip erase.
 
 ## Serial Smoke Test
 

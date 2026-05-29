@@ -21,6 +21,8 @@ param(
 
     [string]$HighFuseValue = '',
 
+    [string]$ExtendedFuseValue = '',
+
     [string]$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
 
     [string]$Tool = 'atmelice',
@@ -55,6 +57,8 @@ $repoRoot = $PSScriptRoot
 $device = 'atmega328p'
 $desiredHighFuseBootBits = 0x06
 $highFuseEesaveBit = 0x08
+$desiredExtendedFuseBodBits = 0x05
+$extendedFuseBodMask = 0x07
 $exitCodes = @{
     Prereqs = 2
     Programmer = 3
@@ -328,9 +332,13 @@ function Invoke-AvrdudeCapture {
 
 function Test-ProgrammerAvrdude {
     $output = Invoke-AvrdudeCapture -Arguments (Get-AvrdudeBaseArguments)
-    if($output -match 'Device signature\s*=\s*(0x[0-9a-fA-F]+)')
+    if($output -match 'Device signature\s*=\s*0x([0-9a-fA-F]{6})')
     {
-        return $Matches[1]
+        return ('0x{0}' -f $Matches[1].ToUpperInvariant())
+    }
+    if($output -match 'Device signature\s*=\s*(?:0x)?([0-9a-fA-F]{2})\s+(?:0x)?([0-9a-fA-F]{2})\s+(?:0x)?([0-9a-fA-F]{2})')
+    {
+        return ('0x{0}{1}{2}' -f $Matches[1].ToUpperInvariant(), $Matches[2].ToUpperInvariant(), $Matches[3].ToUpperInvariant())
     }
     return 'unknown'
 }
@@ -346,6 +354,16 @@ function Read-HighFuseAvrdude {
     if(-not $match)
     {
         throw 'Could not parse high fuse from avrdude output.'
+    }
+    return [Convert]::ToInt32($match.Value, 16)
+}
+
+function Read-ExtendedFuseAvrdude {
+    $output = Invoke-AvrdudeCapture -Arguments ((Get-AvrdudeBaseArguments) + @('-U', 'efuse:r:-:h'))
+    $match = [regex]::Matches($output, '0x[0-9a-fA-F]{2}|(?m)^[0-9a-fA-F]{2}$') | Select-Object -Last 1
+    if(-not $match)
+    {
+        throw 'Could not parse extended fuse from avrdude output.'
     }
     return [Convert]::ToInt32($match.Value, 16)
 }
@@ -416,6 +434,12 @@ try
         exit $exitCodes.Args
     }
 
+    if((-not $SkipFlash) -and (-not ($ProgramFuses -and $ConfirmFuseWrite)))
+    {
+        Write-SetupError -Step 'program-fuses' -Code 'fuses_required' -Detail 'Bootloader installation requires confirmed fuse programming so BOOTRST and BODLEVEL=2.7V are set. Pass -ProgramFuses -ConfirmFuseWrite, or pass -SkipFlash for fuse-only/preflight operations.'
+        exit $exitCodes.Args
+    }
+
     if($ReadFusesOnly -and $selectedBackend -ne 'Avrdude')
     {
         Write-SetupError -Step 'read-fuses' -Code 'unsupported_backend' -Detail '-ReadFusesOnly currently requires -Backend Avrdude.'
@@ -424,7 +448,7 @@ try
 
     if($ProgramFuses -and $selectedBackend -ne 'Avrdude')
     {
-        Write-SetupError -Step 'program-fuses' -Code 'unsupported_backend' -Detail 'Automatic high-fuse rewriting currently requires -Backend Avrdude.'
+        Write-SetupError -Step 'program-fuses' -Code 'unsupported_backend' -Detail 'Automatic fuse rewriting currently requires -Backend Avrdude.'
         exit $exitCodes.Args
     }
 
@@ -432,6 +456,8 @@ try
     {
         $oldHighFuse = $null
         $newHighFuse = $null
+        $oldExtendedFuse = $null
+        $newExtendedFuse = $null
         if(-not [string]::IsNullOrWhiteSpace($HighFuseValue))
         {
             $oldHighFuse = Convert-HexByte -Value $HighFuseValue -Name 'HighFuseValue'
@@ -443,6 +469,19 @@ try
         elseif($ProgramFuses -or $ReadFusesOnly)
         {
             Write-SetupError -Step 'read-fuses' -Code 'high_fuse_required' -Detail 'Dry-run fuse operations require -HighFuseValue because hardware is not read in dry-run mode.'
+            exit $exitCodes.Args
+        }
+        if(-not [string]::IsNullOrWhiteSpace($ExtendedFuseValue))
+        {
+            $oldExtendedFuse = Convert-HexByte -Value $ExtendedFuseValue -Name 'ExtendedFuseValue'
+        }
+        elseif(-not $DryRun)
+        {
+            $oldExtendedFuse = Read-ExtendedFuseAvrdude
+        }
+        elseif($ProgramFuses -or $ReadFusesOnly)
+        {
+            Write-SetupError -Step 'read-fuses' -Code 'extended_fuse_required' -Detail 'Dry-run fuse operations require -ExtendedFuseValue because hardware is not read in dry-run mode.'
             exit $exitCodes.Args
         }
 
@@ -463,13 +502,44 @@ try
             {
                 Write-Host ("Transform: newHigh = (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
             }
-            Write-SetupOk -Step 'read-fuses' -Fields @{ highFuse = ('0x{0:X2}' -f $oldHighFuse); targetHighFuse = ('0x{0:X2}' -f $newHighFuse) }
         }
         else
         {
             Write-Host ("Dry run: high fuse not read. Pass -HighFuseValue to preview the exact bootloader high fuse.")
-            Write-SetupOk -Step 'read-fuses' -Fields @{ highFuse = 'skipped' }
         }
+
+        if($null -ne $oldExtendedFuse)
+        {
+            $newExtendedFuse = ($oldExtendedFuse -band 0xF8) -bor $desiredExtendedFuseBodBits
+            Write-Host ("ATmega328P extended fuse: current=0x{0:X2}; BOD 2.7V target=0x{1:X2}" -f $oldExtendedFuse, $newExtendedFuse)
+            Write-Host ("Transform: newExtended = (oldExtended & 0xF8) | 0x{0:X2}  # BODLEVEL=2.7V" -f $desiredExtendedFuseBodBits)
+        }
+        else
+        {
+            Write-Host ("Dry run: extended fuse not read. Pass -ExtendedFuseValue to preview the exact BOD fuse.")
+        }
+
+        $readFuseFields = @{}
+        if($null -ne $oldHighFuse)
+        {
+            $readFuseFields['highFuse'] = ('0x{0:X2}' -f $oldHighFuse)
+            $readFuseFields['targetHighFuse'] = ('0x{0:X2}' -f $newHighFuse)
+        }
+        else
+        {
+            $readFuseFields['highFuse'] = 'skipped'
+        }
+        if($null -ne $oldExtendedFuse)
+        {
+            $readFuseFields['extendedFuse'] = ('0x{0:X2}' -f $oldExtendedFuse)
+            $readFuseFields['targetExtendedFuse'] = ('0x{0:X2}' -f $newExtendedFuse)
+            $readFuseFields['bodLevel'] = '2.7V'
+        }
+        else
+        {
+            $readFuseFields['extendedFuse'] = 'skipped'
+        }
+        Write-SetupOk -Step 'read-fuses' -Fields $readFuseFields
 
         if($ReadFusesOnly)
         {
@@ -526,8 +596,17 @@ try
             Write-SetupError -Step 'program-fuses' -Code 'high_fuse_unavailable' -Detail 'No high-fuse value is available. Read the fuse from hardware or pass -HighFuseValue.'
             exit $exitCodes.Fuses
         }
-        $fuseArgs = (Get-AvrdudeBaseArguments) + @('-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse))
+        if($null -eq $newExtendedFuse)
+        {
+            Write-SetupError -Step 'program-fuses' -Code 'extended_fuse_unavailable' -Detail 'No extended-fuse value is available. Read the fuse from hardware or pass -ExtendedFuseValue.'
+            exit $exitCodes.Fuses
+        }
+        $fuseArgs = (Get-AvrdudeBaseArguments) + @(
+            '-U', ('hfuse:w:0x{0:X2}:m' -f $newHighFuse),
+            '-U', ('efuse:w:0x{0:X2}:m' -f $newExtendedFuse)
+        )
         Write-Warning ("Writing ATmega328P high fuse from 0x{0:X2} to 0x{1:X2}. Unrelated high-fuse bits are preserved." -f $oldHighFuse, $newHighFuse)
+        Write-Warning ("Writing ATmega328P extended fuse from 0x{0:X2} to 0x{1:X2} for BODLEVEL=2.7V. Unrelated extended-fuse bits are preserved." -f $oldExtendedFuse, $newExtendedFuse)
         if($PreserveEeprom)
         {
             Write-Warning 'EESAVE will be programmed so future chip erase operations preserve EEPROM.'
@@ -535,7 +614,7 @@ try
         Invoke-Avrdude -Arguments $fuseArgs
         if($DryRun)
         {
-            Write-Host 'Dry run: high fuse verify skipped.'
+            Write-Host 'Dry run: fuse verify skipped.'
         }
         else
         {
@@ -546,8 +625,15 @@ try
                 exit $exitCodes.Fuses
             }
             Write-Host ("High fuse verified: 0x{0:X2}" -f $verifiedHighFuse)
+            $verifiedExtendedFuse = Read-ExtendedFuseAvrdude
+            if(($verifiedExtendedFuse -band $extendedFuseBodMask) -ne $desiredExtendedFuseBodBits)
+            {
+                Write-SetupError -Step 'program-fuses' -Code 'verify_failed' -Detail ("Expected extended fuse BODLEVEL bits 0x{0:X2}, read 0x{1:X2}." -f $desiredExtendedFuseBodBits, ($verifiedExtendedFuse -band $extendedFuseBodMask))
+                exit $exitCodes.Fuses
+            }
+            Write-Host ("Extended fuse verified: 0x{0:X2}; BODLEVEL=2.7V" -f $verifiedExtendedFuse)
         }
-        Write-SetupOk -Step 'program-fuses' -Fields @{ highFuse = ('0x{0:X2}' -f $newHighFuse) }
+        Write-SetupOk -Step 'program-fuses' -Fields @{ highFuse = ('0x{0:X2}' -f $newHighFuse); extendedFuse = ('0x{0:X2}' -f $newExtendedFuse); bodLevel = '2.7V' }
     }
     else
     {
@@ -561,6 +647,8 @@ try
         {
             Write-Host ("Desired high-fuse boot bits: (oldHigh & 0xF8) | 0x{0:X2}" -f $desiredHighFuseBootBits)
         }
+        Write-Host ("Desired extended-fuse BOD bits: (oldExtended & 0xF8) | 0x{0:X2}  # BODLEVEL=2.7V" -f $desiredExtendedFuseBodBits)
+        Write-Warning 'The ATmega328P BOD fuse is not written unless fuse writes are enabled with -ProgramFuses -ConfirmFuseWrite.'
         Write-SetupOk -Step 'program-fuses' -Fields @{ status = 'skipped' }
     }
 

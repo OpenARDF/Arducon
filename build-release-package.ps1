@@ -270,6 +270,10 @@ param(
 
     [string]`$AvrdudeBitClock = '',
 
+    [string]`$HighFuseValue = '',
+
+    [string]`$ExtendedFuseValue = '',
+
     [string]`$AtprogramPath = 'C:\Program Files (x86)\Atmel\Studio\7.0\atbackend\atprogram.exe',
 
     [string]`$Tool = 'atmelice',
@@ -349,9 +353,9 @@ Write-Host ''
 
 if(-not `$CheckPrereqs -and -not (`$ProgramFuses -and `$ConfirmFuseWrite))
 {
-    Write-Warning 'This script will not write fuses unless both -ProgramFuses and -ConfirmFuseWrite are provided.'
+    Write-Warning 'Bootloader installation requires both -ProgramFuses and -ConfirmFuseWrite so BOOTRST, boot size, and BODLEVEL=2.7V are set.'
     Write-Host 'To check this computer without touching the Arducon, run with -CheckPrereqs.'
-    Write-Host 'To prepare a connected Arducon, run again with -ProgramFuses -ConfirmFuseWrite.'
+    Write-Host 'To prepare a connected Arducon, run with -ProgramFuses -ConfirmFuseWrite.'
     Write-Host ''
 }
 
@@ -370,6 +374,8 @@ if(`$CheckProgrammer -and `$CheckPrereqs)
     AvrdudeProgrammer = `$AvrdudeProgrammer
     AvrdudePort = `$AvrdudePort
     AvrdudeBitClock = `$AvrdudeBitClock
+    HighFuseValue = `$HighFuseValue
+    ExtendedFuseValue = `$ExtendedFuseValue
     AtprogramPath = `$AtprogramPath
     Tool = `$Tool
     Interface = `$Interface
@@ -554,6 +560,8 @@ $manifest = [pscustomobject]@{
         baud = 115200
         highFuseTarget = '0xDE'
         highFuseTargetPreserveEeprom = '0xD6'
+        extendedFuseBodLevelTarget = '0x05'
+        extendedFuseBodLevelDescription = 'BODLEVEL=2.7V; preserve extended-fuse bits outside BODLEVEL[2:0]'
         startAddress = ('0x{0:X4}' -f $bootloaderSummary.First)
         endAddress = ('0x{0:X4}' -f $bootloaderSummary.Last)
         bytesInImage = $bootloaderSummary.Count
@@ -578,6 +586,8 @@ $manifest = [pscustomobject]@{
         serialValidationScriptFileName = 'test-bootloader-serial.ps1'
         highFuseTarget = '0xDE'
         highFuseTargetPreserveEeprom = '0xD6'
+        extendedFuseBodLevelTarget = '0x05'
+        extendedFuseBodLevelDescription = 'BODLEVEL=2.7V; preserve extended-fuse bits outside BODLEVEL[2:0]'
         supportedProgrammers = @('atmelice_isp', 'atmelice', 'avrisp2', 'usbasp')
     }
     files = $files
@@ -608,6 +618,8 @@ Address range in update HEX: 0x$("{0:X4}" -f $first)..0x$("{0:X4}" -f $last)
 Address range in bootloader HEX: 0x$("{0:X4}" -f $bootloaderSummary.First)..0x$("{0:X4}" -f $bootloaderSummary.Last)
 Bootloader-safe app limit: 0x7DFF when reserving 512 bytes at top of flash.
 High fuse target: 0xDE, or 0xD6 when programming EESAVE to preserve EEPROM across chip erase.
+Extended fuse BODLEVEL target: low bits 0x05 for brown-out detection at VCC=2.7 V; bits outside BODLEVEL[2:0] are preserved.
+Automatic bootloader fuse programming currently requires avrdude. Install avrdude on Windows too, or use an already-reviewed manual fuse programming process.
 
 Updating from Arducon 1.x to $friendlyVersion requires a programming device, such as an Atmel-ICE or compatible ISP programmer, because 1.x units do not already have the new Optiboot update path installed.
 "@ | Set-Content -LiteralPath $readmePath -Encoding ASCII

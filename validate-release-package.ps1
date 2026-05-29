@@ -283,6 +283,10 @@ if($manifestPropertyNames -contains 'bootloader')
             throw "Unexpected EEPROM-preserving bootloader high-fuse target: $($bootloader.highFuseTargetPreserveEeprom)"
         }
     }
+    if($bootloader.extendedFuseBodLevelTarget -ne '0x05')
+    {
+        throw "Unexpected bootloader extended-fuse BODLEVEL target: $($bootloader.extendedFuseBodLevelTarget)"
+    }
 
     $bootloaderBytes = Get-IntelHexBytes -Path $bootloaderPath
     $bootloaderAddresses = @($bootloaderBytes.Keys | Sort-Object { [int]$_ })
@@ -382,6 +386,10 @@ if($workshopSetup.highFuseTargetPreserveEeprom -ne '0xD6')
 {
     throw "Unexpected workshop EEPROM-preserving high-fuse target: $($workshopSetup.highFuseTargetPreserveEeprom)"
 }
+if($workshopSetup.extendedFuseBodLevelTarget -ne '0x05')
+{
+    throw "Unexpected workshop extended-fuse BODLEVEL target: $($workshopSetup.extendedFuseBodLevelTarget)"
+}
 
 $supportedProgrammers = @($workshopSetup.supportedProgrammers)
 foreach($programmer in @('atmelice_isp', 'atmelice', 'avrisp2', 'usbasp'))
@@ -393,7 +401,7 @@ foreach($programmer in @('atmelice_isp', 'atmelice', 'avrisp2', 'usbasp'))
 }
 
 $setupLauncherText = Get-Content -LiteralPath (Join-Path $PackageDir $setupLauncherFileName) -Raw
-foreach($requiredOption in @('CheckPrereqs', 'CheckProgrammer', 'ProgramFuses', 'ConfirmFuseWrite', 'SkipSerialValidation', 'Backend', 'Port'))
+foreach($requiredOption in @('CheckPrereqs', 'CheckProgrammer', 'ProgramFuses', 'ConfirmFuseWrite', 'SkipSerialValidation', 'Backend', 'Port', 'HighFuseValue', 'ExtendedFuseValue'))
 {
     if($setupLauncherText -notmatch [regex]::Escape($requiredOption))
     {
