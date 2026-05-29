@@ -331,7 +331,7 @@ function Invoke-AvrdudeCapture {
 }
 
 function Test-ProgrammerAvrdude {
-    $output = Invoke-AvrdudeCapture -Arguments (Get-AvrdudeBaseArguments)
+    $output = Invoke-AvrdudeCapture -Arguments (@('-v') + (Get-AvrdudeBaseArguments))
     if($output -match 'Device signature\s*=\s*0x([0-9a-fA-F]{6})')
     {
         return ('0x{0}' -f $Matches[1].ToUpperInvariant())
@@ -385,8 +385,7 @@ function Convert-HexByte {
 
 function Get-SelectedBackend {
     if($Backend -ne 'Auto') { return $Backend }
-    if(Test-CommandOrPath $AvrdudePath) { return 'Avrdude' }
-    return 'Atprogram'
+    return 'Avrdude'
 }
 
 try

@@ -619,7 +619,7 @@ Address range in bootloader HEX: 0x$("{0:X4}" -f $bootloaderSummary.First)..0x$(
 Bootloader-safe app limit: 0x7DFF when reserving 512 bytes at top of flash.
 High fuse target: 0xDE, or 0xD6 when programming EESAVE to preserve EEPROM across chip erase.
 Extended fuse BODLEVEL target: low bits 0x05 for brown-out detection at VCC=2.7 V; bits outside BODLEVEL[2:0] are preserved.
-Automatic bootloader fuse programming currently requires avrdude. Install avrdude on Windows too, or use an already-reviewed manual fuse programming process.
+Automatic bootloader fuse programming currently requires avrdude. With -Backend Auto, the setup tool selects avrdude for bootloader installation and fails prereq checks if avrdude is unavailable. Install avrdude on Windows too, or use an already-reviewed manual fuse programming process.
 
 Updating from Arducon 1.x to $friendlyVersion requires a programming device, such as an Atmel-ICE or compatible ISP programmer, because 1.x units do not already have the new Optiboot update path installed.
 "@ | Set-Content -LiteralPath $readmePath -Encoding ASCII

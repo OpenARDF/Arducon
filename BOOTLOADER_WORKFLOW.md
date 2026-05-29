@@ -97,7 +97,7 @@ See `RELEASE_WORKFLOW.md` for the GitHub release checklist, version policy, and 
 ## Provisioning
 
 Provisioning remains guarded: first read and review fuses, then explicitly opt in to flash and fuse writes. Bootloader installation requires confirmed fuse programming so `BOOTRST`, boot size, and `BODLEVEL=2.7V` are set together. Automatic fuse programming currently requires the `Avrdude` backend.
-On Windows, install `avrdude` for the automatic bootloader-install path. The `Atprogram` backend is not used for automatic fuse writes until equivalent read/write/verify behavior is added and tested.
+On Windows, install `avrdude` for the automatic bootloader-install path. With `-Backend Auto`, the setup tool selects `Avrdude` and fails prereq checks if `avrdude` is unavailable. The `Atprogram` backend is not used for automatic fuse writes until equivalent read/write/verify behavior is added and tested.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\provision-bootloader.ps1 -Backend Avrdude -CheckPrereqs -SkipFlash

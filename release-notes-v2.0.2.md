@@ -32,6 +32,6 @@ Firmware release for Arduino Pro Mini / ATmega328P Arducon controllers.
 - Arducon uses Optiboot/STK500v1 at `115200` baud for serial firmware updates.
 - Normal app serial remains `57600` baud.
 - Bootloader installation now requires confirmed fuse programming so `BOOTRST`, boot size, and `BODLEVEL=2.7V` are set together.
-- Automatic bootloader fuse programming currently requires `avrdude`, including on Windows; `atprogram` remains available only for non-automatic/manual workflows until equivalent fuse-write support is added and verified.
+- Automatic bootloader fuse programming currently requires `avrdude`, including on Windows. With `-Backend Auto`, the setup tool selects `avrdude` for bootloader installation and fails prereq checks if `avrdude` is unavailable; `atprogram` remains available only for non-automatic/manual workflows until equivalent fuse-write support is added and verified.
 - Existing SerialSlinger update code does not yet update Arducon packages; SerialSlinger still needs product-aware Arducon package support and an STK500v1/Optiboot transport.
 - ISP recovery remains available with an Atmel-ICE or compatible programmer.
