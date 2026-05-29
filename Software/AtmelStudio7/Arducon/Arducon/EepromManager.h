@@ -40,21 +40,21 @@
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
 		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.0.1(80m) ***\n"
-		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI [H tempC|X] - Read volts/temp, set thermal shutdown, or reset max-ever temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
 	#else
 		/* Set Firmware Version Here */
 		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.0.1B ***\n"
-		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F|O [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI [H tempC|X] - Read volts/temp, set thermal shutdown, or reset max-ever temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
 	#endif  /* SUPPORT_ONLY_80M */
 #elif INCLUDE_DS3231_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
 		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.0.1(80m) ***\n"
-		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  UTI [H tempC|X] - Read volts/temp, set thermal shutdown, or reset max-ever temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
 	#else
 		/* Set Firmware Version Here */
 		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.0.1 ***\n"
-		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI - Read volts & temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
+		#define HELP_TEXT_TXT "\nCommands:\n  CLK [T|S|F [\"YYMMDDhhmmss\"]] - Read/set time/start/finish/offset\n  FOX [fox]- Set fox role\n  ID [callsign] -  Set callsign\n  SYN 0-3 - Synchronize\n  PWD [pwd] - Set DTMF password\n  AM [0-6] - Set AM tone frequency\n  UTI [H tempC|X] - Read volts/temp, set thermal shutdown, or reset max-ever temp\n  SET S|P [setting] - Set ID code speed or PTT reset\n  INF - Firmware information\n  UPD - Enter bootloader update mode"
 	#endif  /* SUPPORT_ONLY_80M */
 #endif          /* INCLUDE_RV3028_SUPPORT */
 
@@ -74,6 +74,8 @@ struct EE_prom
 	uint16_t eeprom_layout_version;
 	uint16_t temperature_table[SIZE_OF_TEMPERATURE_TABLE];
 	int16_t atmega_temp_calibration;
+	int8_t thermal_shutdown_temperature_c;
+	int16_t max_ever_temperature_tenths;
 	int16_t rv3028_offset;
 	time_t event_start_epoch;
 	time_t event_finish_epoch;
@@ -113,6 +115,8 @@ typedef enum
 	Fox_setting,
 	Am_audio_frequency,
 	Atmega_temp_calibration,
+	Thermal_shutdown_temperature_c,
+	Max_ever_temperature_tenths,
 	Rv3028_offset,
 	Event_start_epoch,
 	Event_finish_epoch,

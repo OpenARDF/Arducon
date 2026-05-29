@@ -110,6 +110,11 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 volatile int8_t g_temperature = 0;
+volatile int16_t g_temperature_tenths = 0;
+volatile int16_t g_max_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+volatile int16_t g_max_ever_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+volatile int8_t g_thermal_shutdown_temperature_c = EEPROM_THERMAL_SHUTDOWN_TEMP_C_DEFAULT;
+volatile BOOL g_thermal_shutdown = FALSE;
 volatile uint16_t g_voltage = 0;
 volatile ConfigurationState_t g_config_error = NULL_CONFIG;
 volatile BOOL g_use_rtc_for_startstop = FALSE;
@@ -186,7 +191,11 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
 uint16_t readADC();
 float getTemp(void);
+int16_t getTempTenths(void);
 uint16_t getVoltage(void);
+void updateTemperatureState(int16_t temperatureTenths);
+void resetMaxEverTemperatureToCurrent(void);
+void sendTemperatureTenths(const char* label, int16_t temperatureTenths);
 BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
 void stopEventNow(EventActionSource_t activationSource);
@@ -1088,12 +1097,12 @@ ISR( TIMER2_COMPB_vect )
 		{
 			if(g_use_rtc_for_startstop)
 			{
-				if(g_current_epoch >= (g_event_start_epoch - 5)) /* Turn on radio power in advance of the start time */
+				if((g_current_epoch >= (g_event_start_epoch - 5)) && !g_thermal_shutdown) /* Turn on radio power in advance of the start time */
 				{
 					digitalWrite(PIN_PWDN, ON);
 				}
 
-				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
+				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch) && !g_thermal_shutdown)    /* Event should be running */
 				{
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
@@ -1394,7 +1403,10 @@ void loop()
 				if(!g_temperature_check_countdown)
 				{
 					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
-					int8_t temp = (int8_t)getTemp();
+					int16_t temp_tenths = getTempTenths();
+					int8_t temp = (int8_t)((temp_tenths >= 0) ? ((temp_tenths + 5) / 10) : ((temp_tenths - 5) / 10));
+
+					updateTemperatureState(temp_tenths);
 					if(temp != g_temperature)
 					{
 						g_temperature = temp;
@@ -2155,18 +2167,43 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
-#if !SUPPORT_ONLY_80M
-					else if(lb_buff->fields[FIELD1][0] == 'Z')
+				else if(lb_buff->fields[FIELD1][0] == 'H')
+				{
+					if(lb_buff->fields[FIELD2][0])
 					{
-						cli();
-						g_AM_enabled = FALSE;
-						TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
-						setAtten(0);
-						sei();
+						int16_t v = atoi(lb_buff->fields[FIELD2]);
+
+						if((v >= THERMAL_SHUTDOWN_MIN_C) && (v <= THERMAL_SHUTDOWN_MAX_C))
+						{
+							g_thermal_shutdown_temperature_c = (int8_t)v;
+							ee_mgr.updateEEPROMVar(Thermal_shutdown_temperature_c, (void*)&g_thermal_shutdown_temperature_c);
+						}
 					}
+
+					sprintf(g_tempStr, "Thermal Shutdown= %dC\n", g_thermal_shutdown_temperature_c);
+					lb_send_string(g_tempStr, TRUE);
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'X')
+				{
+					resetMaxEverTemperatureToCurrent();
+					sendTemperatureTenths("Max Ever Reset", g_max_ever_temperature_tenths);
+				}
+#if !SUPPORT_ONLY_80M
+				else if(lb_buff->fields[FIELD1][0] == 'Z')
+				{
+					cli();
+					g_AM_enabled = FALSE;
+					TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+					setAtten(0);
+					sei();
+				}
 #endif /* !SUPPORT_ONLY_80M */
 
-				sprintf(g_tempStr, "T=%dC\n", g_temperature);
+				sendTemperatureTenths("T", g_temperature_tenths);
+				sendTemperatureTenths("Max", g_max_temperature_tenths);
+				sendTemperatureTenths("Max Ever", g_max_ever_temperature_tenths);
+
+				sprintf(g_tempStr, "Thermal Shutdown=%dC\n", g_thermal_shutdown_temperature_c);
 				lb_send_string(g_tempStr, TRUE);
 
 				sprintf(g_tempStr, "V=%d.%02dV\n", g_voltage / 100, g_voltage % 100);
@@ -3138,11 +3175,71 @@ uint16_t readADC()
  */
 float getTemp(void)
 {
-	float offset = CLAMP(-440., (float)g_atmega_temp_calibration / 10., 440.);
+	return((float)getTempTenths() / 10.);
+}
 
-	/* The offset in 1/10ths C (first term) was determined empirically */
+int16_t getTempTenths(void)
+{
+	int16_t offset_tenths = CLAMP(-440, g_atmega_temp_calibration, 440);
+
 	readADC();  /* throw away first reading */
-	return(roundf(offset + (readADC() - 324.31) / 1.22));
+	int32_t adc = readADC();
+	return((int16_t)(offset_tenths + ((adc * 1000L - 324310L) / 122L)));
+}
+
+void updateTemperatureState(int16_t temperatureTenths)
+{
+	BOOL firstSample = ((g_temperature_tenths == EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT) && (g_max_temperature_tenths == EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT));
+	g_temperature_tenths = temperatureTenths;
+
+	if(firstSample || (temperatureTenths > g_max_temperature_tenths))
+	{
+		g_max_temperature_tenths = temperatureTenths;
+	}
+
+	if(temperatureTenths > g_max_ever_temperature_tenths)
+	{
+		g_max_ever_temperature_tenths = temperatureTenths;
+		ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
+	}
+
+	g_thermal_shutdown =
+		temperatureTenths >= ((int16_t)g_thermal_shutdown_temperature_c * 10) ? TRUE :
+		temperatureTenths <= ((int16_t)(g_thermal_shutdown_temperature_c - THERMAL_SHUTDOWN_HYSTERESIS_C) * 10) ? FALSE :
+		g_thermal_shutdown;
+
+	if(g_thermal_shutdown)
+	{
+		g_transmissions_disabled = TRUE;
+		g_on_the_air = FALSE;
+		digitalWrite(PIN_PWDN, OFF);
+	}
+}
+
+void resetMaxEverTemperatureToCurrent(void)
+{
+	setUpSampling(TEMPERATURE_SAMPLING, FALSE);
+	int16_t temperatureTenths = getTempTenths();
+	updateTemperatureState(temperatureTenths);
+	g_max_temperature_tenths = temperatureTenths;
+	g_max_ever_temperature_tenths = temperatureTenths;
+	ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
+	setUpSampling(AUDIO_SAMPLING, FALSE);
+}
+
+void sendTemperatureTenths(const char* label, int16_t temperatureTenths)
+{
+	if(temperatureTenths < 0)
+	{
+		int16_t magnitude = -temperatureTenths;
+		sprintf(g_tempStr, "%s=-%d.%dC\n", label, magnitude / 10, magnitude % 10);
+	}
+	else
+	{
+		sprintf(g_tempStr, "%s=%d.%dC\n", label, temperatureTenths / 10, temperatureTenths % 10);
+	}
+
+	lb_send_string(g_tempStr, TRUE);
 }
 
 uint16_t getVoltage(void)

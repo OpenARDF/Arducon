@@ -79,6 +79,8 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .eeprom_layout_version = */ 0,
 	/* .temperature_table = */ { 0 },
 	/* .atmega_temp_calibration = */ 0,
+	/* .thermal_shutdown_temperature_c = */ 0,
+	/* .max_ever_temperature_tenths = */ 0,
 	/* .rv3028_offset = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
@@ -99,6 +101,8 @@ extern volatile uint8_t g_id_codespeed;
 extern volatile uint8_t g_pattern_codespeed;
 extern volatile uint16_t g_time_needed_for_ID;
 extern volatile int16_t g_atmega_temp_calibration;
+extern volatile int8_t g_thermal_shutdown_temperature_c;
+extern volatile int16_t g_max_ever_temperature_tenths;
 extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
@@ -192,6 +196,18 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Atmega_temp_calibration:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration);
+		}
+		break;
+
+		case Thermal_shutdown_temperature_c:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c);
+		}
+		break;
+
+		case Max_ever_temperature_tenths:
+		{
+			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths);
 		}
 		break;
 
@@ -374,6 +390,8 @@ BOOL EepromManager::readNonVols(void)
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
 		g_AM_audio_frequency = (AM_Tone_Freq_t)eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
+		g_thermal_shutdown_temperature_c = CLAMP(THERMAL_SHUTDOWN_MIN_C, (int8_t)eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c)), THERMAL_SHUTDOWN_MAX_C);
+		g_max_ever_temperature_tenths = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
@@ -444,6 +462,12 @@ BOOL EepromManager::initializeEEPROMVars(void)
 
 		g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration), (uint16_t)g_atmega_temp_calibration);
+
+		g_thermal_shutdown_temperature_c = EEPROM_THERMAL_SHUTDOWN_TEMP_C_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c), (uint8_t)g_thermal_shutdown_temperature_c);
+
+		g_max_ever_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths), (uint16_t)g_max_ever_temperature_tenths);
 
 		i2c_init(); /* Needs to happen before reading RTC */
 

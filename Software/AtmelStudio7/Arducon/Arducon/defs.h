@@ -389,7 +389,7 @@ typedef enum
 /******************************************************
  * EEPROM definitions */
 #define EEPROM_INITIALIZED_FLAG 0x00BB  /* Never set to 0xFFFF */
-#define EEPROM_LAYOUT_VERSION 0x0002    /* Increment when EEPROM layout/defaults intentionally reset old contents */
+#define EEPROM_LAYOUT_VERSION 0x0003    /* Increment when EEPROM layout/defaults intentionally reset old contents */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_START_TIME_DEFAULT 0
@@ -401,6 +401,11 @@ typedef enum
 #define EEPROM_OFF_AIR_TIME_DEFAULT 240
 #define EEPROM_INTRA_CYCLE_DELAY_TIME_DEFAULT 0
 #define EEPROM_TEMP_CALIBRATION_DEFAULT 330 /* Use -110 for genuine ATMEGA328P) */
+#define EEPROM_THERMAL_SHUTDOWN_TEMP_C_DEFAULT 50
+#define EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT 0
+#define THERMAL_SHUTDOWN_HYSTERESIS_C 5
+#define THERMAL_SHUTDOWN_MIN_C (-14)
+#define THERMAL_SHUTDOWN_MAX_C 119
 #define EEPROM_RV3028_OFFSET_DEFAULT 0
 #define EEPROM_FOX_SETTING_DEFAULT (Fox_t)1
 #define EEPROM_AM_AUDIO_FREQ_DEFAULT (AM_Tone_Freq_t)0
