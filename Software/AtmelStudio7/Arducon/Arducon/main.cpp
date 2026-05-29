@@ -2024,16 +2024,25 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'S')  /* Event start time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, -g_utc_offset);
+					BOOL disableSchedule = (g_tempStr[0] == '=');
+					time_t s = disableSchedule ? g_event_finish_epoch : validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
-					if(s)
+					if(s || disableSchedule)
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
-						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
-						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+
+						if(disableSchedule)
+						{
+							setupForFox(NULL, START_NOTHING);
+						}
+						else
+						{
+							g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
+							ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
+							setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+							if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+						}
 					}
 
 					sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
@@ -2042,14 +2051,23 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, -g_utc_offset);
+					BOOL disableSchedule = (g_tempStr[0] == '=');
+					time_t f = disableSchedule ? g_event_start_epoch : validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
-					if(f)
+					if(f || disableSchedule)
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+
+						if(disableSchedule)
+						{
+							setupForFox(NULL, START_NOTHING);
+						}
+						else
+						{
+							setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+							if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+						}
 					}
 
 					sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);

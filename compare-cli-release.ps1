@@ -4,9 +4,9 @@ param(
 
     [string]$AtmelReleaseDir = '',
 
-    [int]$BaselineHexDataBytes = 29074,
+    [int]$BaselineHexDataBytes = 29158,
 
-    [string]$BaselineHexLastAddress = '0x7191',
+    [string]$BaselineHexLastAddress = '0x71E5',
 
     [int]$BaselineSramBytes = 1451,
 

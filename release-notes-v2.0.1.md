@@ -1,6 +1,6 @@
-# Arducon v2.0.0
+# Arducon v2.0.1
 
-Firmware release candidate for Arduino Pro Mini / ATmega328P Arducon controllers.
+Firmware release for Arduino Pro Mini / ATmega328P Arducon controllers.
 
 ## Highlights
 
@@ -8,6 +8,7 @@ Firmware release candidate for Arduino Pro Mini / ATmega328P Arducon controllers
 - Removes the separate EEPROM-initialization build workflow; normal first boot now initializes EEPROM when needed.
 - Adds Optiboot/STK500v1 bootloader packaging and serial-only `UPD` entry from the application.
 - Adds `INF` metadata for product-aware updater tools.
+- Adds SignalSlinger-style schedule disabling: `CLK S =` and `CLK F =` make the saved start and finish equal so the scheduled event cannot run.
 - Preserves serial and DTMF command behavior while tightening parser bounds, watchdog handling, and serial transmit waits.
 - Reduces SRAM usage and keeps the Release application below the `0x7E00` bootloader boundary.
 
@@ -29,6 +30,7 @@ Firmware release candidate for Arduino Pro Mini / ATmega328P Arducon controllers
 
 ## Update Notes
 
+- Updating from Arducon 1.x to 2.0.1 requires a programming device, such as an Atmel-ICE or compatible ISP programmer, because 1.x units do not already have the new Optiboot update path installed.
 - Arducon uses Optiboot/STK500v1 at `115200` baud for serial firmware updates.
 - Normal app serial remains `57600` baud.
 - Existing SerialSlinger update code does not yet update Arducon packages; SerialSlinger still needs product-aware Arducon package support and an STK500v1/Optiboot transport.
