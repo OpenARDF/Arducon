@@ -7,6 +7,10 @@ When connected to the microphone input of an Amateur Radio handy-talky or simila
 
 Consult the <a href="https://docs.google.com/document/d/12K_Gxl0QbTVqAUzWxVBv87l9BldALZO71cXGYb9wk7I/edit?usp=sharing">User Manual</a>  for more information on Arducon and its capabilities.
 
+## Configuration and Updates
+
+Use [SerialSlinger](https://github.com/OpenARDF/SerialSlinger) to configure and update Arducon through its serial port without memorizing raw serial commands.
+
 Pictured below are all the parts that comprise an Arducon. Put them together, then just add a power source (a 9V battery will do) and cables to the transmitter, and you've got a complete automated "fox" transmitter.
 
 ![Docs/Arducon1.png](Docs/Arducon1.png)
