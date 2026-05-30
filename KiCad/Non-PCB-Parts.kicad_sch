@@ -1,0 +1,39 @@
+(kicad_sch (version 20211123) (generator eeschema)
+
+  (uuid 782e74f8-8e76-4e6f-bfec-df9b9d96b19d)
+
+  (paper "A4")
+
+  (title_block
+    (title "Arducon")
+    (date "2022-01-20")
+    (rev "V3.0")
+  )
+
+  (lib_symbols
+  )
+
+
+  (symbol (lib_id "Arducon-rescue:Circuit_Board-special") (at 80.01 59.69 0) (unit 1)
+    (in_bom yes) (on_board yes)
+    (uuid 00000000-0000-0000-0000-00005fcc9970)
+    (property "Reference" "PCB201" (id 0) (at 93.9292 59.0804 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "Printed Circuit Board" (id 1) (at 93.9292 61.3918 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Oddities:Dummy_Empty" (id 2) (at 101.346 55.626 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (id 3) (at 101.346 55.626 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Digi-Key Part No." "np" (id 4) (at 80.01 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Link" "np" (id 5) (at 80.01 59.69 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+  )
+)
