@@ -629,7 +629,7 @@ ISR(USART_RX_vect)
 
 			ignoreCount = 2;        /* throw out the next two characters */
 		}
-		else if(rx_char == 0x0D)    /* Handle carriage return */
+		else if((rx_char == 0x0D) || (rx_char == 0x0A))    /* Handle CR, LF, or CRLF command terminators */
 		{
 			if(receiving_msg)
 			{
