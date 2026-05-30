@@ -1,0 +1,28 @@
+# KiCad local/generated files
+**/fp-info-cache
+**/*.kicad_prl
+**/*.sch.lck
+**/#auto_saved_files#
+**/#auto_saved_files#/
+**/*-backups/
+**/*-backups/*.zip
+
+# AVR/Atmel Studio build outputs
+**/.vs/
+**/Debug/
+**/Release/
+tmp/
+release-packages/
+**/*.elf
+**/*.hex
+!Bootloaders/**/*.hex
+**/*.eep
+**/*.lss
+**/*.srec
+**/*.o
+**/*.d
+**/*.map
+
+# Local OS/editor noise
+.DS_Store
+**/.DS_Store

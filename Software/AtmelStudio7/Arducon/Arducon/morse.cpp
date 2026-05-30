@@ -25,6 +25,9 @@
 #include "morse.h"
 #include <stddef.h>
 #include <ctype.h>
+#ifdef ATMEL_STUDIO_7
+#include <avr/pgmspace.h>
+#endif
 
 MorseCharacter getMorseChar(char c);
 
@@ -249,476 +252,86 @@ uint16_t timeRequiredToSendStrAtWPM(char* str, uint16_t spd)
  *  lengthInSymbols = how many symbols (dits and dahs) the character contains; this is how many pattern bits are used to represent the character
  *  lengthInElements = how long (measured in "dit lengths") is the total character including all inter-symbol spaces.
  */
+typedef struct {
+	char c;
+	MorseCharacter morse;
+} MorseTableEntry;
+
+static const MorseTableEntry MORSE_TABLE[] PROGMEM =
+{
+	{ 'A', { 0x02, 2, 5 } },
+	{ 'B', { 0x01, 4, 9 } },
+	{ 'C', { 0x05, 4, 11 } },
+	{ 'D', { 0x01, 3, 7 } },
+	{ 'E', { 0x00, 1, 1 } },
+	{ 'F', { 0x04, 4, 9 } },
+	{ 'G', { 0x03, 3, 9 } },
+	{ 'H', { 0x00, 4, 7 } },
+	{ 'I', { 0x00, 2, 3 } },
+	{ 'J', { 0x0e, 4, 13 } },
+	{ 'K', { 0x05, 3, 9 } },
+	{ 'L', { 0x02, 4, 9 } },
+	{ 'M', { 0x03, 2, 7 } },
+	{ 'N', { 0x01, 2, 5 } },
+	{ 'O', { 0x07, 3, 11 } },
+	{ 'P', { 0x06, 4, 11 } },
+	{ 'Q', { 0x0b, 4, 13 } },
+	{ 'R', { 0x02, 3, 7 } },
+	{ 'S', { 0x00, 3, 5 } },
+	{ 'T', { 0x01, 1, 3 } },
+	{ 'U', { 0x04, 3, 7 } },
+	{ 'V', { 0x08, 4, 9 } },
+	{ 'W', { 0x06, 3, 9 } },
+	{ 'X', { 0x09, 4, 11 } },
+	{ 'Y', { 0x0d, 4, 13 } },
+	{ 'Z', { 0x03, 4, 11 } },
+	{ '0', { 0x1f, 5, 19 } },
+	{ '1', { 0x1e, 5, 17 } },
+	{ '2', { 0x1c, 5, 15 } },
+	{ '3', { 0x18, 5, 13 } },
+	{ '4', { 0x10, 5, 11 } },
+	{ '5', { 0x00, 5, 9 } },
+	{ '6', { 0x01, 5, 11 } },
+	{ '7', { 0x03, 5, 13 } },
+	{ '8', { 0x07, 5, 15 } },
+	{ '9', { 0x0f, 5, 17 } },
+	{ '.', { 0x2a, 6, 17 } },
+	{ ',', { 0x33, 6, 19 } },
+	{ '?', { 0x0c, 6, 15 } },
+	{ '\'', { 0x1e, 6, 19 } },
+	{ '!', { 0x35, 6, 19 } },
+	{ '/', { 0x09, 5, 13 } },
+	{ '(', { 0x0d, 5, 15 } },
+	{ ')', { 0x2d, 6, 19 } },
+	{ '&', { 0x02, 5, 11 } },
+	{ ':', { 0x07, 6, 17 } },
+	{ ';', { 0x15, 6, 12 } },
+	{ '=', { 0x11, 5, 13 } },
+	{ '+', { 0x0a, 5, 13 } },
+	{ '-', { 0x21, 6, 15 } },
+	{ '_', { 0x2c, 6, 17 } },
+	{ '"', { 0x12, 6, 15 } },
+	{ '$', { 0x48, 7, 17 } },
+	{ '@', { 0x16, 6, 17 } },
+	{ '|', { 0xff, 7, 4 } },   /* adjusted by -3 to account for inter-character space */
+	{ ' ', { 0xfe, 7, 7 } },
+	{ '<', { 0x1f, 5, 19 } }
+};
+
 MorseCharacter getMorseChar(char c)
 {
-	MorseCharacter morse;
-
 	c = toupper(c);
 
-	switch( c )
+	for(uint8_t i = 0; i < (sizeof(MORSE_TABLE) / sizeof(MORSE_TABLE[0])); i++)
 	{
-		case 'A':
+		if((char)pgm_read_byte(&MORSE_TABLE[i].c) == c)
 		{
-			morse.pattern = 0x02;   /* 0000 0010; */
-			morse.lengthInSymbols = 2;
-			morse.lengthInElements = 5;
+			MorseCharacter morse;
+			memcpy_P(&morse, &MORSE_TABLE[i].morse, sizeof(morse));
+			return(morse);
 		}
-		break;
-
-		case 'B':
-		{
-			morse.pattern = 0x01;   /* 0000 0001; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'C':
-		{
-			morse.pattern = 0x05;   /* 0000 0101; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case 'D':
-		{
-			morse.pattern = 0x01;   /* 0000 0001; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 7;
-		}
-		break;
-
-		case 'E':
-		{
-			morse.pattern = 0x00;   /* 0000 0000; */
-			morse.lengthInSymbols = 1;
-			morse.lengthInElements = 1;
-		}
-		break;
-
-		case 'F':
-		{
-			morse.pattern = 0x04;   /* 0000 0100; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'G':
-		{
-			morse.pattern = 0x03;   /* 0000 0011; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'H':
-		{
-			morse.pattern = 0x00;   /* 0000 0000; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 7;
-		}
-		break;
-
-		case 'I':
-		{
-			morse.pattern = 0x00;   /* 0000 0000; */
-			morse.lengthInSymbols = 2;
-			morse.lengthInElements = 3;
-		}
-		break;
-
-		case 'J':
-		{
-			morse.pattern = 0x0e;   /* 0000 1110; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case 'K':
-		{
-			morse.pattern = 0x05;   /* 0000 0101; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'L':
-		{
-			morse.pattern = 0x02;   /* 0000 0010; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'M':
-		{
-			morse.pattern = 0x03;   /* 0000 0011; */
-			morse.lengthInSymbols = 2;
-			morse.lengthInElements = 7;
-		}
-		break;
-
-		case 'N':
-		{
-			morse.pattern = 0x01;   /* 0000 0001; */
-			morse.lengthInSymbols = 2;
-			morse.lengthInElements = 5;
-		}
-		break;
-
-		case 'O':
-		{
-			morse.pattern = 0x07;   /* 0000 0111; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case 'P':
-		{
-			morse.pattern = 0x06;   /* 0000 0110; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case 'Q':
-		{
-			morse.pattern = 0x0b;   /* 0000 1011; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case 'R':
-		{
-			morse.pattern = 0x02;   /* 0000 0010; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 7;
-		}
-		break;
-
-		case 'S':
-		{
-			morse.pattern = 0x00;   /* 0000 0000; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 5;
-		}
-		break;
-
-		case 'T':
-		{
-			morse.pattern = 0x01;   /* 0000 0001; */
-			morse.lengthInSymbols = 1;
-			morse.lengthInElements = 3;
-		}
-		break;
-
-		case 'U':
-		{
-			morse.pattern = 0x04;   /* 0000 0100; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 7;
-		}
-		break;
-
-		case 'V':
-		{
-			morse.pattern = 0x08;   /* 0000 1000; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'W':
-		{
-			morse.pattern = 0x06;   /* 0000 0110; */
-			morse.lengthInSymbols = 3;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case 'X':
-		{
-			morse.pattern = 0x09;   /* 0000 1001; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case 'Y':
-		{
-			morse.pattern = 0x0d;   /* 0000 1101; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case 'Z':
-		{
-			morse.pattern = 0x03;   /* 0000 0011; */
-			morse.lengthInSymbols = 4;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case '0':
-		{
-			morse.pattern = 0x1f;   /* 0001 1111; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		case '1':
-		{
-			morse.pattern = 0x1e;   /* 0001 1110; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case '2':
-		{
-			morse.pattern = 0x1c;   /* 0001 1100; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case '3':
-		{
-			morse.pattern = 0x18;   /* 0001 1000; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case '4':
-		{
-			morse.pattern = 0x10;   /* 0001 0000; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case '5':
-		{
-			morse.pattern = 0x00;   /* 0000 0000; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 9;
-		}
-		break;
-
-		case '6':
-		{
-			morse.pattern = 0x01;   /* 0000 0001; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case '7':
-		{
-			morse.pattern = 0x03;   /* 0000 0011; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case '8':
-		{
-			morse.pattern = 0x07;   /* 0000 0111; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case '9':
-		{
-			morse.pattern = 0x0f;   /* 0000 1111; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case '.':
-		{
-			morse.pattern = 0x2a;   /* 0010 1010; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case ',':
-		{
-			morse.pattern = 0x33;   /* 0011 0011; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		case '?':
-		{
-			morse.pattern = 0x0c;   /* 0000 1100; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case '\'':
-		{
-			morse.pattern = 0x1e;   /* 0001 1110; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		case '!':
-		{
-			morse.pattern = 0x35;   /* 0011 0101; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		case '/':
-		{
-			morse.pattern = 0x09;   /* 0000 1001; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case '(':
-		{
-			morse.pattern = 0x0d;   /* 0000 1101; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case ')':
-		{
-			morse.pattern = 0x2d;   /* 0010 1101; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		case '&':
-		{
-			morse.pattern = 0x02;   /* 0000 0010; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 11;
-		}
-		break;
-
-		case ':':
-		{
-			morse.pattern = 0x07;   /* 0000 0111; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case ';':
-		{
-			morse.pattern = 0x15;   /* 0001 0101; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 12;
-		}
-		break;
-
-		case '=':
-		{
-			morse.pattern = 0x11;   /* 0001 0001; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case '+':
-		{
-			morse.pattern = 0x0a;   /* 0000 1010; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 13;
-		}
-		break;
-
-		case '-':
-		{
-			morse.pattern = 0x21;   /* 0010 0001; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case '_':
-		{
-			morse.pattern = 0x2c;   /* 0010 1100; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case '"':
-		{
-			morse.pattern = 0x12;   /* 0001 0010; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 15;
-		}
-		break;
-
-		case '$':
-		{
-			morse.pattern = 0x48;   /* 0100 1000; */
-			morse.lengthInSymbols = 7;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case '@':
-		{
-			morse.pattern = 0x16;   /* 0001 0110; */
-			morse.lengthInSymbols = 6;
-			morse.lengthInElements = 17;
-		}
-		break;
-
-		case '|':                       /* inter-word space */
-		{ morse.pattern = 0xff;         /* 1000 0000; */
-		  morse.lengthInSymbols = 7;
-		  morse.lengthInElements = 4;   /* adjusted by -3 to account for inter-character space */
-		}
-		break;
-
-		case ' ':                       /* inter-word space */
-		{ morse.pattern = 0xfe;         /* 1000 0000; */
-		  morse.lengthInSymbols = 7;
-		  morse.lengthInElements = 7;   /* 4 + 3 (character space) = 7 */
-		}
-		break;
-
-		case '<':                       /* long keydown */
-		{
-			morse.pattern = 0x1f;       /* 0001 1111; */
-			morse.lengthInSymbols = 5;
-			morse.lengthInElements = 19;
-		}
-		break;
-
-		default:
-		{
-			morse.pattern = 0x0000; /* 0000 0000; */
-			morse.lengthInSymbols = 0;
-			morse.lengthInElements = 0;
-		}
-		break;
 	}
 
-	return( morse);
+	MorseCharacter morse = { 0x00, 0, 0 };
+	return(morse);
 }

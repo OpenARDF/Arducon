@@ -25,7 +25,6 @@
 #include "Goertzel.h"
 #include <string.h>
 
-#if !INIT_EEPROM_ONLY
 
 float _SAMPLING_FREQUENCY;
 float _TARGET_FREQUENCY;
@@ -37,23 +36,21 @@ volatile int _index = 0;
 volatile bool _samplesReady = false;
 int highValueCount = 0;
 
-int* testData;
+static uint8_t testData[MAXN];
 
 Goertzel::Goertzel(float N, float sampling_frequency)
 {
 	_SAMPLING_FREQUENCY = sampling_frequency;   /*on 16mhz, ~8928.57142857143, on 8mhz ~44444 */
 	_N = CLAMP(100, N, MAXN);
-	testData = (int*)malloc(_N * sizeof(int));
 }
 
 Goertzel::~Goertzel()
 {
-	free(testData);
 }
 
 void Goertzel::Flush(void)
 {
-	memset(testData, 0x00, _N * sizeof(int));
+	memset(testData, 0x00, _N * sizeof(testData[0]));
 	ResetGoertzel();
 }
 
@@ -132,4 +129,3 @@ float Goertzel::Magnitude2(int *highCount)
 	ResetGoertzel();
 	return( magnitude2);
 }
-#endif // !INIT_EEPROM_ONLY

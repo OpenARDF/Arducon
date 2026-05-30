@@ -937,8 +937,6 @@ X 2 2 250 0 122 L 50 50 1 1 I
 ENDDRAW
 ENDDEF
 #
-<<<<<<< Updated upstream
-=======
 # TPS22810DBVT-Power_Management
 #
 DEF TPS22810DBVT-Power_Management U 0 20 Y Y 1 F N
@@ -982,7 +980,6 @@ X GND 7 0 -300 100 U 50 50 1 1 P N
 ENDDRAW
 ENDDEF
 #
->>>>>>> Stashed changes
 # Vproc
 #
 DEF Vproc #PWR 0 0 Y Y 1 F P

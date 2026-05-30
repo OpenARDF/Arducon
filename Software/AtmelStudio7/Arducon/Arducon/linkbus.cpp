@@ -31,6 +31,8 @@
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/eeprom.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
 #endif  /* ATMEL_STUDIO_7 */
 
 #ifdef ATMEL_STUDIO_7
@@ -41,7 +43,6 @@
 /* Global Variables */
 static volatile BOOL g_bus_disabled = TRUE;
 static const char crlf[] = "\n";
-static char lineTerm[8] = "\n";
 static const char textPrompt[] = "> ";
 
 static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
@@ -49,6 +50,11 @@ static char g_tempMsgBuff[LINKBUS_MAX_MSG_LENGTH];
 /* Local function prototypes */
 BOOL linkbus_start_tx(void);
 BOOL linkbus_send_text(char* text);
+BOOL linkbus_wait_for_tx_idle(void);
+
+#define LINKBUS_TX_PAYLOAD_LENGTH (LINKBUS_MAX_TX_MSG_LENGTH - 1)
+#define LINKBUS_TX_IDLE_WAIT_LIMIT 1000
+#define LINKBUS_TX_IDLE_WAIT_US 100
 
 /* Module global variables */
 static volatile BOOL linkbus_tx_active = FALSE; /* volatile is required to ensure optimizer handles this properly */
@@ -267,7 +273,7 @@ void linkbus_disable(void)
 BOOL linkbus_send_text(char* text)
 {
 	BOOL err = TRUE;
-	uint16_t tries = 200;
+	uint16_t tries = LINKBUS_TX_IDLE_WAIT_LIMIT;
 
 	if(g_bus_disabled)
 	{
@@ -278,21 +284,30 @@ BOOL linkbus_send_text(char* text)
 	{
 		LinkbusTxBuffer* buff = nextEmptyTxBuffer();
 
+		if(!buff && !(SREG & (1 << SREG_I)))
+		{
+			return(err);
+		}
+
 		while(!buff && tries)
 		{
-			while(linkbusTxInProgress() && tries)
+			if(linkbusTxInProgress())
 			{
-				if(tries)
-				{
-					tries--;    /* wait until transmit finishes */
-				}
+				_delay_us(LINKBUS_TX_IDLE_WAIT_US); /* Wait for ISR-driven transmit progress without feeding the watchdog. */
+				tries--;
 			}
+			else
+			{
+				tries = 0;
+			}
+
 			buff = nextEmptyTxBuffer();
 		}
 
 		if(buff)
 		{
-			sprintf(*buff, text);
+			strncpy(*buff, text, LINKBUS_TX_PAYLOAD_LENGTH);
+			(*buff)[LINKBUS_TX_PAYLOAD_LENGTH] = '\0';
 
 			linkbus_start_tx();
 			err = FALSE;
@@ -300,6 +315,24 @@ BOOL linkbus_send_text(char* text)
 	}
 
 	return(err);
+}
+
+BOOL linkbus_wait_for_tx_idle(void)
+{
+	uint16_t tries = LINKBUS_TX_IDLE_WAIT_LIMIT;
+
+	if(!(SREG & (1 << SREG_I)))
+	{
+		return(linkbusTxInProgress());
+	}
+
+	while(linkbusTxInProgress() && tries)
+	{
+		_delay_us(LINKBUS_TX_IDLE_WAIT_US);
+		tries--;
+	}
+
+	return(linkbusTxInProgress());
 }
 
 
@@ -314,10 +347,7 @@ void lb_send_NewPrompt(void)
 		return;
 	}
 
-	while(linkbus_send_text((char*)textPrompt))
-	{
-		;
-	}
+	linkbus_send_text((char*)textPrompt);
 }
 
 void lb_send_NewLine(void)
@@ -343,6 +373,7 @@ void lb_echo_char(uint8_t c)
 BOOL lb_send_string(char* str, BOOL wait)
 {
 	BOOL err = FALSE;
+	char* p = str;
 
 	if(g_bus_disabled)
 	{
@@ -359,27 +390,37 @@ BOOL lb_send_string(char* str, BOOL wait)
 		return(TRUE);
 	}
 
-	if(strlen(str) > LINKBUS_MAX_TX_MSG_LENGTH)
+	while(*p && !err)
 	{
-		return( TRUE);
-	}
-
-	strncpy(g_tempMsgBuff, str, LINKBUS_MAX_TX_MSG_LENGTH);
-
-	if(wait)
-	{
-		while((err = linkbus_send_text(g_tempMsgBuff)))
+		size_t chunkLen = strlen(p);
+		if(chunkLen > LINKBUS_TX_PAYLOAD_LENGTH)
 		{
-			;
+			chunkLen = LINKBUS_TX_PAYLOAD_LENGTH;
 		}
-		while(!err && linkbusTxInProgress())
+
+		strncpy(g_tempMsgBuff, p, chunkLen);
+		g_tempMsgBuff[chunkLen] = '\0';
+
+		if(wait)
 		{
-			;
+			err = linkbus_send_text(g_tempMsgBuff);
+			if(err)
+			{
+				break;
+			}
+
+			err = linkbus_wait_for_tx_idle();
+			if(err)
+			{
+				break;
+			}
 		}
-	}
-	else
-	{
-		err = linkbus_send_text(g_tempMsgBuff);
+		else
+		{
+			err = linkbus_send_text(g_tempMsgBuff);
+		}
+
+		p += chunkLen;
 	}
 
 	return( err);
@@ -394,15 +435,14 @@ void lb_send_value(uint16_t value, char* label)
 		return;
 	}
 
-	sprintf(g_tempMsgBuff, "> %s=%d%s", label, value, lineTerm);
-	while((err = linkbus_send_text(g_tempMsgBuff)))
+	sprintf(g_tempMsgBuff, "> %s=%d\n", label, value);
+	err = linkbus_send_text(g_tempMsgBuff);
+	if(err)
 	{
-		;
+		return;
 	}
-	while(!err && linkbusTxInProgress())
-	{
-		;
-	}
+
+	linkbus_wait_for_tx_idle();
 }
 
 

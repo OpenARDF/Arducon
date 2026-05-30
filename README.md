@@ -19,4 +19,21 @@ The KiCad folder holds files for generating the schematic, BOM, and PCB files us
 
 <b>Software</b>
 
-The Software folder holds files for compiling executable code using either the Arduino IDE or Atmel Studio 7. The latter provides better debugging tools. Both IDEs will build the same functional executable code for flashing into an Arduino Pro Mini.
+The maintained firmware source lives under `Software/AtmelStudio7/Arducon` and targets an Arduino Pro Mini / ATmega328P using the Atmel Studio 7 project or the repo-owned CLI Release build scripts. Arduino IDE builds are no longer supported.
+
+Use the CLI Release build for reproducible local builds:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
+powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
+```
+
+Microchip/Atmel Studio 7 Release remains the cross-check path for now:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Release
+powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuration Release
+```
+
+See `BOOTLOADER_WORKFLOW.md` for Optiboot provisioning, release packaging, fuse handling, and serial bootloader smoke tests.
+See `RELEASE_WORKFLOW.md` for GitHub release publishing and version-number policy.

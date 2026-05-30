@@ -36,14 +36,13 @@
 
 #include "EepromManager.h"
 
-#if !INIT_EEPROM_ONLY
 #include "Goertzel.h"
 #include "f1975.h"
-#endif  /* INIT_EEPROM_ONLY */
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/io.h>
 #include <avr/eeprom.h>
+#include <avr/pgmspace.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -72,9 +71,7 @@ volatile int g_code_throttle    = 0;        /* Adjusts Morse code speed */
 
 volatile int g_dtmf_error_countdown = 0;
 
-#if !INIT_EEPROM_ONLY
-	const char g_morsePatterns[][5] = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
-#endif  /* !INIT_EEPROM_ONLY */
+	const char g_morsePatterns[][5] PROGMEM = { "MO ", "MOE ", "MOI ", "MOS ", "MOH ", "MO5 ", "5", "S", "ME", "MI", "MS", "MH", "M5", "OE", "OI", "OS", "OH", "O5" };
 
 volatile BOOL g_callsign_sent = TRUE;
 
@@ -86,6 +83,7 @@ volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
 volatile int8_t g_utc_offset = 0;
 volatile BOOL g_ptt_periodic_reset_enabled;
+volatile uint8_t g_linkbusRxRestoreADIE = 0;
 
 volatile BOOL g_sendAMmodulation = FALSE;
 volatile AM_Tone_Freq_t g_AM_audio_frequency;
@@ -112,6 +110,11 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
 volatile int8_t g_temperature = 0;
+volatile int16_t g_temperature_tenths = 0;
+volatile int16_t g_max_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+volatile int16_t g_max_ever_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+volatile int8_t g_thermal_shutdown_temperature_c = EEPROM_THERMAL_SHUTDOWN_TEMP_C_DEFAULT;
+volatile BOOL g_thermal_shutdown = FALSE;
 volatile uint16_t g_voltage = 0;
 volatile ConfigurationState_t g_config_error = NULL_CONFIG;
 volatile BOOL g_use_rtc_for_startstop = FALSE;
@@ -151,16 +154,14 @@ volatile uint8_t g_temperature_check_countdown = 0;
 volatile uint8_t g_voltage_check_countdown = 0;
 volatile int16_t g_rv3028_offset = EEPROM_RV3028_OFFSET_DEFAULT;
 
-#if !INIT_EEPROM_ONLY
 	const int N = Goertzel_N;
 	const float threshold = 500000. * (Goertzel_N / 100);
 	const float sampling_freq = SAMPLE_RATE;
-	const float x_frequencies[4] = { 1209., 1336., 1477., 1633. };
-	const float y_frequencies[4] = { 697., 770., 852., 941. };
+	const float x_frequencies[4] PROGMEM = { 1209., 1336., 1477., 1633. };
+	const float y_frequencies[4] PROGMEM = { 697., 770., 852., 941. };
 #ifdef DEBUG_DTMF
 		const float mid_frequencies[7] = { 734., 811., 897., 1075., 1273., 1407., 1555. };
 #endif  /* DEBUG_DTMF */
-#endif  /* !INIT_EEPROM_ONLY */
 
 char g_lastKey = '\0';
 volatile unsigned long g_tick_count = 0;
@@ -168,9 +169,7 @@ volatile unsigned int g_tone_duration_ticks = 0;
 volatile unsigned int g_LED_Enunciation_holdoff = 0;
 volatile unsigned long g_DTMF_sentence_in_progress_ticks = 0;
 
-#if !INIT_EEPROM_ONLY
 	Goertzel g_goertzel(N, sampling_freq);
-#endif  /* INIT_EEPROM_ONLY */
 
 char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
 
@@ -179,13 +178,24 @@ char g_tempStr[TEMP_STRING_LENGTH] = { '\0' };
  */
 void handleLinkBusMsgs(void);
 void sendMorseTone(BOOL onOff);
+void sendFirmwareInfo(void);
+void enterBootloaderUpdateMode(void);
 void setupForFox(Fox_t* fox, EventAction_t action);
+uint8_t suspendADCInterrupts(void);
+void restoreADCInterrupts(uint8_t restoreADIE);
+BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text);
+float readProgmemFloat(const float* value);
+void copyFoxMorsePattern(Fox_t fox, char* destination);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 
 uint16_t readADC();
 float getTemp(void);
+int16_t getTempTenths(void);
 uint16_t getVoltage(void);
+void updateTemperatureState(int16_t temperatureTenths);
+void resetMaxEverTemperatureToCurrent(void);
+void sendTemperatureTenths(const char* label, int16_t temperatureTenths);
 BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
 void stopEventNow(EventActionSource_t activationSource);
@@ -198,10 +208,8 @@ void wdt_init(WDReset resetType);
 char value2Morse(char value);
 DTMF_key_t value2DTMFKey(uint8_t value);
 
-#if !INIT_EEPROM_ONLY
 	BOOL processDTMFdetection(DTMF_key_t key);
 	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
-#endif  /* !INIT_EEPROM_ONLY */
 
 #ifdef ATMEL_STUDIO_7
 	void loop(void);
@@ -278,13 +286,17 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		PORTB &= 0xC0;
 #endif  /* !SUPPORT_ONLY_80M */
 
-#if INIT_EEPROM_ONLY
-		BOOL eepromErr = ee_mgr.initializeEEPROMVars();                                 /* Must happen after pins are configured due to I2C access */
-#else
 		i2c_init();
 		BOOL eepromErr = ee_mgr.readNonVols();
+		if(eepromErr)
+		{
+			eepromErr = ee_mgr.initializeEEPROMVars();
+			if(!eepromErr)
+			{
+				eepromErr = ee_mgr.readNonVols();
+			}
+		}
 		setUpSampling(AUDIO_SAMPLING, TRUE);
-#endif
 
 	cli();
 
@@ -360,24 +372,6 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 	g_reset_button_held = !digitalRead(PIN_SYNC);
 
-#if INIT_EEPROM_ONLY
-		RTC_1s_sqw(ON);
-
-		if(eepromErr)
-		{
-			lb_send_string((char*)"EEPROM Erase Error!\n", TRUE);
-		}
-		else
-		{
-			ee_mgr.sendSuccessString();
-		}
-
-		digitalWrite(PIN_LED, ON); /* Turn the LED constantly on */
-		while(1) /* Wait forever */
-		{
-			;
-		}
-#else
 		if(eepromErr)
 		{
 			lb_send_string((char*)"EEPROM Error!\n", TRUE);
@@ -389,9 +383,7 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 		RTC_1s_sqw(ON);
 #endif
 
-#endif  /* !INIT_EEPROM_ONLY */
-
-#if !INIT_EEPROM_ONLY
+		uint8_t restoreADIE = suspendADCInterrupts();
 		ee_mgr.send_Help();
 
 #if INCLUDE_RV3028_SUPPORT
@@ -420,8 +412,8 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 		reportConfigErrors();
 		lb_send_NewPrompt();
+		restoreADCInterrupts(restoreADIE);
 
-#endif  /* #if INIT_EEPROM_ONLY */
 
 	startEventNow(POWER_UP);
 
@@ -506,6 +498,11 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
 			 *  WDTCSR = (1 << WDP3) | (1 << WDP0)  | (1 << WDIE); // Enable WD interrupt every 8 seconds (no HW reset) */
 			WDTCSR = (1 << WDP1) | (1 << WDP2)  | (1 << WDIE);  /* Enable WD interrupt every 1 seconds (no HW reset) */
 		}
+		else if(resetType == WD_FORCE_RESET)
+		{
+			WDTCSR |= (1 << WDCE) | (1 << WDE);
+			WDTCSR = (1 << WDE);  /* Enable hardware reset in 16ms */
+		}
 		else
 		{
 			WDTCSR |= (1 << WDCE) | (1 << WDE);
@@ -522,12 +519,10 @@ void __attribute__((optimize("O1"))) wdt_init(WDReset resetType)
  ************************************************************************/
 ISR(ADC_vect)
 {
-#if !INIT_EEPROM_ONLY
 		if(g_goertzel.DataPoint(ADCH))
 		{
 			ADCSRA &= ~(1 << ADIE); /* disable ADC interrupt */
 		}
-#endif /* INIT_EEPROM_ONLY */
 }
 
 
@@ -602,7 +597,7 @@ ISR(USART_RX_vect)
 	static uint8_t charIndex = 0;
 	static uint8_t field_index = 0;
 	static uint8_t field_len = 0;
-	static int msg_ID = 0;
+	static uint16_t msg_ID = 0;
 	static BOOL receiving_msg = FALSE;
 	uint8_t rx_char;
 
@@ -634,28 +629,35 @@ ISR(USART_RX_vect)
 
 			ignoreCount = 2;        /* throw out the next two characters */
 		}
-		else if(rx_char == 0x0D)    /* Handle carriage return */
+		else if((rx_char == 0x0D) || (rx_char == 0x0A))    /* Handle CR, LF, or CRLF command terminators */
 		{
 			if(receiving_msg)
 			{
 				if(charIndex > 0)
 				{
 					buff->type = LINKBUS_MSG_QUERY;
-					buff->id = (LBMessageID)msg_ID;
+					textBuff[charIndex] = '\0'; /* terminate last-message buffer */
+
+					if(isSupportedLinkbusCommand(msg_ID, textBuff))
+					{
+						buff->id = (LBMessageID)msg_ID;
+					}
+					else
+					{
+						buff->id = MESSAGE_EMPTY;
+					}
 
 					if(field_index > 0) /* terminate the last field */
 					{
 						buff->fields[field_index - 1][field_len] = 0;
 					}
-
-					textBuff[charIndex] = '\0'; /* terminate last-message buffer */
 				}
 
 				lb_send_NewLine();
 			}
 			else
 			{
-				buff->id = INVALID_MESSAGE; /* print help message */
+				buff->id = MESSAGE_EMPTY; /* Ignore empty lines/noise terminators. */
 			}
 
 			charIndex = 0;
@@ -663,6 +665,11 @@ ISR(USART_RX_vect)
 			msg_ID = MESSAGE_EMPTY;
 
 			field_index = 0;
+			if((buff->id == MESSAGE_EMPTY) && g_linkbusRxRestoreADIE)
+			{
+				ADCSRA |= (1 << ADIE);
+				g_linkbusRxRestoreADIE = 0;
+			}
 			buff = NULL;
 
 			receiving_msg = FALSE;
@@ -678,8 +685,11 @@ ISR(USART_RX_vect)
 					charIndex--;
 					if(field_index == 0)
 					{
-						msg_ID -= textBuff[charIndex];
-						msg_ID /= 10;
+						if(msg_ID != INVALID_MESSAGE)
+						{
+							msg_ID -= textBuff[charIndex];
+							msg_ID /= 10;
+						}
 					}
 					else if(field_len)
 					{
@@ -724,11 +734,19 @@ ISR(USART_RX_vect)
 							charIndex = MIN(charIndex + 1, (LINKBUS_MAX_COMMANDLINE_LENGTH - 1));
 						}
 					}
-					else if(field_len < LINKBUS_MAX_MSG_FIELD_LENGTH)
+					else if(field_len < (LINKBUS_MAX_MSG_FIELD_LENGTH - 1))
 					{
 						if(field_index == 0)    /* message ID received */
 						{
-							msg_ID = msg_ID * 10 + rx_char;
+							if(field_len < 3)
+							{
+								msg_ID = msg_ID * 10 + rx_char;
+							}
+							else
+							{
+								msg_ID = INVALID_MESSAGE;
+							}
+
 							field_len++;
 						}
 						else
@@ -765,6 +783,11 @@ ISR(USART_RX_vect)
 					uint8_t i;
 					field_index = 0;
 					msg_ID = rx_char;
+					if(!g_linkbusRxRestoreADIE)
+					{
+						g_linkbusRxRestoreADIE = (ADCSRA & (1 << ADIE));
+						ADCSRA &= ~(1 << ADIE);
+					}
 
 					/* Empty the field buffers */
 					for(i = 0; i < LINKBUS_MAX_MSG_NUMBER_OF_FIELDS; i++)
@@ -801,6 +824,12 @@ ISR(USART_UDRE_vect)
 	if(!buff)
 	{
 		buff = nextFullTxBuffer();
+	}
+
+	if(!buff)
+	{
+		linkbus_end_tx();
+		return;
 	}
 
 	if((*buff)[charIndex])
@@ -1034,7 +1063,6 @@ ISR( TIMER2_COMPB_vect )
 }                                               /* End of Timer 2 ISR */
 
 
-#if !INIT_EEPROM_ONLY
 /***********************************************************************
  *  Handle RTC 1-second interrupts
  **********************************************************************/
@@ -1069,12 +1097,12 @@ ISR( TIMER2_COMPB_vect )
 		{
 			if(g_use_rtc_for_startstop)
 			{
-				if(g_current_epoch >= (g_event_start_epoch - 5)) /* Turn on radio power in advance of the start time */
+				if((g_current_epoch >= (g_event_start_epoch - 5)) && !g_thermal_shutdown) /* Turn on radio power in advance of the start time */
 				{
 					digitalWrite(PIN_PWDN, ON);
 				}
 
-				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch))    /* Event should be running */
+				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch) && !g_thermal_shutdown)    /* Event should be running */
 				{
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
@@ -1220,11 +1248,11 @@ ISR( TIMER2_COMPB_vect )
 						}
 						else
 						{
-							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
 							repeat = TRUE;
 						}
 #else
-							strcpy((char*)g_messages_text[PATTERN_TEXT], g_morsePatterns[g_fox]);
+							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
 							repeat = TRUE;
 #endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
 
@@ -1242,7 +1270,6 @@ ISR( TIMER2_COMPB_vect )
 			}
 		}
 	}                                   /* end of INT0 ISR */
-#endif /* INIT_EEPROM_ONLY */
 
 /***********************************************************************
  *  Timer0 interrupt generates a square wave audio tone on the audio out pin.
@@ -1274,7 +1301,6 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 	ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
 	{
-#if !INIT_EEPROM_ONLY
 			if(g_AM_enabled)
 			{
 				static uint8_t index = 0;
@@ -1312,7 +1338,6 @@ ISR(TIMER0_COMPA_vect)
 					}
 				}
 			}
-#endif  /* INIT_EEPROM_ONLY */
 	}
 #endif  /* !SUPPORT_ONLY_80M */
 
@@ -1323,7 +1348,6 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 void loop()
 {
-#if !INIT_EEPROM_ONLY
 		int8_t dtmfX = -1;
 		int8_t dtmfY = -1;
 		float largestX;
@@ -1346,7 +1370,6 @@ void loop()
 		}
 
 		dtmfEntryError = processDTMFdetection(NO_KEY);
-#endif  /* !INIT_EEPROM_ONLY */
 
 	handleLinkBusMsgs();
 
@@ -1355,7 +1378,6 @@ void loop()
 #endif /* TRANQUILIZE_WATCHDOG */
 
 
-#if !INIT_EEPROM_ONLY
 		if(!dtmfEntryError)
 		{
 			if(g_goertzel.SamplesReady())
@@ -1381,7 +1403,10 @@ void loop()
 				if(!g_temperature_check_countdown)
 				{
 					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
-					int8_t temp = (int8_t)getTemp();
+					int16_t temp_tenths = getTempTenths();
+					int8_t temp = (int8_t)((temp_tenths >= 0) ? ((temp_tenths + 5) / 10) : ((temp_tenths - 5) / 10));
+
+					updateTemperatureState(temp_tenths);
 					if(temp != g_temperature)
 					{
 						g_temperature = temp;
@@ -1405,7 +1430,8 @@ void loop()
 
 				for(int i = 0; i < 4; i++)
 				{
-					g_goertzel.SetTargetFrequency(y_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+					float yFrequency = readProgmemFloat(&y_frequencies[i]);
+					g_goertzel.SetTargetFrequency(yFrequency);          /* Initialize the object with the sampling frequency, # of samples and target freq */
 					magnitudeY = g_goertzel.Magnitude2(&clipCount);     /* Check samples for presence of the target frequency */
 
 					if(magnitudeY > largestY)                           /* Use only the greatest Y value */
@@ -1420,7 +1446,7 @@ void loop()
 #ifdef DEBUG_DTMF
 						if(magnitudeY > threshold)
 						{
-							dtostrf((double)y_frequencies[i], 4, 0, s);
+							dtostrf((double)yFrequency, 4, 0, s);
 							sprintf(g_tempStr, "Y(%s)=", s);
 							lb_send_string(g_tempStr, TRUE);
 							dtostrf((double)magnitudeY, 4, 0, s);
@@ -1434,7 +1460,8 @@ void loop()
 				{
 					for(int i = 0; i < 4; i++)
 					{
-						g_goertzel.SetTargetFrequency(x_frequencies[i]);    /* Initialize the object with the sampling frequency, # of samples and target freq */
+						float xFrequency = readProgmemFloat(&x_frequencies[i]);
+						g_goertzel.SetTargetFrequency(xFrequency);          /* Initialize the object with the sampling frequency, # of samples and target freq */
 						magnitudeX = g_goertzel.Magnitude2(NULL);           /* Check samples for presence of the target frequency */
 
 						if(magnitudeX > largestX)                           /* Use only the greatest X value */
@@ -1449,7 +1476,7 @@ void loop()
 #ifdef DEBUG_DTMF
 							if(magnitudeX > threshold)
 							{
-								dtostrf((double)x_frequencies[i], 4, 0, s);
+								dtostrf((double)xFrequency, 4, 0, s);
 								sprintf(g_tempStr, "X(%s)=", s);
 								lb_send_string(g_tempStr, TRUE);
 								dtostrf((double)magnitudeX, 4, 0, s);
@@ -1659,7 +1686,6 @@ void loop()
 			digitalWrite(PIN_LED, OFF); /* ensure LED is off */
 		}
 	}
-#endif  /* !INIT_EEPROM_ONLY */
 }
 
 
@@ -1714,6 +1740,12 @@ void handleLinkBusMsgs()
 
 	while((lb_buff = nextFullRxBuffer()))
 	{
+		uint8_t restoreADIE = g_linkbusRxRestoreADIE;
+		g_linkbusRxRestoreADIE = 0;
+		if(!restoreADIE)
+		{
+			restoreADIE = suspendADCInterrupts();
+		}
 		LBMessageID msg_id = lb_buff->id;
 
 		switch(msg_id)
@@ -1875,17 +1907,23 @@ void handleLinkBusMsgs()
 			{
 				if(lb_buff->fields[FIELD1][0])
 				{
-					strcpy(g_tempStr, " "); /* Space before ID gets sent */
-					strcat(g_tempStr, lb_buff->fields[FIELD1]);
-
+					uint8_t idLength = 1 + strlen(lb_buff->fields[FIELD1]); /* Space before ID gets sent */
 					if(lb_buff->fields[FIELD2][0])
 					{
-						strcat(g_tempStr, " ");
-						strcat(g_tempStr, lb_buff->fields[FIELD2]);
+						idLength += 1 + strlen(lb_buff->fields[FIELD2]);
 					}
 
-					if(strlen(g_tempStr) <= MAX_PATTERN_TEXT_LENGTH)
+					if(idLength <= MAX_PATTERN_TEXT_LENGTH)
 					{
+						strcpy(g_tempStr, " ");
+						strcat(g_tempStr, lb_buff->fields[FIELD1]);
+
+						if(lb_buff->fields[FIELD2][0])
+						{
+							strcat(g_tempStr, " ");
+							strcat(g_tempStr, lb_buff->fields[FIELD2]);
+						}
+
 						strcpy((char*)g_messages_text[STATION_ID], g_tempStr);
 						ee_mgr.updateEEPROMVar(StationID_text, (void*)g_tempStr);
 					}
@@ -1998,16 +2036,25 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'S')  /* Event start time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t s = validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, -g_utc_offset);
+					BOOL disableSchedule = (g_tempStr[0] == '=');
+					time_t s = disableSchedule ? g_event_finish_epoch : validateTimeString(g_tempStr, (time_t*)&g_event_start_epoch, -g_utc_offset);
 
-					if(s)
+					if(s || disableSchedule)
 					{
 						g_event_start_epoch = s;
 						ee_mgr.updateEEPROMVar(Event_start_epoch, (void*)&g_event_start_epoch);
-						g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
-						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+
+						if(disableSchedule)
+						{
+							setupForFox(NULL, START_NOTHING);
+						}
+						else
+						{
+							g_event_finish_epoch = MAX(g_event_finish_epoch, (g_event_start_epoch + SECONDS_24H));
+							ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
+							setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+							if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+						}
 					}
 
 					sprintf(g_tempStr, "Start:%lu\n", g_event_start_epoch);
@@ -2016,14 +2063,23 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'F')  /* Event finish time */
 				{
 					strcpy(g_tempStr, lb_buff->fields[FIELD2]);
-					time_t f = validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, -g_utc_offset);
+					BOOL disableSchedule = (g_tempStr[0] == '=');
+					time_t f = disableSchedule ? g_event_start_epoch : validateTimeString(g_tempStr, (time_t*)&g_event_finish_epoch, -g_utc_offset);
 
-					if(f)
+					if(f || disableSchedule)
 					{
 						g_event_finish_epoch = f;
 						ee_mgr.updateEEPROMVar(Event_finish_epoch, (void*)&g_event_finish_epoch);
-						setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-						if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+
+						if(disableSchedule)
+						{
+							setupForFox(NULL, START_NOTHING);
+						}
+						else
+						{
+							setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+							if(g_event_start_epoch > g_current_epoch) startEventUsingRTC();
+						}
 					}
 
 					sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
@@ -2111,22 +2167,59 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "T Cal= %d\n", g_atmega_temp_calibration);
 					lb_send_string(g_tempStr, TRUE);
 				}
-#if !INIT_EEPROM_ONLY && !SUPPORT_ONLY_80M
-					else if(lb_buff->fields[FIELD1][0] == 'Z')
+				else if(lb_buff->fields[FIELD1][0] == 'H')
+				{
+					if(lb_buff->fields[FIELD2][0])
 					{
-						cli();
-						g_AM_enabled = FALSE;
-						TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
-						setAtten(0);
-						sei();
-					}
-#endif /* INIT_EEPROM_ONLY */
+						int16_t v = atoi(lb_buff->fields[FIELD2]);
 
-				sprintf(g_tempStr, "T=%dC\n", g_temperature);
+						if((v >= THERMAL_SHUTDOWN_MIN_C) && (v <= THERMAL_SHUTDOWN_MAX_C))
+						{
+							g_thermal_shutdown_temperature_c = (int8_t)v;
+							ee_mgr.updateEEPROMVar(Thermal_shutdown_temperature_c, (void*)&g_thermal_shutdown_temperature_c);
+						}
+					}
+
+					sprintf(g_tempStr, "Thermal Shutdown= %dC\n", g_thermal_shutdown_temperature_c);
+					lb_send_string(g_tempStr, TRUE);
+				}
+				else if(lb_buff->fields[FIELD1][0] == 'X')
+				{
+					resetMaxEverTemperatureToCurrent();
+					sendTemperatureTenths("Max Ever Reset", g_max_ever_temperature_tenths);
+				}
+#if !SUPPORT_ONLY_80M
+				else if(lb_buff->fields[FIELD1][0] == 'Z')
+				{
+					cli();
+					g_AM_enabled = FALSE;
+					TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
+					setAtten(0);
+					sei();
+				}
+#endif /* !SUPPORT_ONLY_80M */
+
+				sendTemperatureTenths("T", g_temperature_tenths);
+				sendTemperatureTenths("Max", g_max_temperature_tenths);
+				sendTemperatureTenths("Max Ever", g_max_ever_temperature_tenths);
+
+				sprintf(g_tempStr, "Thermal Shutdown=%dC\n", g_thermal_shutdown_temperature_c);
 				lb_send_string(g_tempStr, TRUE);
 
 				sprintf(g_tempStr, "V=%d.%02dV\n", g_voltage / 100, g_voltage % 100);
 				lb_send_string(g_tempStr, TRUE);
+			}
+			break;
+
+			case MESSAGE_INFO:
+			{
+				sendFirmwareInfo();
+			}
+			break;
+
+			case MESSAGE_UPDATE:
+			{
+				enterBootloaderUpdateMode();
 			}
 			break;
 
@@ -2139,13 +2232,120 @@ void handleLinkBusMsgs()
 
 		lb_buff->id = (LBMessageID)MESSAGE_EMPTY;
 		lb_send_NewPrompt();
+		restoreADCInterrupts(restoreADIE);
 
 		g_LED_timeout_countdown = LED_TIMEOUT_SECONDS;
 		g_config_error = NULL_CONFIG;   /* Trigger a new configuration enunciation */
 	}
 }
 
-#if !INIT_EEPROM_ONLY
+uint8_t suspendADCInterrupts(void)
+{
+	uint8_t sreg = SREG;
+	uint8_t restoreADIE = (ADCSRA & (1 << ADIE));
+
+	cli();
+	ADCSRA &= ~(1 << ADIE);
+	SREG = sreg;
+
+	return(restoreADIE);
+}
+
+void restoreADCInterrupts(uint8_t restoreADIE)
+{
+	if(restoreADIE)
+	{
+		uint8_t sreg = SREG;
+		cli();
+		ADCSRA |= (1 << ADIE);
+		SREG = sreg;
+	}
+}
+
+float readProgmemFloat(const float* value)
+{
+	float result;
+	memcpy_P(&result, value, sizeof(result));
+	return(result);
+}
+
+void copyFoxMorsePattern(Fox_t fox, char* destination)
+{
+	strcpy_P(destination, (PGM_P)g_morsePatterns[fox]);
+}
+
+BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text)
+{
+	if((text[0] == '?') || (strcmp(text, "HELP") == 0))
+	{
+		return(TRUE);
+	}
+
+	switch(msg_ID)
+	{
+		case MESSAGE_SET_FOX:
+#if !SUPPORT_ONLY_80M
+		case MESSAGE_SET_AM_TONE:
+#endif
+		case MESSAGE_UTIL:
+		case MESSAGE_SET_STATION_ID:
+		case MESSAGE_SYNC:
+		case MESSAGE_CODE_SETTINGS:
+		case MESSAGE_CLOCK:
+		case MESSAGE_PASSWORD:
+		case MESSAGE_INFO:
+		case MESSAGE_UPDATE:
+		{
+			return(TRUE);
+		}
+		break;
+
+		default:
+		{
+			return(FALSE);
+		}
+		break;
+	}
+}
+
+void sendFirmwareInfo(void)
+{
+	lb_send_string((char*)"* INF product=Arducon\n", TRUE);
+	lb_send_string((char*)"* INF update=UPD\n", TRUE);
+	sprintf(g_tempStr, "* INF sw=%s\n", ARDUCON_FIRMWARE_VERSION);
+	lb_send_string(g_tempStr, TRUE);
+	lb_send_string((char*)"* INF hw=ATmega328P-16\n", TRUE);
+	lb_send_string((char*)"* INF app=0x0000\n", TRUE);
+	sprintf(g_tempStr, "* INF appbaud=%lu\n", (uint32_t)BAUD);
+	lb_send_string(g_tempStr, TRUE);
+	sprintf(g_tempStr, "* INF baud=%lu\n", (uint32_t)UPDATE_BAUD);
+	lb_send_string(g_tempStr, TRUE);
+	lb_send_string((char*)"* INF bl=unknown\n", TRUE);
+	lb_send_string((char*)"* INF proto=stk500v1\n", TRUE);
+}
+
+void enterBootloaderUpdateMode(void)
+{
+	uint16_t tries = UINT16_MAX;
+
+	stopEventNow(PROGRAMMATIC);
+	UCSR0A |= (1 << TXC0);
+	if(!lb_send_string((char*)"* Bootloader update mode\n", TRUE))
+	{
+		while(!(UCSR0A & (1 << TXC0)) && tries)
+		{
+			tries--;
+		}
+	}
+	cli();
+	wdt_init(WD_FORCE_RESET);
+
+	while(1)
+	{
+		;
+	}
+}
+
 
 /*
  *   Command set:
@@ -2168,7 +2368,7 @@ void handleLinkBusMsgs()
 		static int digits;
 		static int value;
 		static int stringLength;
-		static char receivedString[MAX_PATTERN_TEXT_LENGTH + 1] = { '\0' };
+		static char receivedString[MAX_DTMF_ARG_LENGTH + 1] = { '\0' };
 		static BOOL setPasswordEnabled = FALSE;
 		static unsigned int last_in_progress_ticks = 0;
 		BOOL entryError = FALSE;
@@ -2239,6 +2439,7 @@ void handleLinkBusMsgs()
 			case STATE_SENTENCE_START:
 			{
 				stringLength = 0;
+				receivedString[0] = '\0';
 				value = 0;
 				digits = 0;
 
@@ -2431,7 +2632,7 @@ void handleLinkBusMsgs()
 				}
 				else if((key >= '0') && (key <= '9'))
 				{
-					if(stringLength <= MAX_UNLOCK_CODE_LENGTH)
+					if(stringLength < MAX_UNLOCK_CODE_LENGTH)
 					{
 						receivedString[stringLength++] = key;
 						receivedString[stringLength] = '\0';
@@ -2800,7 +3001,6 @@ void handleLinkBusMsgs()
 		return(entryError);
 	}
 
-#endif  /* #if !INIT_EEPROM_ONLY */
 
 
 void setupForFox(Fox_t* fox, EventAction_t action)
@@ -2975,11 +3175,71 @@ uint16_t readADC()
  */
 float getTemp(void)
 {
-	float offset = CLAMP(-440., (float)g_atmega_temp_calibration / 10., 440.);
+	return((float)getTempTenths() / 10.);
+}
 
-	/* The offset in 1/10ths C (first term) was determined empirically */
+int16_t getTempTenths(void)
+{
+	int16_t offset_tenths = CLAMP(-440, g_atmega_temp_calibration, 440);
+
 	readADC();  /* throw away first reading */
-	return(roundf(offset + (readADC() - 324.31) / 1.22));
+	int32_t adc = readADC();
+	return((int16_t)(offset_tenths + ((adc * 1000L - 324310L) / 122L)));
+}
+
+void updateTemperatureState(int16_t temperatureTenths)
+{
+	BOOL firstSample = ((g_temperature_tenths == EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT) && (g_max_temperature_tenths == EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT));
+	g_temperature_tenths = temperatureTenths;
+
+	if(firstSample || (temperatureTenths > g_max_temperature_tenths))
+	{
+		g_max_temperature_tenths = temperatureTenths;
+	}
+
+	if(temperatureTenths > g_max_ever_temperature_tenths)
+	{
+		g_max_ever_temperature_tenths = temperatureTenths;
+		ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
+	}
+
+	g_thermal_shutdown =
+		temperatureTenths >= ((int16_t)g_thermal_shutdown_temperature_c * 10) ? TRUE :
+		temperatureTenths <= ((int16_t)(g_thermal_shutdown_temperature_c - THERMAL_SHUTDOWN_HYSTERESIS_C) * 10) ? FALSE :
+		g_thermal_shutdown;
+
+	if(g_thermal_shutdown)
+	{
+		g_transmissions_disabled = TRUE;
+		g_on_the_air = FALSE;
+		digitalWrite(PIN_PWDN, OFF);
+	}
+}
+
+void resetMaxEverTemperatureToCurrent(void)
+{
+	setUpSampling(TEMPERATURE_SAMPLING, FALSE);
+	int16_t temperatureTenths = getTempTenths();
+	updateTemperatureState(temperatureTenths);
+	g_max_temperature_tenths = temperatureTenths;
+	g_max_ever_temperature_tenths = temperatureTenths;
+	ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
+	setUpSampling(AUDIO_SAMPLING, FALSE);
+}
+
+void sendTemperatureTenths(const char* label, int16_t temperatureTenths)
+{
+	if(temperatureTenths < 0)
+	{
+		int16_t magnitude = -temperatureTenths;
+		sprintf(g_tempStr, "%s=-%d.%dC\n", label, magnitude / 10, magnitude % 10);
+	}
+	else
+	{
+		sprintf(g_tempStr, "%s=%d.%dC\n", label, temperatureTenths / 10, temperatureTenths % 10);
+	}
+
+	lb_send_string(g_tempStr, TRUE);
 }
 
 uint16_t getVoltage(void)
@@ -3365,9 +3625,6 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 {
 	BOOL enableAM = TRUE;
 
-#if INIT_EEPROM_ONLY
-	if(value) enableAM = FALSE; /* Remove compiler warning */
-#else
 	switch(value)
 	{
 		case AM_DISABLED:
@@ -3465,7 +3722,6 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 
 	g_AM_enabled = enableAM;
 	sei();
-#endif  /* INIT_EEPROM_ONLY */
 	return(enableAM);
 }
 

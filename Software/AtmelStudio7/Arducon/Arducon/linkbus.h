@@ -49,6 +49,7 @@
 #define LINKBUS_MIN_TX_INTERVAL_MS 100
 
 #define BAUD 57600
+#define UPDATE_BAUD 115200
 #define MYUBRR(b) ((F_CPU + b * 8L) / (b * 16L) - 1)
 
 typedef enum
@@ -82,6 +83,8 @@ typedef enum
 	MESSAGE_CODE_SETTINGS = 'S' * 100 + 'E' * 10 + 'T',     /* Set Morse code speeds */
 	MESSAGE_CLOCK = 'C' * 100 + 'L' * 10 + 'K',             /* Set or read the RTC */
 	MESSAGE_PASSWORD = 'P' * 100 + 'W' * 10 + 'D',			/* Password command */
+	MESSAGE_INFO = 'I' * 100 + 'N' * 10 + 'F',              /* Report firmware/update identity */
+	MESSAGE_UPDATE = 'U' * 100 + 'P' * 10 + 'D',            /* Reboot into bootloader update mode */
 
 	INVALID_MESSAGE = UINT16_MAX                            /* This value must never overlap a valid message ID */
 } LBMessageID;

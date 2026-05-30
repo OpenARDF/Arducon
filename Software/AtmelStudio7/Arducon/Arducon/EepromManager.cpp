@@ -37,12 +37,13 @@
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
+#include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #endif  /* ATMEL_STUDIO_7 */
 
-/* Set Firmware Version Here */
 const char PRODUCT_NAME_LONG[] PROGMEM = PRODUCT_NAME_LONG_TXT;
 const char HELP_TEXT[] PROGMEM = HELP_TEXT_TXT;
 const char TEXT_SET_TIME[] PROGMEM = TEXT_SET_TIME_TXT;
@@ -55,9 +56,14 @@ const char TEXT_ERR_START_IN_PAST[] PROGMEM = TEXT_ERR_START_IN_PAST_TXT;
 const char TEXT_ERR_INVALID_TIME[] PROGMEM = TEXT_ERR_INVALID_TIME_TXT;
 const char TEXT_ERR_TIME_IN_PAST[] PROGMEM = TEXT_ERR_TIME_IN_PAST_TXT;
 
-#if INIT_EEPROM_ONLY
-const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_TXT;
-#endif // INIT_EEPROM_ONLY
+
+static const uint8_t DATA_MODULATION_DEFAULTS[SIZE_OF_DATA_MODULATION] PROGMEM =
+{
+	31, 31, 29, 27, 24, 21, 17, 14,
+	10, 8, 5, 3, 2, 1, 1, 0,
+	0, 0, 1, 1, 2, 3, 5, 7,
+	10, 13, 17, 20, 24, 27, 29, 31
+};
 
 /***********************************************************************
  * Global Variables & String Constants
@@ -70,22 +76,14 @@ const char TEXT_EEPROM_SUCCESS_MESSAGE[] PROGMEM = TEXT_EEPROM_SUCCESS_MESSAGE_T
 const struct EE_prom EEMEM EepromManager::ee_vars =
 {
 	/* .eeprom_initialization_flag = */ 0,
+	/* .eeprom_layout_version = */ 0,
 	/* .temperature_table = */ { 0 },
 	/* .atmega_temp_calibration = */ 0,
+	/* .thermal_shutdown_temperature_c = */ 0,
+	/* .max_ever_temperature_tenths = */ 0,
 	/* .rv3028_offset = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
-	/* .textVersion = */ "\0",
-	/* .textHelp = */ "\0",
-	/* .textSetTime = */ "\0",
-	/* .textSetStart = */ "\0",
-	/* .textSetFinish = */ "\0",
-	/* .textSetID = */ "\0",
-	/* .textErrFinishB4Start = */ "\0",
-	/* .textErrFinishInPast = */ "\0",
-	/* .textErrStartInPast = */ "\0",
-	/* .textErrInvalidTime = */ "\0",
-	/* .textErrTimeInPast = */ "\0",
 	/* .stationID_text = */ "\0",
 
 	/* .dataModulation = */ { 0 },
@@ -103,6 +101,8 @@ extern volatile uint8_t g_id_codespeed;
 extern volatile uint8_t g_pattern_codespeed;
 extern volatile uint16_t g_time_needed_for_ID;
 extern volatile int16_t g_atmega_temp_calibration;
+extern volatile int8_t g_thermal_shutdown_temperature_c;
+extern volatile int16_t g_max_ever_temperature_tenths;
 extern volatile uint8_t g_temperature_check_countdown;
 extern volatile int16_t g_rv3028_offset;
 
@@ -117,6 +117,8 @@ extern uint8_t g_dataModulation[];
 extern uint8_t g_unlockCode[];
 
 extern char g_tempStr[];
+
+#define EEPROM_TEXT_TX_IDLE_WAIT_LIMIT 1000
 
 /* default constructor */
 EepromManager::EepromManager()
@@ -147,7 +149,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 			char c = *char_addr++;
 			int i = 0;
 
-			while(c)
+			while(c && (i < MAX_PATTERN_TEXT_LENGTH))
 			{
 				eeprom_update_byte((uint8_t*)&(EepromManager::ee_vars.stationID_text[i++]), (uint8_t)c);
 				c = *char_addr++;
@@ -194,6 +196,18 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Atmega_temp_calibration:
 		{
 			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration);
+		}
+		break;
+
+		case Thermal_shutdown_temperature_c:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c);
+		}
+		break;
+
+		case Max_ever_temperature_tenths:
+		{
+			ee_word_addr = (uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths);
 		}
 		break;
 
@@ -256,7 +270,7 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 
 void EepromManager::sendEEPROMString(EE_var_t v)
 {
-	char* ee_addr = NULL;
+	const char* fl_addr = NULL;
 
 	if(!lb_enabled())
 	{
@@ -267,68 +281,68 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 	{
 		case TextVersion:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textVersion[0]);
+			fl_addr = PRODUCT_NAME_LONG;
 		}
 		break;
 
 		case TextHelp:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textHelp[0]);
+			fl_addr = HELP_TEXT;
 		}
 		break;
 
 		case TextSetTime:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetTime[0]);
+			fl_addr = TEXT_SET_TIME;
 		}
 		break;
 
 		case TextSetStart:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetStart[0]);
+			fl_addr = TEXT_SET_START;
 		}
 		break;
 
 		case TextSetFinish:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetFinish[0]);
+			fl_addr = TEXT_SET_FINISH;
 		}
 		break;
 
 		case TextSetID:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textSetID[0]);
+			fl_addr = TEXT_SET_ID;
 		}
 		break;
 
 		case TextErrFinishB4Start:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrFinishB4Start[0]);
+			fl_addr = TEXT_ERR_FINISH_BEFORE_START;
 
 		}
 		break;
 
 		case TextErrFinishInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrFinishInPast[0]);
+			fl_addr = TEXT_ERR_FINISH_IN_PAST;
 		}
 		break;
 
 		case TextErrStartInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrStartInPast[0]);
+			fl_addr = TEXT_ERR_START_IN_PAST;
 		}
 		break;
 
 		case TextErrInvalidTime:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrInvalidTime[0]);
+			fl_addr = TEXT_ERR_INVALID_TIME;
 		}
 		break;
 
 		case TextErrTimeInPast:
 		{
-			ee_addr = (char*)&(EepromManager::ee_vars.textErrTimeInPast[0]);
+			fl_addr = TEXT_ERR_TIME_IN_PAST;
 		}
 		break;
 
@@ -339,19 +353,28 @@ void EepromManager::sendEEPROMString(EE_var_t v)
 		break;
 	}
 
-	if(ee_addr)
+	if(fl_addr)
 	{
-		char c = eeprom_read_byte((uint8_t*)ee_addr++);
+		char c = pgm_read_byte(fl_addr++);
+		uint16_t tries = EEPROM_TEXT_TX_IDLE_WAIT_LIMIT;
 
 		while(c)
 		{
 			lb_echo_char(c);
-			c = eeprom_read_byte((uint8_t*)(ee_addr++));
+			c = pgm_read_byte(fl_addr++);
 
-			while(linkbusTxInProgress())
+			while(linkbusTxInProgress() && tries)
 			{
-				;
+				_delay_us(100);
+				tries--;
 			}
+
+			if(!tries)
+			{
+				break;
+			}
+
+			tries = EEPROM_TEXT_TX_IDLE_WAIT_LIMIT;
 		}
 	}
 }
@@ -360,14 +383,15 @@ BOOL EepromManager::readNonVols(void)
 {
 	BOOL failure = TRUE;
 	uint16_t i;
-	uint16_t initialization_flag = eeprom_read_word(&(EepromManager::ee_vars.eeprom_initialization_flag));
 
-	if(initialization_flag == EEPROM_INITIALIZED_FLAG)  /* EEPROM is up to date */
+	if(eepromLayoutIsCurrent())  /* EEPROM is initialized and matches this firmware layout */
 	{
 		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
 		g_AM_audio_frequency = (AM_Tone_Freq_t)eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
+		g_thermal_shutdown_temperature_c = CLAMP(THERMAL_SHUTDOWN_MIN_C, (int8_t)eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c)), THERMAL_SHUTDOWN_MAX_C);
+		g_max_ever_temperature_tenths = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
@@ -382,6 +406,7 @@ BOOL EepromManager::readNonVols(void)
 				break;
 			}
 		}
+		g_messages_text[STATION_ID][MAX_PATTERN_TEXT_LENGTH] = '\0';
 
 		for(i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
 		{
@@ -391,6 +416,7 @@ BOOL EepromManager::readNonVols(void)
 				break;
 			}
 		}
+		g_unlockCode[MAX_UNLOCK_CODE_LENGTH] = '\0';
 
 		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)    /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
@@ -409,65 +435,24 @@ BOOL EepromManager::readNonVols(void)
 	return( failure);
 }
 
-#if INIT_EEPROM_ONLY
-	void EepromManager::sendSuccessString(void)
-	{
-		sendEEPROMString(TextVersion);
-		sendPROGMEMString((const char*)&TEXT_EEPROM_SUCCESS_MESSAGE);
-//		dumpEEPROMVars();
-	}
+BOOL EepromManager::eepromLayoutIsCurrent(void)
+{
+	uint16_t initialization_flag = eeprom_read_word(&(EepromManager::ee_vars.eeprom_initialization_flag));
+	uint16_t layout_version = eeprom_read_word(&(EepromManager::ee_vars.eeprom_layout_version));
 
-	void EepromManager::sendPROGMEMString(const char* fl_addr)
-	{
-		if(!lb_enabled())
-		{
-			return;
-		}
+	return((initialization_flag == EEPROM_INITIALIZED_FLAG) && (layout_version == EEPROM_LAYOUT_VERSION));
+}
 
-		if(fl_addr)
-		{
-			char c = pgm_read_byte(fl_addr++);
-
-			while(c)
-			{
-				lb_echo_char(c);
-				c = pgm_read_byte((fl_addr++));
-
-				while(linkbusTxInProgress())
-				{
-					;
-				}
-			}
-		}
-	}
 
 /*
- * Set volatile variables to their values stored in EEPROM
+ * Initialize EEPROM defaults and mirror mutable defaults into RAM.
  */
-	BOOL EepromManager::initializeEEPROMVars(void)
-	{
-		BOOL err = FALSE;
-		uint16_t i;
+BOOL EepromManager::initializeEEPROMVars(void)
+{
+	uint16_t i;
 
-#ifndef ATMEL_STUDIO_7
-			/* Erase full EEPROM */
-			for(i = 0; i < 0x0400; i++)
-			{
-				eeprom_write_byte((uint8_t*)i, 0xFF);
-			}
-
-			for(i = 0; i < 0x0400; i++)
-			{
-				uint8_t x = eeprom_read_byte((const uint8_t*)&i);
-				if(x != 0xFF)
-				{
-					err = TRUE;
-				}
-			}
-#endif  /* !ATMEL_STUDIO_7 */
-
-		g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
+	g_id_codespeed = EEPROM_ID_CODE_SPEED_DEFAULT;
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.id_codespeed), g_id_codespeed);
 
 		g_fox = EEPROM_FOX_SETTING_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.fox_setting), g_fox);
@@ -477,6 +462,12 @@ BOOL EepromManager::readNonVols(void)
 
 		g_atmega_temp_calibration = EEPROM_TEMP_CALIBRATION_DEFAULT;
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration), (uint16_t)g_atmega_temp_calibration);
+
+		g_thermal_shutdown_temperature_c = EEPROM_THERMAL_SHUTDOWN_TEMP_C_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c), (uint8_t)g_thermal_shutdown_temperature_c);
+
+		g_max_ever_temperature_tenths = EEPROM_MAX_EVER_TEMPERATURE_TENTHS_DEFAULT;
+		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths), (uint16_t)g_max_ever_temperature_tenths);
 
 		i2c_init(); /* Needs to happen before reading RTC */
 
@@ -516,218 +507,22 @@ BOOL EepromManager::readNonVols(void)
 		for(i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
 		{
 			uint16_t val = (uint16_t)(((i * i) * 37L) / 1000L);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.temperature_table[i]), val);
+			eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.temperature_table[i]), val);
 		}
 
-		for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
-		{
-			float val = 5.5 * squaref((1.4 + sinf((i + (SIZE_OF_DATA_MODULATION / 4)) * 0.196))); /* Set maximum attenuation to fall at index 0 */
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), (uint8_t)val);
-		}
-
-		/* Software Version String */
-		for(i = 0; i < strlen_P(PRODUCT_NAME_LONG); i++)
-		{
-			uint8_t byteval = pgm_read_byte(PRODUCT_NAME_LONG + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textVersion[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textVersion[i]), 0);
-
-		/* Help String */
-		for(i = 0; i < strlen_P(HELP_TEXT); i++)
-		{
-			uint8_t byteval = pgm_read_byte(HELP_TEXT + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textHelp[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textHelp[i]), 0);
-
-		/* Set ID String */
-		for(i = 0; i < strlen_P(TEXT_SET_ID); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_ID + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetID[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetID[i]), 0);
-
-		/* Set Time String */
-		for(i = 0; i < strlen_P(TEXT_SET_TIME); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_TIME + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetTime[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetTime[i]), 0);
-
-		/* Set Start String */
-		for(i = 0; i < strlen_P(TEXT_SET_START); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_START + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetStart[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetStart[i]), 0);
-
-		/* Set Finish String */
-		for(i = 0; i < strlen_P(TEXT_SET_FINISH); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_SET_FINISH + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetFinish[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textSetFinish[i]), 0);
-
-		/* Set Err Finish in Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_FINISH_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishInPast[i]), 0);
-
-		/* Set Err Start in Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_START_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_START_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrStartInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrStartInPast[i]), 0);
-
-		/* Set Err Finish Before Start String */
-		for(i = 0; i < strlen_P(TEXT_ERR_FINISH_BEFORE_START); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_FINISH_BEFORE_START + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishB4Start[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrFinishB4Start[i]), 0);
-
-		/* Set Err Invalid Time String */
-		for(i = 0; i < strlen_P(TEXT_ERR_INVALID_TIME); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_INVALID_TIME + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrInvalidTime[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrInvalidTime[i]), 0);
-
-		/* Set Err Time In Past String */
-		for(i = 0; i < strlen_P(TEXT_ERR_TIME_IN_PAST); i++)
-		{
-			uint8_t byteval = pgm_read_byte(TEXT_ERR_TIME_IN_PAST + i);
-			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrTimeInPast[i]), byteval);
-		}
-
-		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.textErrTimeInPast[i]), 0);
+	for(i = 0; i < SIZE_OF_DATA_MODULATION; i++)
+	{
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.dataModulation[i]), pgm_read_byte(&DATA_MODULATION_DEFAULTS[i]));
+	}
 
 		/* Done */
 
+		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_layout_version), EEPROM_LAYOUT_VERSION);
 		eeprom_write_word((uint16_t*)&(EepromManager::ee_vars.eeprom_initialization_flag), EEPROM_INITIALIZED_FLAG);
 
-		return(err);
-	}
+	return(FALSE);
+}
 
-	void EepromManager::dumpEEPROMVars(void)
-	{
-		uint8_t byt;
-		uint16_t wrd;
-		uint32_t dwrd;
-
-		sendEEPROMString(TextVersion);
-		sendEEPROMString(TextHelp);
-		sendEEPROMString(TextSetID);
-		sendEEPROMString(TextSetTime);
-		sendEEPROMString(TextSetStart);
-		sendEEPROMString(TextSetFinish);
-		sendEEPROMString(TextErrFinishInPast);
-		sendEEPROMString(TextErrStartInPast);
-		sendEEPROMString(TextErrFinishB4Start);
-		sendEEPROMString(TextErrInvalidTime);
-		sendEEPROMString(TextErrTimeInPast);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed));
-		sprintf(g_tempStr, "CS=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.fox_setting));
-		sprintf(g_tempStr, "FX=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
-		sprintf(g_tempStr, "AM=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
-		sprintf(g_tempStr, "TC=%u\n", wrd);
-		lb_send_string(g_tempStr, TRUE);
-
-		wrd = (uint16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
-		sprintf(g_tempStr, "RVO=%u\n", wrd);
-		lb_send_string(g_tempStr, TRUE);
-
-		dwrd = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
-		sprintf(g_tempStr, "SE=%lu\n", dwrd);
-		lb_send_string(g_tempStr, TRUE);
-
-		dwrd = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
-		sprintf(g_tempStr, "FE=%lu\n", dwrd);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
-		sprintf(g_tempStr, "UO=%d\n", (int8_t)byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		byt = eeprom_read_byte(&(EepromManager::ee_vars.ptt_periodic_reset));
-		sprintf(g_tempStr, "PT=%d\n", byt);
-		lb_send_string(g_tempStr, TRUE);
-
-		for(int i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
-		{
-			g_messages_text[STATION_ID][i] = (char)eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.stationID_text[i])));
-			if(!g_messages_text[STATION_ID][i])
-			{
-				break;
-			}
-		}
-
-		sprintf(g_tempStr, "ID=\"%s\"\n", g_messages_text[STATION_ID]);
-		lb_send_string(g_tempStr, TRUE);
-
-		for(int i = 0; i < MAX_UNLOCK_CODE_LENGTH; i++)
-		{
-			g_unlockCode[i] = eeprom_read_byte((uint8_t*)(&(EepromManager::ee_vars.unlockCode[i])));
-			if(!g_unlockCode[i])
-			{
-				break;
-			}
-		}
-
-		sprintf(g_tempStr, "PW=\"%s\"\n", (char*)g_unlockCode);
-		lb_send_string(g_tempStr, TRUE);
-
-
-		/* Each correction pulse = 1 tick corresponds to 1 / (16384 x 64) = 0.9537 ppm.
-		 * ppm frequency change = -0.035 * (T-T0)^2 (+/-10%)
-		 * Table[0] = 25C, Table[1] = 24C or 26C, Table[2] = 23C or 27C, etc. */
-		for(int i = 0; i < SIZE_OF_TEMPERATURE_TABLE; i++)  /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
-		{
-			lb_send_value((char)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i])), (char*)"T");
-		}
-
-		lb_send_NewLine();
-
-		for(int i = 0; i < SIZE_OF_DATA_MODULATION; i++)    /* Use 1-degree steps and take advantage of parabola symmetry for -35C to +85C coverage */
-		{
-			lb_send_value((char)eeprom_read_byte(&(EepromManager::ee_vars.dataModulation[i])), (char*)"M");
-		}
-
-		lb_send_NewLine();
-	}
-#endif  /* INIT_EEPROM_ONLY */
 
 void EepromManager::resetEEPROMValues(void)
 {
@@ -737,7 +532,7 @@ void EepromManager::resetEEPROMValues(void)
 	for(i = 0; i < strlen(EEPROM_DTMF_UNLOCK_CODE_DEFAULT); i++)
 	{
 		g_unlockCode[i] = *v;
-		eeprom_write_byte((uint8_t*)&(g_unlockCode[i]), *v++);
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), *v++);
 	}
 
 	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.unlockCode[i]), 0);
@@ -773,4 +568,3 @@ uint16_t EepromManager::readTemperatureTable(int i)
 {
 	return( (uint16_t)eeprom_read_word(&(EepromManager::ee_vars.temperature_table[i])));
 }
-

@@ -73,35 +73,17 @@
    #define RTC_PASSWORD_1                  0x22
    #define RTC_PASSWORD_2                  0x23
    #define RTC_PASSWORD_3                  0x24
-   #define RTC_EE_ADDRESS                  0x25
-   #define RTC_EE_DATA                     0x26
    #define RTC_EE_COMMAND                  0x27
    #define RTC_ID                          0x28
-   #define RTC_EEPROM_PW_ENABLE            0x30
-   #define RTC_EEPROM_PW_0                 0x31
-   #define RTC_EEPROM_PW_1                 0x32
-   #define RTC_EEPROM_PW_2                 0x33
-   #define RTC_EEPROM_PW_3                 0x34
    #define RTC_EEPROM_CLKOUT               0x35
    #define RTC_EEPROM_OFFSET               0x36
-   #define RTC_EEPROM_BACKUP               0x37
 
    #define EEbusy 7
-   #define EERD   3
-   #define EE_COMMAND_WRITE_ONE_BYTE      0x21
-   #define EE_COMMAND_READ_ONE_BYTE       0x22
-   #define EE_COMMAND_WRITE_ALL_EEPROM    0x11
-   #define EE_COMMAND_READ_ALL_EEPROM     0x12
 
-#if INIT_EEPROM_ONLY
-		extern char g_tempStr[];
-#endif  /* INIT_EEPROM_ONLY */
 
 	static BOOL g_1HzSqWave_on = FALSE;
 
 	BOOL waitForEEPROMReady(void);
-	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val);
-	uint8_t readOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t* val);
 	void refreshRAMfromEEPROM(void);
 
 	uint8_t bcd2dec(uint8_t val)
@@ -118,140 +100,25 @@
 		return( result);
 	}
 
-/*
- *  Handles setting a single RTC EEPROM register. The first argument holds the RTC register address.
- *  The second argument holds a mask field indicating which bits are being changed, where
- *  changing bits are indicated by a "1" bit in the mask. The third argument holds the bit values
- *  to be written.
- */
-	uint8_t writeOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t mask, uint8_t val)
+	BOOL waitForEEPROMReady(void)
 	{
-		uint8_t temp = 0;
-		uint8_t hold;
+		uint8_t status = 1;
+		BOOL failure = FALSE;
 
-		if(waitForEEPROMReady())
+		while(status && !failure)
 		{
-			return( 1);
+			failure |= i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_STATUS, &status, 1);
+			if(!failure)
+			{
+				status &= (1 << EEbusy);
+			}
 		}
 
-		temp = (1 << EERD); /* EERD = 1 Disable automatic refresh - setting other bits to zero */
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
-		{
-			return( 1);
-		}
-
-		/* Save existing value stored in RAM - Note: we are assuming that RAM still holds unchanged EEPROM value */
-		i2c_device_read(RV3028_I2C_SLAVE_ADDR, rtc_ee_addr, &hold, 1);
-		hold &= ~mask;  /* Set mask 1-bits to zero */
-		val &= mask;    /* Ensure only mask 1-bits get applied */
-		val = hold | val;
-
-		/* Set up single-byte write to EEPROM */
-
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_ADDRESS, &rtc_ee_addr, 1))
-		{
-			return( 1);
-		}
-
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_DATA, &val, 1))
-		{
-			return( 1);
-		}
-
-		temp = 0x00;
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
-		{
-			return( 1);
-		}
-
-		if(waitForEEPROMReady())
-		{
-			return( 1);
-		}
-
-		temp = EE_COMMAND_WRITE_ONE_BYTE;
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
-		{
-			return( 1);
-		}
-
-		if(waitForEEPROMReady())
-		{
-			return( 1);
-		}
-
-		temp = 0;   /* EERD = 0 Re-enable automatic refresh - setting other bits to zero */
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
-		{
-			return( 1);
-		}
-
-		return( 0);
+		return(status);
 	}
 
-	uint8_t readOneEEPROMByte(uint8_t rtc_ee_addr, uint8_t* val)
-	{
-		uint8_t temp = 0;
-
-		if(!val)
-		{
-			return(1);
-		}
-
-		if(waitForEEPROMReady())
-		{
-			return( 1);
-		}
-
-		temp = (1 << EERD); /* EERD = 1 Disable automatic refresh - setting other bits to zero */
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
-		{
-			return( 1);
-		}
-
-		/* Set up single-byte read from EEPROM */
-
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_ADDRESS, &rtc_ee_addr, 1))
-		{
-			return( 1);
-		}
-
-		temp = 0x00;
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
-		{
-			return( 1);
-		}
-
-		if(waitForEEPROMReady())
-		{
-			return( 1);
-		}
-
-		temp = EE_COMMAND_READ_ONE_BYTE;
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EE_COMMAND, &temp, 1))
-		{
-			return( 1);
-		}
-
-		if(waitForEEPROMReady())
-		{
-			return( 1);
-		}
-
-		temp = 0;   /* EERD = 0 Re-enable automatic refresh - setting other bits to zero */
-		if(i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_CONTROL_1, &temp, 1))
-		{
-			return( 1);
-		}
-
-		/* Read the value from RAM */
-		i2c_device_read(RV3028_I2C_SLAVE_ADDR, rtc_ee_addr, val, 1);
-
-		return(0);
-	}
-
-/* Note: this is not thread safe */
-	time_t RTC_get_epoch(bool *result, char *datetime)
+	/* Note: this is not thread safe */
+		time_t RTC_get_epoch(bool *result, char *datetime)
 	{
 		uint8_t data[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		BOOL res = 0;
@@ -474,54 +341,11 @@
 		i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_OFFSET, (uint8_t*)data, 2);
 	}
 
-#ifdef INIT_EEPROM_ONLY
-/*
- *  Instructions for setting EEPROM values:
- *       1. Enter the correct password PW (PW = EEPW) to unlock write protection
- *       2. Disable automatic refresh by setting EERD = 1
- *       3. Edit Configuration settings in registers 35h to 37h (RAM)
- *       4. Update EEPROM (all Configuration RAM ? EEPROM) by setting EECMD = 00h followed by 11h
- *       5. Enable automatic refresh by setting EERD = 0
- *       6. Enter an incorrect password PW (PW ? EEPW) to lock the device
- *
- #define RTC_EE_ADDRESS                  0x25
- #define RTC_EE_DATA                     0x26
- #define RTC_EE_COMMAND                  0x27
- #define RTC_STATUS                      0x0E
- */
 		BOOL RTC_1s_sqw(BOOL onOff)
 		{
 			uint8_t status = FALSE;
 			uint8_t temp = onOff; /* remove compile warning */
 
-#if INIT_EEPROM_ONLY
-/* Ensure that no existing RTC RAM mirror settings differ from what is stored in EEPROM
- * by reading all EEPROM into the RAM mirror now */
-				refreshRAMfromEEPROM();
-
-				if(waitForEEPROMReady())
-				{
-					return( 1);
-				}
-
-				temp = 0xC5;            /* Enable 1Hz Output */
-				uint8_t mask = 0xFF;    /* 11111111 */
-				if(writeOneEEPROMByte(RTC_EEPROM_CLKOUT, mask, temp))
-				{
-					return( 1);
-				}
-
-/*          temp = 0x04;    / * Enable direct switching mode * / */
-/*          mask = 0x06;    / * 00001100 * / */
-				temp = 0x00;    /* Disable Vbackup switchover */
-				mask = 0x06;    /* 00001100 */
-				if(writeOneEEPROMByte(RTC_EEPROM_BACKUP, mask, temp))
-				{
-					return( 1);
-				}
-
-				refreshRAMfromEEPROM();
-#else
 				if(onOff)
 				{
 					temp = 0xC5;    /* turn on 1-Hz signal */
@@ -534,27 +358,6 @@
 				}
 
 				i2c_device_write(RV3028_I2C_SLAVE_ADDR, RTC_EEPROM_CLKOUT, &temp, 1);
-
-#endif  /* INIT_EEPROM_ONLY */
-
-
-/* Debug only */
-#if INIT_EEPROM_ONLY_DEBUG
-			uint8_t temp_byte;
-			uint8_t hold_byte;
-			for(temp_byte = 0x30; temp_byte <= 0x37; temp_byte++)
-			{
-				i2c_device_read(RV3028_I2C_SLAVE_ADDR, temp_byte, &hold_byte, 1);
-				sprintf(g_tempStr, "\n0x%02X = 0x%02X", temp_byte, hold_byte);
-				lb_send_string(g_tempStr, TRUE);
-			}
-
-			lb_send_NewLine();
-			lb_send_NewPrompt();
-
-			g_tempStr[0] = '\0';
-#endif // INIT_EEPROM_ONLY_DEBUG
-/* End debugging */
 
 			if(!status)
 			{
@@ -571,27 +374,6 @@
 
 			return(status);
 		}
-
-		BOOL waitForEEPROMReady(void)
-		{
-			uint8_t status = 1;
-			BOOL failure = FALSE;
-
-			while(status && !failure)
-			{
-				failure |= i2c_device_read(RV3028_I2C_SLAVE_ADDR, RTC_STATUS, &status, 1);
-				if(!failure)
-				{
-					status &= (1 << EEbusy);
-				}
-			}
-
-			return(status);
-		}
-
-
-#endif  /* INIT_EEPROM_ONLY */
-
 	BOOL rv3028_1Hz_enabled(void)
 	{
 		return(g_1HzSqWave_on);
