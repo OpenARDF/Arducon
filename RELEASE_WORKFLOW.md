@@ -21,6 +21,15 @@ Unless stated otherwise, commands below assume the repository root is the curren
 
 ## Standard Release Checklist
 
+Before starting a release, copy `release-checklist-template.json` to a release-specific file such as `release-checklist-vX.Y.Z.json`. Each checklist item must be marked `done` with evidence, or `skipped` with both `skipReason` and `skipRequestedBy` when the user specifically requested the skip.
+
+Run the checklist guard before tagging and again before declaring the release complete:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.json --phase pre-tag
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.json --phase final
+```
+
 1. Confirm the branch, commit, and working tree:
 
 ```powershell
@@ -81,6 +90,12 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 8. Draft concise GitHub release notes before tagging.
    Include the firmware version, hardware target, user-visible changes, bootloader/update notes if relevant, and any EEPROM/fuse caveats.
 
+Before creating the tag or release, update the release checklist through `github-release-notes` and run:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.json --phase pre-tag
+```
+
 9. Create the Git tag and GitHub release. For a stable release:
 
 ```powershell
@@ -105,6 +120,12 @@ gh release view vX.Y.Z --repo OpenARDF/Arducon
 Confirm the release page shows the expected title, notes, tag, standalone update HEX, and release ZIP.
 
 11. Re-check this checklist against the work just performed before declaring the deployment complete.
+
+Update the release checklist through `final-checklist-audit` and run:
+
+```powershell
+node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.json --phase final
+```
 
 ## Notes
 

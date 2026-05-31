@@ -1,0 +1,72 @@
+{
+  "release": "vX.Y.Z",
+  "repository": "OpenARDF/Arducon",
+  "items": [
+    {
+      "id": "branch-state",
+      "description": "Confirm the branch, commit, and working tree.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "firmware-version",
+      "description": "Confirm the intended firmware version in EepromManager.h.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "cli-release-build-size",
+      "description": "Run the reproducible CLI Release build and size check, recording size evidence.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "windows-studio-cross-check",
+      "description": "Complete the Windows/Microchip Studio Release cross-check or record the explicitly accepted branch waiver.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "hardware-regression",
+      "description": "Run or confirm the hardware regression layer for this release candidate.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "release-package-build-validation",
+      "description": "Build and validate the release package.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "package-outputs",
+      "description": "Verify the expected release package outputs exist under release-packages.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "github-release-notes",
+      "description": "Draft concise GitHub release notes before tagging.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "tag-and-release-created",
+      "description": "Create and push the Git tag, then create the GitHub release with required assets.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "published-release-verified",
+      "description": "Verify the published GitHub release title, notes, tag, standalone update HEX, and ZIP.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "final-checklist-audit",
+      "description": "Re-check this checklist against the work just performed before declaring deployment complete.",
+      "status": "pending",
+      "evidence": ""
+    }
+  ]
+}
