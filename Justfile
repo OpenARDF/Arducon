@@ -13,6 +13,9 @@ version:
 cli-build:
     pwsh -NoProfile -File ./build-cli-release.ps1 -Clean
 
+interrupt-regression:
+    node ./scripts/check-firmware-interrupts.mjs
+
 size:
     pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release -HexPath ./tmp/cli-release/Arducon.hex
 

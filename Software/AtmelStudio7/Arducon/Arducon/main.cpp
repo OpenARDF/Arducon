@@ -106,7 +106,8 @@ volatile int g_att_rf_shutdown_delay = TIMER2_SECONDS_2;
 volatile BOOL g_audio_tone_state = FALSE;
 volatile int16_t g_sync_pin_timer = 0;
 volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
-volatile uint16_t g_timer2_service_ticks = 0;
+volatile uint16_t g_periodic_service_ticks = 0;
+volatile uint16_t g_rtc_service_ticks = 0;
 volatile BOOL g_audio_sampling_suspended_for_am_tx = FALSE;
 
 volatile BOOL g_dtmf_detected = FALSE;
@@ -190,9 +191,12 @@ float readProgmemFloat(const float* value);
 void copyFoxMorsePattern(Fox_t fox, char* destination);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
-BOOL consumeTimer2ServiceTick(void);
-void servicePendingTimer2Tasks(void);
-void serviceTimer2TaskTick(void);
+BOOL consumePeriodicServiceTick(void);
+void servicePendingPeriodicTasks(void);
+void servicePeriodicTaskTick(void);
+BOOL consumeRTCServiceTick(void);
+void servicePendingRTCSeconds(void);
+void serviceRTCSecondTick(void);
 void updateAudioSamplingForAMTransmit(void);
 void restartAudioSamplingIfAllowed(void);
 
@@ -379,39 +383,38 @@ static inline void writeLedFast(BOOL value)
 	cli();
 
 	/*******************************************************************
-	 *  TIMER2 is for periodic interrupts to drive Morse code generation
+	 *  TIMER1 is for periodic interrupts to drive Morse code generation
 	 *  Reset control registers */
-	TCCR2A = 0;
-	TCCR2B = 0;
-	TCCR2A |= (1 << WGM21);                             /* set Clear Timer on Compare Match (CTC) mode with OCR2A setting the top */
-	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);  /* 1024 Prescaler */
+	TCCR1A = 0;
+	TCCR1B = 0;
+	TCNT1 = 0;
+	TCCR1B |= (1 << WGM12);                             /* set Clear Timer on Compare Match (CTC) mode with OCR1A setting the top */
+	TCCR1B |= (1 << CS12) | (1 << CS10);                /* 1024 Prescaler */
 
 #if F_CPU == 16000000UL
-		OCR2A = 0x0C;                                   /* set frequency to ~300 Hz (0x0c) */
+		OCR1A = 0x0C;                                   /* keep the existing periodic tick rate */
 #else
-		OCR2A = 0x06;                                   /* set frequency to ~300 Hz (0x0c) */
+		OCR1A = 0x06;                                   /* keep the existing periodic tick rate */
 #endif
 
-	OCR2B = 0x00;
-	/* Use system clock for Timer/Counter2 */
-	ASSR &= ~(1 << AS2);
-	/* Reset Timer/Counter2 Interrupt Mask Register */
-	TIMSK2 = 0;
-	TIMSK2 |= (1 << OCIE2B);    /* Output Compare Match B Interrupt Enable */
-
 	/*******************************************************************
-	 *  Timer 1 is used for controlling the attenuator for AM generation
-	 *  set timer1 interrupt at 16 kHz */
+	 *  Timer 2 is used for controlling the attenuator for AM generation. */
 
-	TCCR1A = 0;                 /* set entire TCCR1A register to 0 */
-	TCCR1B = 0;                 /* same for TCCR1B */
-	TCNT1 = 0;                  /* initialize counter value to 0 */
+	TCCR2A = 0;
+	TCCR2B = 0;
+	TCNT2 = 0;
+	TIMSK2 = 0;
 #if !SUPPORT_ONLY_80M
+		/* Use system clock for Timer/Counter2 */
+		ASSR &= ~(1 << AS2);
 		/* turn on CTC mode */
-		TCCR1B |= (1 << WGM12);
-		/* Set CS10 bit for no prescaling */
-		TCCR1B |= (1 << CS10);
+		TCCR2A |= (1 << WGM21);
+		/* Set CS21 bit for prescaler 8 */
+		TCCR2B |= (1 << CS21);
 #endif  /* !SUPPORT_ONLY_80M */
+
+	TIMSK1 = 0;
+	TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable */
 
 	/********************************************************************/
 	/* Timer 0 is for FM audio tone generation and control
@@ -932,11 +935,11 @@ ISR(USART_UDRE_vect)
 
 
 /***********************************************************************
- *  Timer/Counter2 Compare Match B ISR
+ *  Timer/Counter1 Compare Match A ISR
  *
  *  Handles periodic tasks not requiring precise timing.
  ************************************************************************/
-ISR( TIMER2_COMPB_vect )
+ISR(TIMER1_COMPA_vect)
 {
 	g_tick_count++;
 
@@ -970,21 +973,21 @@ ISR( TIMER2_COMPB_vect )
 		g_DTMF_sentence_in_progress_ticks--;
 	}
 
-	if(g_timer2_service_ticks < MAX_UINT16)
+	if(g_periodic_service_ticks < MAX_UINT16)
 	{
-		g_timer2_service_ticks++;
+		g_periodic_service_ticks++;
 	}
-}                                               /* End of Timer 2 ISR */
+}                                               /* End of Timer 1 ISR */
 
-BOOL consumeTimer2ServiceTick(void)
+BOOL consumePeriodicServiceTick(void)
 {
 	BOOL consumed = FALSE;
 	uint8_t sreg = SREG;
 
 	cli();
-	if(g_timer2_service_ticks)
+	if(g_periodic_service_ticks)
 	{
-		g_timer2_service_ticks--;
+		g_periodic_service_ticks--;
 		consumed = TRUE;
 	}
 	SREG = sreg;
@@ -992,15 +995,15 @@ BOOL consumeTimer2ServiceTick(void)
 	return(consumed);
 }
 
-void servicePendingTimer2Tasks(void)
+void servicePendingPeriodicTasks(void)
 {
-	while(consumeTimer2ServiceTick())
+	while(consumePeriodicServiceTick())
 	{
-		serviceTimer2TaskTick();
+		servicePeriodicTaskTick();
 	}
 }
 
-void serviceTimer2TaskTick(void)
+void servicePeriodicTaskTick(void)
 {
 
 	static uint16_t codeInc = 0;
@@ -1214,35 +1217,56 @@ void restartAudioSamplingIfAllowed(void)
 }
 
 
-/***********************************************************************
- *  Handle RTC 1-second interrupts
- **********************************************************************/
-	ISR( INT0_vect )
+BOOL consumeRTCServiceTick(void)
+{
+	BOOL consumed = FALSE;
+	uint8_t sreg = SREG;
+
+	cli();
+	if(g_rtc_service_ticks)
 	{
-		static int32_t post_sync_seconds_to_send_ID = 0;
-		static int seconds_into_cycle = 0;
-		static BOOL fox_transition_occurred = FALSE;
-		BOOL send_ID_now = FALSE;
-		BOOL energizeTx = FALSE;
+		g_rtc_service_ticks--;
+		consumed = TRUE;
+	}
+	SREG = sreg;
 
-		g_current_epoch++;
+	return(consumed);
+}
 
-		g_seconds_since_powerup++;
+void servicePendingRTCSeconds(void)
+{
+	while(consumeRTCServiceTick())
+	{
+		serviceRTCSecondTick();
+	}
+}
 
-		if(g_temperature_check_countdown)
-		{
-			g_temperature_check_countdown--;
-		}
+void serviceRTCSecondTick(void)
+{
+	static int32_t post_sync_seconds_to_send_ID = 0;
+	static int seconds_into_cycle = 0;
+	static BOOL fox_transition_occurred = FALSE;
+	BOOL send_ID_now = FALSE;
+	BOOL energizeTx = FALSE;
 
-		if(g_LED_timeout_countdown)
-		{
-			g_LED_timeout_countdown--;
-		}
+	g_current_epoch++;
 
-		if(g_voltage_check_countdown)
-		{
-			g_voltage_check_countdown--;
-		}
+	g_seconds_since_powerup++;
+
+	if(g_temperature_check_countdown)
+	{
+		g_temperature_check_countdown--;
+	}
+
+	if(g_LED_timeout_countdown)
+	{
+		g_LED_timeout_countdown--;
+	}
+
+	if(g_voltage_check_countdown)
+	{
+		g_voltage_check_countdown--;
+	}
 
 		if(g_transmissions_disabled)
 		{
@@ -1420,7 +1444,18 @@ void restartAudioSamplingIfAllowed(void)
 				seconds_into_cycle++;
 			}
 		}
-	}                                   /* end of INT0 ISR */
+	}                                   /* end of RTC second service */
+
+/***********************************************************************
+ *  Queue RTC 1-second interrupts for foreground scheduling service.
+ **********************************************************************/
+ISR(INT0_vect)
+{
+	if(g_rtc_service_ticks < MAX_UINT16)
+	{
+		g_rtc_service_ticks++;
+	}
+}
 
 /***********************************************************************
  *  Timer0 interrupt generates a square wave audio tone on the audio out pin.
@@ -1446,11 +1481,11 @@ ISR(TIMER0_COMPA_vect)
 
 #if !SUPPORT_ONLY_80M
 /***********************************************************************
- *  Timer/Counter1 Compare Match A ISR
+ *  Timer/Counter2 Compare Match A ISR
  *
  *  Handles AM modulation tasks
  ************************************************************************/
-	ISR(TIMER1_COMPA_vect)  /* timer1 interrupt */
+	ISR(TIMER2_COMPA_vect)  /* timer2 interrupt */
 	{
 			if(g_AM_enabled)
 			{
@@ -1499,7 +1534,8 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 void loop()
 {
-		servicePendingTimer2Tasks();
+		servicePendingRTCSeconds();
+		servicePendingPeriodicTasks();
 
 		int8_t dtmfX = -1;
 		int8_t dtmfY = -1;
@@ -1516,7 +1552,8 @@ void loop()
 			linkbus_init(BAUD);
 			while(g_reset_button_held)
 			{
-				servicePendingTimer2Tasks();
+				servicePendingRTCSeconds();
+				servicePendingPeriodicTasks();
 				writeLedFast(OFF); /*  LED */
 			}
 
@@ -3805,9 +3842,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		case AM_900Hz:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 556;    /* For ~900 Hz tone output */
+				OCR2A = 69;     /* For ~900 Hz tone output */
 #else
-				OCR1A = 278;
+				OCR2A = 34;
 #endif
 		}
 		break;
@@ -3815,9 +3852,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		case AM_800Hz:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 625;    /* For ~800 Hz tone output */
+				OCR2A = 77;     /* For ~800 Hz tone output */
 #else
-				OCR1A = 312;
+				OCR2A = 38;
 #endif
 		}
 		break;
@@ -3825,9 +3862,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		case AM_700Hz:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 714;    /* For ~700 Hz tone output */
+				OCR2A = 88;     /* For ~700 Hz tone output */
 #else
-				OCR1A = 357;
+				OCR2A = 44;
 #endif
 		}
 		break;
@@ -3835,9 +3872,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		case AM_600Hz:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 833;    /* For ~600 Hz tone output */
+				OCR2A = 103;    /* For ~600 Hz tone output */
 #else
-				OCR1A = 416;
+				OCR2A = 51;
 #endif
 		}
 		break;
@@ -3845,9 +3882,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		case AM_500Hz:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 1000;   /* For ~500 Hz tone output */
+				OCR2A = 124;    /* For ~500 Hz tone output */
 #else
-				OCR1A = 500;
+				OCR2A = 62;
 #endif
 		}
 		break;
@@ -3856,9 +3893,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 		default:
 		{
 #if F_CPU == 16000000UL
-				OCR1A = 500;    /* For ~1000 Hz tone output */
+				OCR2A = 62;     /* For ~1000 Hz tone output */
 #else
-				OCR1A = 250;
+				OCR2A = 30;
 #endif
 		}
 		break;
@@ -3870,9 +3907,9 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 
 	}
 
- 	if(!OCR1A)
+	if(!OCR2A)
  	{
-		OCR1A = 1000;  /* Ensure that AM tone setting is initialized - even if it won't be used */
+		OCR2A = 124;  /* Ensure that AM tone setting is initialized - even if it won't be used */
  	}
 
 	cli();
@@ -3881,12 +3918,12 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 	if(enableAM)
 	{
 		TIMSK0 &= ~(1 << OCIE0A);   /* Timer/Counter0 Output Compare Match A Interrupt Disable (CW Tone Output for FM) */
-		TIMSK1 |= (1 << OCIE1A);    /* Timer/Counter1 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
+		TIMSK2 |= (1 << OCIE2A);    /* Timer/Counter2 Output Compare Match A Interrupt Enable (CW Tone Output for AM) */
 	}
 	else
 	{
 		TIMSK0 |= (1 << OCIE0A);    /* Timer/Counter0 Output Compare Match A Interrupt Enable (CW Tone Output for FM) */
-		TIMSK1 &= ~(1 << OCIE1A);   /* Timer/Counter1 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
+		TIMSK2 &= ~(1 << OCIE2A);   /* Timer/Counter2 Output Compare Match A Interrupt Disable (CW Tone Output for AM) */
 	}
 
 	g_AM_enabled = enableAM;
