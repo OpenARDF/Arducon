@@ -119,6 +119,15 @@ assertContains(loadCurrentFoxMorsePattern, "g_code_throttle = THROTTLE_VAL_FROM_
 assertContains(loadCurrentFoxMorsePattern, "makeMorse((char*)\"\\0\"", "loadCurrentFoxMorsePattern");
 assertContains(loadCurrentFoxMorsePattern, "makeMorse((char*)g_messages_text[PATTERN_TEXT]", "loadCurrentFoxMorsePattern");
 
+const setupForFox = extractFunction("setupForFox");
+assertContains(setupForFox, "BOOL startActiveEventNow = FALSE", "setupForFox");
+assertContains(setupForFox, "g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES", "setupForFox");
+assertContains(setupForFox, "g_transmissions_disabled = FALSE", "setupForFox");
+assertContains(setupForFox, "g_transmissions_disabled = TRUE", "setupForFox");
+assertContains(setupForFox, "if(startActiveEventNow && !g_thermal_shutdown)", "setupForFox");
+assertContains(setupForFox, "loadCurrentFoxMorsePattern();", "setupForFox");
+assertContains(setupForFox, "g_on_the_air = TRUE", "setupForFox");
+
 const loop = extractFunction("loop");
 const rtcServiceIndex = loop.indexOf("servicePendingRTCSeconds();");
 const periodicServiceIndex = loop.indexOf("servicePendingPeriodicTasks();");

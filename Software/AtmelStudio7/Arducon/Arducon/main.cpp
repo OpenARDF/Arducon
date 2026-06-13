@@ -3284,6 +3284,8 @@ void enterBootloaderUpdateMode(void)
 
 void setupForFox(Fox_t* fox, EventAction_t action)
 {
+	BOOL startActiveEventNow = FALSE;
+
 	if(fox)
 	{
 		if(*fox != INVALID_FOX)
@@ -3384,6 +3386,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		g_seconds_since_sync = 0;                                               /* Total elapsed time since synchronization */
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
+		startActiveEventNow = TRUE;
 	}
 	else if(action == START_TRANSMISSIONS_NOW)                                  /* Immediately start transmitting, regardless RTC or time slot */
 	{
@@ -3392,6 +3395,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		g_use_rtc_for_startstop = FALSE;
 		g_transmissions_disabled = FALSE;
 		g_initialize_fox_transmissions = INIT_EVENT_STARTING_NOW;
+		startActiveEventNow = TRUE;
 	}
 	else                                                                    /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
@@ -3400,11 +3404,14 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
 			g_fox_counter = CLAMP(1, 1 + ((g_seconds_since_sync % g_cycle_period_seconds) / g_on_air_interval_seconds), g_number_of_foxes);
 			g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES;
+			g_transmissions_disabled = FALSE;
+			startActiveEventNow = TRUE;
 		}
 		else                                                                /* event starts in the future */
 		{
 			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
 			g_fox_counter = 1;
+			g_transmissions_disabled = TRUE;
 			if(g_event_start_epoch > (g_current_epoch + 300))
 			{
 				digitalWrite(PIN_PWDN, OFF); /* Turn off the radio until close to start time */
@@ -3412,7 +3419,6 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 
 		g_use_rtc_for_startstop = TRUE;
-		g_transmissions_disabled = TRUE;
 	}
 
 	sendMorseTone(OFF);
@@ -3426,6 +3432,16 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	g_sendAMmodulation = FALSE;
 	g_LED_enunciating = FALSE;
 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
+
+	if(startActiveEventNow && !g_thermal_shutdown)
+	{
+		digitalWrite(PIN_PWDN, ON);
+		if(currentFoxShouldTransmit())
+		{
+			loadCurrentFoxMorsePattern();
+			g_on_the_air = TRUE;
+		}
+	}
 
 	sei();
 }
