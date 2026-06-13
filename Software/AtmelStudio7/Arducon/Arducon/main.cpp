@@ -106,6 +106,8 @@ volatile int g_att_rf_shutdown_delay = TIMER2_SECONDS_2;
 volatile BOOL g_audio_tone_state = FALSE;
 volatile int16_t g_sync_pin_timer = 0;
 volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
+volatile uint16_t g_timer2_service_ticks = 0;
+volatile BOOL g_audio_sampling_suspended_for_am_tx = FALSE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
@@ -188,6 +190,11 @@ float readProgmemFloat(const float* value);
 void copyFoxMorsePattern(Fox_t fox, char* destination);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
+BOOL consumeTimer2ServiceTick(void);
+void servicePendingTimer2Tasks(void);
+void serviceTimer2TaskTick(void);
+void updateAudioSamplingForAMTransmit(void);
+void restartAudioSamplingIfAllowed(void);
 
 uint16_t readADC();
 float getTemp(void);
@@ -210,6 +217,75 @@ DTMF_key_t value2DTMFKey(uint8_t value);
 
 	BOOL processDTMFdetection(DTMF_key_t key);
 	void setUpSampling(ADCChannel_t channel, BOOL enableSampling);
+
+static inline BOOL readSyncFast(void)
+{
+	return((PINC & (1 << PINC3)) != 0);
+}
+
+static inline BOOL readPttFast(void)
+{
+	return((PIND & (1 << PIND4)) != 0);
+}
+
+static inline void writePttFast(BOOL value)
+{
+	if(value)
+	{
+		PORTD |= (1 << PORTD4);
+	}
+	else
+	{
+		PORTD &= ~(1 << PORTD4);
+	}
+}
+
+static inline void writeToneFast(BOOL value)
+{
+	if(value)
+	{
+		PORTD |= (1 << PORTD5);
+	}
+	else
+	{
+		PORTD &= ~(1 << PORTD5);
+	}
+}
+
+static inline void writeKeyFast(BOOL value)
+{
+	if(value)
+	{
+		PORTD |= (1 << PORTD6);
+	}
+	else
+	{
+		PORTD &= ~(1 << PORTD6);
+	}
+}
+
+static inline void writeLedFast(BOOL value)
+{
+#if SUPPORT_ONLY_80M
+	if(value)
+	{
+		PORTB |= (1 << PORTB5);
+	}
+	else
+	{
+		PORTB &= ~(1 << PORTB5);
+	}
+#else
+	if(value)
+	{
+		PORTC |= (1 << PORTC2);
+	}
+	else
+	{
+		PORTC &= ~(1 << PORTC2);
+	}
+#endif
+}
 
 #ifdef ATMEL_STUDIO_7
 	void loop(void);
@@ -535,7 +611,7 @@ ISR(ADC_vect)
 ISR(PCINT1_vect)
 {
 	static BOOL holdPinVal = OFF;
-	BOOL pinVal = digitalRead(PIN_SYNC);
+	BOOL pinVal = readSyncFast();
 
 	g_sync_pin_timer = 0;
 
@@ -550,7 +626,7 @@ ISR(PCINT1_vect)
 					if(g_sync_pin_stable == STABLE_LOW)
 					{
 						g_sync_pin_stable = UNSTABLE;
-						digitalWrite(PIN_LED, OFF); /*  LED */
+						writeLedFast(OFF); /*  LED */
 						startEventNow(PUSHBUTTON);
 					}
 				}
@@ -664,12 +740,15 @@ ISR(USART_RX_vect)
 			field_len = 0;
 			msg_ID = MESSAGE_EMPTY;
 
-			field_index = 0;
-			if((buff->id == MESSAGE_EMPTY) && g_linkbusRxRestoreADIE)
-			{
-				ADCSRA |= (1 << ADIE);
-				g_linkbusRxRestoreADIE = 0;
-			}
+				field_index = 0;
+				if((buff->id == MESSAGE_EMPTY) && g_linkbusRxRestoreADIE)
+				{
+					if(!g_audio_sampling_suspended_for_am_tx)
+					{
+						ADCSRA |= (1 << ADIE);
+					}
+					g_linkbusRxRestoreADIE = 0;
+				}
 			buff = NULL;
 
 			receiving_msg = FALSE;
@@ -889,17 +968,50 @@ ISR( TIMER2_COMPB_vect )
 		g_DTMF_sentence_in_progress_ticks--;
 	}
 
+	if(g_timer2_service_ticks < MAX_UINT16)
+	{
+		g_timer2_service_ticks++;
+	}
+}                                               /* End of Timer 2 ISR */
+
+BOOL consumeTimer2ServiceTick(void)
+{
+	BOOL consumed = FALSE;
+	uint8_t sreg = SREG;
+
+	cli();
+	if(g_timer2_service_ticks)
+	{
+		g_timer2_service_ticks--;
+		consumed = TRUE;
+	}
+	SREG = sreg;
+
+	return(consumed);
+}
+
+void servicePendingTimer2Tasks(void)
+{
+	while(consumeTimer2ServiceTick())
+	{
+		serviceTimer2TaskTick();
+	}
+}
+
+void serviceTimer2TaskTick(void)
+{
+
 	static uint16_t codeInc = 0;
 	static uint8_t holdButtonState = HIGH;
 	BOOL repeat = TRUE, finished = FALSE;
 
-	uint8_t button = digitalRead(PIN_SYNC);
+	uint8_t button = readSyncFast();
 
 	if(g_reset_button_held && !button)
 	{
 		if(g_seconds_since_powerup < 5)
 		{
-			digitalWrite(PIN_LED, ON);  /* hold the LED on until the sync button is released */
+			writeLedFast(ON);  /* hold the LED on until the sync button is released */
 		}
 		else if(g_seconds_since_powerup == 5)
 		{
@@ -925,7 +1037,7 @@ ISR( TIMER2_COMPB_vect )
 
 			if((button == LOW) && !g_reset_button_held)
 			{
-				digitalWrite(PIN_LED, ON);
+				writeLedFast(ON);
 			}
 		}
 	}
@@ -944,9 +1056,10 @@ ISR( TIMER2_COMPB_vect )
 	{
 		g_att_rf_shutdown_delay = TIMER2_SECONDS_2;
 
-		if(!digitalRead(PIN_PTT_LOGIC))
+		if(!readPttFast())
 		{
-			digitalWrite(PIN_PTT_LOGIC, ON); /* Key the microphone / energize transmitter */
+			writePttFast(ON); /* Key the microphone / energize transmitter */
+			updateAudioSamplingForAMTransmit();
 			ptt_delay = TIMER2_SECONDS_1;
 		}
 		else if(ptt_delay)
@@ -975,8 +1088,8 @@ ISR( TIMER2_COMPB_vect )
 						}
 					}
 
-					digitalWrite(PIN_LED, key);             /*  LED */
-					digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
+					writeLedFast(key);             /*  LED */
+					writeKeyFast(key);             /* TX key line */
 					g_sendAMmodulation = key;
 					sendMorseTone(key);
 				}
@@ -985,10 +1098,10 @@ ISR( TIMER2_COMPB_vect )
 			{
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED, key);         /*  LED */
+					writeLedFast(key);         /*  LED */
 				}
 
-				digitalWrite(PIN_CW_KEY_LOGIC, key);    /* TX key line */
+				writeKeyFast(key);             /* TX key line */
 				g_sendAMmodulation = key;
 				sendMorseTone(key);
 				codeInc = g_code_throttle;
@@ -997,7 +1110,7 @@ ISR( TIMER2_COMPB_vect )
 	}
 	else
 	{
-		if(digitalRead(PIN_PTT_LOGIC))
+		if(readPttFast())
 		{
 			if(!ptt_delay)
 			{
@@ -1009,7 +1122,8 @@ ISR( TIMER2_COMPB_vect )
 
 				if(!ptt_delay)
 				{
-					digitalWrite(PIN_PTT_LOGIC, OFF);   /* Unkey the microphone / de-energize transmitter */
+					writePttFast(OFF);   /* Unkey the microphone / de-energize transmitter */
+					updateAudioSamplingForAMTransmit();
 				}
 			}
 		}
@@ -1034,7 +1148,7 @@ ISR( TIMER2_COMPB_vect )
 					if(!codeInc)
 					{
 						key = makeMorse(NULL, &repeat, &finished);
-						digitalWrite(PIN_LED, key); /*  LED */
+						writeLedFast(key); /*  LED */
 						codeInc = g_code_throttle;
 					}
 				}
@@ -1051,16 +1165,51 @@ ISR( TIMER2_COMPB_vect )
 				key = OFF;
 				if(g_sync_pin_stable != STABLE_LOW)
 				{
-					digitalWrite(PIN_LED, OFF); /*  LED Off */
+					writeLedFast(OFF); /*  LED Off */
 				}
 			}
 		}
 
-		digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
+		writeKeyFast(OFF);               /* TX key line */
 		g_sendAMmodulation = FALSE;
 		sendMorseTone(OFF);
 	}
-}                                               /* End of Timer 2 ISR */
+}
+
+void updateAudioSamplingForAMTransmit(void)
+{
+	BOOL shouldSuspend = (g_AM_enabled && readPttFast());
+
+	if(shouldSuspend)
+	{
+		if(!g_audio_sampling_suspended_for_am_tx)
+		{
+			uint8_t sreg = SREG;
+			cli();
+			ADCSRA &= ~(1 << ADIE);
+			g_linkbusRxRestoreADIE = 0;
+			g_audio_sampling_suspended_for_am_tx = TRUE;
+			SREG = sreg;
+		}
+	}
+	else if(g_audio_sampling_suspended_for_am_tx)
+	{
+		g_audio_sampling_suspended_for_am_tx = FALSE;
+		restartAudioSamplingIfAllowed();
+	}
+}
+
+void restartAudioSamplingIfAllowed(void)
+{
+	if(!g_audio_sampling_suspended_for_am_tx && !g_goertzel.SamplesReady())
+	{
+		uint8_t sreg = SREG;
+		cli();
+		ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+		ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+		SREG = sreg;
+	}
+}
 
 
 /***********************************************************************
@@ -1284,11 +1433,11 @@ ISR(TIMER0_COMPA_vect)
 
 		if(g_audio_tone_state)
 		{
-			digitalWrite(PIN_CW_TONE_LOGIC, toggle);
+			writeToneFast(toggle);
 		}
 		else
 		{
-			digitalWrite(PIN_CW_TONE_LOGIC, OFF);
+			writeToneFast(OFF);
 		}
 	}
 }
@@ -1330,7 +1479,7 @@ ISR(TIMER0_COMPA_vect)
 					}
 					else
 					{
-						if(!digitalRead(PIN_PTT_LOGIC) && !g_att_rf_shutdown_delay)
+						if(!readPttFast() && !g_att_rf_shutdown_delay)
 						{
 							controlPins = 0;
 							PORTB = controlPins;
@@ -1348,6 +1497,8 @@ ISR(TIMER0_COMPA_vect)
  ************************************************************************/
 void loop()
 {
+		servicePendingTimer2Tasks();
+
 		int8_t dtmfX = -1;
 		int8_t dtmfY = -1;
 		float largestX;
@@ -1363,7 +1514,8 @@ void loop()
 			linkbus_init(BAUD);
 			while(g_reset_button_held)
 			{
-				digitalWrite(PIN_LED, OFF); /*  LED */
+				servicePendingTimer2Tasks();
+				writeLedFast(OFF); /*  LED */
 			}
 
 			g_perform_EEPROM_reset = FALSE;
@@ -1612,10 +1764,9 @@ void loop()
 					lastKey = '\0';
 				}
 
-				ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-				ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+					restartAudioSamplingIfAllowed();
+				}
 			}
-		}
 
 	if(!g_on_the_air)
 	{
@@ -2253,7 +2404,7 @@ uint8_t suspendADCInterrupts(void)
 
 void restoreADCInterrupts(uint8_t restoreADIE)
 {
-	if(restoreADIE)
+	if(restoreADIE && !g_audio_sampling_suspended_for_am_tx)
 	{
 		uint8_t sreg = SREG;
 		cli();
@@ -3295,14 +3446,13 @@ void setUpSampling(ADCChannel_t channel, BOOL enableSampling)
 #endif
 #endif /* F_CPU == 16000000 */
 
-		ADCSRA |= (1 << ADATE);     /* enable auto trigger */
-		ADCSRA |= (1 << ADIE);      /* enable interrupts when measurement complete */
-		ADCSRA |= (1 << ADEN);      /* enable ADC */
+			ADCSRA |= (1 << ADATE);     /* enable auto trigger */
+			ADCSRA |= (1 << ADEN);      /* enable ADC */
 
-		if(enableSampling)
-		{
-			ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
-			ADCSRA |= (1 << ADSC);  /* start ADC measurements */
+			if(enableSampling && !g_audio_sampling_suspended_for_am_tx)
+			{
+				ADCSRA |= (1 << ADIE);  /* enable interrupts when measurement complete */
+				ADCSRA |= (1 << ADSC);  /* start ADC measurements */
 		}
 	}
 	else
@@ -3722,6 +3872,7 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 
 	g_AM_enabled = enableAM;
 	sei();
+	updateAudioSamplingForAMTransmit();
 	return(enableAM);
 }
 
