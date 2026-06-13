@@ -16,6 +16,15 @@ cli-build:
 interrupt-regression:
     node ./scripts/check-firmware-interrupts.mjs
 
+serial-bootloader-smoke port:
+    pwsh -NoProfile -File ./test-bootloader-serial.ps1 -Port "{{port}}"
+
+serial-bootloader-smoke-via-app port:
+    pwsh -NoProfile -File ./test-bootloader-serial.ps1 -Port "{{port}}" -RequestBootloaderFromApp
+
+serial-update port hex="tmp/cli-release/Arducon.hex":
+    ${AVRDUDE:-avrdude} -v -p m328p -c arduino -P "{{port}}" -b 115200 -D -U "flash:w:{{hex}}:i"
+
 size:
     pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release -HexPath ./tmp/cli-release/Arducon.hex
 
