@@ -89,6 +89,13 @@ assertContains(rtcService, "g_seconds_since_powerup++", "serviceRTCSecondTick");
 assertContains(rtcService, "g_seconds_since_sync++", "serviceRTCSecondTick");
 assertContains(rtcService, "makeMorse", "serviceRTCSecondTick");
 assertContains(rtcService, "copyFoxMorsePattern", "serviceRTCSecondTick");
+assertContains(rtcService, "stationIDMorseStart", "serviceRTCSecondTick");
+assertContains(rtcService, "send_ID_now = FALSE", "serviceRTCSecondTick");
+assertNotContains(rtcService, "makeMorse((char*)\" \"", "serviceRTCSecondTick");
+
+const stationIDMorseStart = extractFunction("stationIDMorseStart");
+assertContains(stationIDMorseStart, "while(*stationID == ' ')", "stationIDMorseStart");
+assertContains(stationIDMorseStart, "stationID++", "stationIDMorseStart");
 
 const loop = extractFunction("loop");
 const rtcServiceIndex = loop.indexOf("servicePendingRTCSeconds();");

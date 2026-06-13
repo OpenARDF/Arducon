@@ -189,6 +189,7 @@ void restoreADCInterrupts(uint8_t restoreADIE);
 BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text);
 float readProgmemFloat(const float* value);
 void copyFoxMorsePattern(Fox_t fox, char* destination);
+char* stationIDMorseStart(void);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 BOOL consumePeriodicServiceTick(void);
@@ -1303,7 +1304,8 @@ void serviceRTCSecondTick(void)
 
 			if(!g_transmissions_disabled)
 			{
-				int secondsForID = (500 + timeRequiredToSendStrAtWPM((char*)g_messages_text[STATION_ID], g_id_codespeed)) / 1000;
+				char* stationID = stationIDMorseStart();
+				int secondsForID = *stationID ? (500 + timeRequiredToSendStrAtWPM(stationID, g_id_codespeed)) / 1000 : 0;
 
 				if((g_seconds_since_sync == 0) && (g_initialize_fox_transmissions == INIT_NOT_SPECIFIED))   /* sync occurs now */
 				{
@@ -1385,18 +1387,16 @@ void serviceRTCSecondTick(void)
 					seconds_into_cycle = 0;
 				}
 
+				if(send_ID_now && !*stationID)
+				{
+					send_ID_now = FALSE;
+				}
+
 				if(send_ID_now) /* Sending the call sign takes priority */
 				{
 					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_id_codespeed);
 					BOOL repeat = FALSE;
-					if(g_messages_text[STATION_ID][0])
-					{
-						makeMorse((char*)g_messages_text[STATION_ID], &repeat, NULL);
-					}
-					else
-					{
-						makeMorse((char*)" ", &repeat, NULL);
-					}
+					makeMorse(stationID, &repeat, NULL);
 					g_callsign_sent = FALSE;
 					g_on_the_air = TRUE;
 				}
@@ -2479,6 +2479,18 @@ float readProgmemFloat(const float* value)
 void copyFoxMorsePattern(Fox_t fox, char* destination)
 {
 	strcpy_P(destination, (PGM_P)g_morsePatterns[fox]);
+}
+
+char* stationIDMorseStart(void)
+{
+	char* stationID = (char*)g_messages_text[STATION_ID];
+
+	while(*stationID == ' ')
+	{
+		stationID++;
+	}
+
+	return(stationID);
 }
 
 BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text)
