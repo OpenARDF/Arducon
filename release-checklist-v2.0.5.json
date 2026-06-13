@@ -55,20 +55,20 @@
     {
       "id": "tag-and-release-created",
       "description": "Create and push the Git tag, then create the GitHub release with required assets.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Created and pushed tag v2.0.5 from main commit bf36227, pushed main and Development1 to origin, then created GitHub release https://github.com/OpenARDF/Arducon/releases/tag/v2.0.5 with the standalone update HEX and complete release ZIP."
     },
     {
       "id": "published-release-verified",
       "description": "Verify the published GitHub release title, notes, tag, standalone update HEX, and ZIP.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "just release-view 2.0.5 verified title Arducon v2.0.5, tag v2.0.5, published URL, release notes, asset Arducon-Update-v2.0.5-ATmega328P.hex, and asset Arducon-v2.0.5-ATmega328P-Release-Files.zip."
     },
     {
       "id": "final-checklist-audit",
       "description": "Re-check this checklist against the work just performed before declaring deployment complete.",
-      "status": "pending",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Checklist updated with tag, release, and verification evidence after publication; final checklist guard run before declaring deployment complete."
     }
   ]
 }
