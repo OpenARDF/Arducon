@@ -88,14 +88,36 @@ assertContains(rtcService, "g_current_epoch++", "serviceRTCSecondTick");
 assertContains(rtcService, "g_seconds_since_powerup++", "serviceRTCSecondTick");
 assertContains(rtcService, "g_seconds_since_sync++", "serviceRTCSecondTick");
 assertContains(rtcService, "makeMorse", "serviceRTCSecondTick");
-assertContains(rtcService, "copyFoxMorsePattern", "serviceRTCSecondTick");
+assertContains(rtcService, "loadCurrentFoxMorsePattern", "serviceRTCSecondTick");
+assertContains(rtcService, "currentFoxShouldTransmit()", "serviceRTCSecondTick");
+assertContains(rtcService, "post_sync_seconds_to_send_ID = g_id_interval_seconds", "serviceRTCSecondTick");
+assertContains(rtcService, "post_sync_seconds_to_send_ID =  (slot * g_on_air_interval_seconds) - secondsForID", "serviceRTCSecondTick");
 assertContains(rtcService, "stationIDMorseStart", "serviceRTCSecondTick");
 assertContains(rtcService, "send_ID_now = FALSE", "serviceRTCSecondTick");
 assertNotContains(rtcService, "makeMorse((char*)\" \"", "serviceRTCSecondTick");
 
+const periodicService = extractFunction("servicePeriodicTaskTick");
+assertContains(periodicService, "g_callsign_sent = TRUE", "servicePeriodicTaskTick");
+assertContains(periodicService, "currentFoxShouldTransmit()", "servicePeriodicTaskTick");
+assertContains(periodicService, "loadCurrentFoxMorsePattern();", "servicePeriodicTaskTick");
+
 const stationIDMorseStart = extractFunction("stationIDMorseStart");
 assertContains(stationIDMorseStart, "while(*stationID == ' ')", "stationIDMorseStart");
 assertContains(stationIDMorseStart, "stationID++", "stationIDMorseStart");
+
+const isContinuousTransmissionMode = extractFunction("isContinuousTransmissionMode");
+assertContains(isContinuousTransmissionMode, "g_number_of_foxes == 1", "isContinuousTransmissionMode");
+
+const currentFoxShouldTransmit = extractFunction("currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "isContinuousTransmissionMode()", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "g_number_of_foxes > 1", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "g_fox == (g_fox_counter + g_fox_id_offset)", "currentFoxShouldTransmit");
+
+const loadCurrentFoxMorsePattern = extractFunction("loadCurrentFoxMorsePattern");
+assertContains(loadCurrentFoxMorsePattern, "copyFoxMorsePattern", "loadCurrentFoxMorsePattern");
+assertContains(loadCurrentFoxMorsePattern, "g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed)", "loadCurrentFoxMorsePattern");
+assertContains(loadCurrentFoxMorsePattern, "makeMorse((char*)\"\\0\"", "loadCurrentFoxMorsePattern");
+assertContains(loadCurrentFoxMorsePattern, "makeMorse((char*)g_messages_text[PATTERN_TEXT]", "loadCurrentFoxMorsePattern");
 
 const loop = extractFunction("loop");
 const rtcServiceIndex = loop.indexOf("servicePendingRTCSeconds();");

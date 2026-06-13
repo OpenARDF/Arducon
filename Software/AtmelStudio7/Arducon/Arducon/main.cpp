@@ -190,6 +190,9 @@ BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text);
 float readProgmemFloat(const float* value);
 void copyFoxMorsePattern(Fox_t fox, char* destination);
 char* stationIDMorseStart(void);
+BOOL isContinuousTransmissionMode(void);
+BOOL currentFoxShouldTransmit(void);
+void loadCurrentFoxMorsePattern(void);
 
 BOOL setAMToneFrequency(AM_Tone_Freq_t value);
 BOOL consumePeriodicServiceTick(void);
@@ -1086,6 +1089,14 @@ void servicePeriodicTaskTick(void)
 					{
 						key = OFF;
 						g_callsign_sent = TRUE;
+						if(currentFoxShouldTransmit())
+						{
+							loadCurrentFoxMorsePattern();
+						}
+						else
+						{
+							g_on_the_air = FALSE;
+						}
 
 						if(g_use_ptt_periodic_reset)
 						{
@@ -1282,10 +1293,15 @@ void serviceRTCSecondTick(void)
 				{
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
-					BOOL repeat = TRUE;
-					makeMorse((char*)"\0", NULL, NULL);
-					makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
-					g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
+					if(currentFoxShouldTransmit())
+					{
+						loadCurrentFoxMorsePattern();
+						g_on_the_air = TRUE;
+					}
+					else
+					{
+						g_on_the_air = FALSE;
+					}
 				}
 			}
 		}
@@ -1310,10 +1326,17 @@ void serviceRTCSecondTick(void)
 				if((g_seconds_since_sync == 0) && (g_initialize_fox_transmissions == INIT_NOT_SPECIFIED))   /* sync occurs now */
 				{
 					send_ID_now = FALSE;
-					if(g_id_interval_seconds <= g_cycle_period_seconds)
+					if((g_id_interval_seconds > 0) && (g_id_interval_seconds <= g_cycle_period_seconds))
 					{
-						int slot = MAX(1, g_fox - g_fox_id_offset);
-						post_sync_seconds_to_send_ID =  (slot * g_on_air_interval_seconds) - secondsForID;
+						if(isContinuousTransmissionMode())
+						{
+							post_sync_seconds_to_send_ID = g_id_interval_seconds;
+						}
+						else
+						{
+							int slot = MAX(1, g_fox - g_fox_id_offset);
+							post_sync_seconds_to_send_ID =  (slot * g_on_air_interval_seconds) - secondsForID;
+						}
 					}
 
 					seconds_into_cycle = 0;
@@ -1327,26 +1350,49 @@ void serviceRTCSecondTick(void)
 						if(g_initialize_fox_transmissions == INIT_EVENT_STARTING_NOW)
 						{
 							send_ID_now = FALSE;
-							post_sync_seconds_to_send_ID = g_seconds_since_sync + g_on_air_interval_seconds - secondsForID;
+							if(isContinuousTransmissionMode())
+							{
+								post_sync_seconds_to_send_ID = g_seconds_since_sync + g_id_interval_seconds;
+							}
+							else
+							{
+								post_sync_seconds_to_send_ID = g_seconds_since_sync + g_on_air_interval_seconds - secondsForID;
+							}
 							energizeTx = TRUE;
 						}
 						else if(g_initialize_fox_transmissions == INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES)
 						{
-							if(((g_fox - g_fox_id_offset) == g_fox_counter) || (g_number_of_foxes == 1))    /* This transmitter is on-the-air now */
+							if(currentFoxShouldTransmit())    /* This transmitter is on-the-air now */
 							{
-								int secondsLeftOfXmsn = g_on_air_interval_seconds - (seconds_into_cycle % g_on_air_interval_seconds);
+								if(isContinuousTransmissionMode())
+								{
+									int secondsUntilID = g_id_interval_seconds - (g_seconds_since_sync % g_id_interval_seconds);
 
-								if(secondsLeftOfXmsn > secondsForID)
-								{
-									post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn - secondsForID;
-								}
-								else if(secondsLeftOfXmsn < secondsForID)
-								{
-									post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn + g_cycle_period_seconds - secondsForID;
+									if(secondsUntilID == g_id_interval_seconds)
+									{
+										send_ID_now = TRUE;
+									}
+									else
+									{
+										post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsUntilID;
+									}
 								}
 								else
 								{
-									send_ID_now = TRUE;
+									int secondsLeftOfXmsn = g_on_air_interval_seconds - (seconds_into_cycle % g_on_air_interval_seconds);
+
+									if(secondsLeftOfXmsn > secondsForID)
+									{
+										post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn - secondsForID;
+									}
+									else if(secondsLeftOfXmsn < secondsForID)
+									{
+										post_sync_seconds_to_send_ID = g_seconds_since_sync + secondsLeftOfXmsn + g_cycle_period_seconds - secondsForID;
+									}
+									else
+									{
+										send_ID_now = TRUE;
+									}
 								}
 
 								energizeTx = TRUE;
@@ -1405,36 +1451,13 @@ void serviceRTCSecondTick(void)
 					digitalWrite(PIN_LED, OFF);
 					fox_transition_occurred = FALSE;
 
-					if((g_number_of_foxes > 1) && (g_fox != (g_fox_counter + g_fox_id_offset))) /* Turn off transmissions during times when this fox should be silent */
+					if(!currentFoxShouldTransmit()) /* Turn off transmissions during times when this fox should be silent */
 					{
 						g_on_the_air = FALSE;
 					}
 					else
 					{
-						BOOL repeat;
-						/* Choose the appropriate Morse pattern to be sent */
-#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-						if(g_fox == REPORT_BATTERY)
-						{
-							uint16_t v = g_voltage + 5;
-							sprintf(g_tempStr, "|||%dR%d/%d", v / 100, (v % 100) / 10, g_temperature);
-							strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
-							repeat = FALSE;
-						}
-						else
-						{
-							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
-							repeat = TRUE;
-						}
-#else
-							copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
-							repeat = TRUE;
-#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-
-						g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
-						makeMorse((char*)"\0", NULL, NULL);
-						makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
-
+						loadCurrentFoxMorsePattern();
 						g_on_the_air = TRUE;
 					}
 				}
@@ -2491,6 +2514,43 @@ char* stationIDMorseStart(void)
 	}
 
 	return(stationID);
+}
+
+BOOL isContinuousTransmissionMode(void)
+{
+	return(g_number_of_foxes == 1);
+}
+
+BOOL currentFoxShouldTransmit(void)
+{
+	return(isContinuousTransmissionMode() || ((g_number_of_foxes > 1) && (g_fox == (g_fox_counter + g_fox_id_offset))));
+}
+
+void loadCurrentFoxMorsePattern(void)
+{
+	BOOL repeat;
+	/* Choose the appropriate Morse pattern to be sent */
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+	if(g_fox == REPORT_BATTERY)
+	{
+		uint16_t v = g_voltage + 5;
+		sprintf(g_tempStr, "|||%dR%d/%d", v / 100, (v % 100) / 10, g_temperature);
+		strcpy((char*)g_messages_text[PATTERN_TEXT], g_tempStr);
+		repeat = FALSE;
+	}
+	else
+	{
+		copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
+		repeat = TRUE;
+	}
+#else
+	copyFoxMorsePattern(g_fox, (char*)g_messages_text[PATTERN_TEXT]);
+	repeat = TRUE;
+#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+
+	g_code_throttle = THROTTLE_VAL_FROM_WPM(g_pattern_codespeed);
+	makeMorse((char*)"\0", NULL, NULL);
+	makeMorse((char*)g_messages_text[PATTERN_TEXT], &repeat, NULL);
 }
 
 BOOL isSupportedLinkbusCommand(uint16_t msg_ID, const char* text)
