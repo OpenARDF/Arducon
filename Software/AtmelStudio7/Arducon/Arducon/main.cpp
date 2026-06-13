@@ -205,6 +205,8 @@ void resetMaxEverTemperatureToCurrent(void);
 void sendTemperatureTenths(const char* label, int16_t temperatureTenths);
 BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
+void updateScheduleStateAfterConfigurationChange(Fox_t* fox);
+void updateScheduleStateAfterClockSet(void);
 void stopEventNow(EventActionSource_t activationSource);
 void startEventNow(EventActionSource_t buttonActivated);
 void startEventUsingRTC(void);
@@ -1876,6 +1878,23 @@ ConfigurationState_t clockConfigurationCheck(void)
 	return(WAITING_FOR_START);  /* Future event hasn't started yet */
 }
 
+void updateScheduleStateAfterConfigurationChange(Fox_t* fox)
+{
+	if(clockConfigurationCheck() == CONFIGURATION_ERROR)
+	{
+		setupForFox(fox, START_NOTHING);
+	}
+	else
+	{
+		setupForFox(fox, START_EVENT_WITH_STARTFINISH_TIMES);
+	}
+}
+
+void updateScheduleStateAfterClockSet(void)
+{
+	updateScheduleStateAfterConfigurationChange(NULL);
+}
+
 
 void sendMorseTone(BOOL onOff)
 {
@@ -1994,7 +2013,7 @@ void handleLinkBusMsgs()
 						ee_mgr.updateEEPROMVar(Fox_setting, (void*)&holdFox);
 						if(holdFox != g_fox)
 						{
-							setupForFox(&holdFox, START_NOTHING);
+							updateScheduleStateAfterConfigurationChange(&holdFox);
 						}
 					}
 				}
@@ -2173,7 +2192,7 @@ void handleLinkBusMsgs()
 
 						g_current_epoch = t;
 						sprintf(g_tempStr, "Time:%lu\n", g_current_epoch);
-						setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+						updateScheduleStateAfterClockSet();
 					}
 					else
 					{
@@ -2851,7 +2870,7 @@ void enterBootloaderUpdateMode(void)
 						ee_mgr.updateEEPROMVar(Fox_setting, (void*)&holdFox);
 						if(holdFox != g_fox)
 						{
-							setupForFox(&holdFox, START_NOTHING);
+							updateScheduleStateAfterConfigurationChange(&holdFox);
 						}
 					}
 					else
@@ -2897,7 +2916,7 @@ void enterBootloaderUpdateMode(void)
 							#endif
 
 							g_current_epoch = t;
-							setupForFox(NULL, START_NOTHING);   /* Avoid timing problems if an event is already active */
+							updateScheduleStateAfterClockSet();
 						}
 						else
 						{
