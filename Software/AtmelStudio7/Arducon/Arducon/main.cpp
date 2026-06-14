@@ -3461,6 +3461,12 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		}
 	}
 
+	if(g_transmissions_disabled || !g_on_the_air)
+	{
+		writePttFast(OFF);
+		updateAudioSamplingForAMTransmit();
+	}
+
 	g_reset_transmit_service_state = TRUE;
 
 	sei();

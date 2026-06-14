@@ -134,6 +134,9 @@ assertContains(setupForFox, "g_transmissions_disabled = TRUE", "setupForFox");
 assertContains(setupForFox, "if(startActiveEventNow && !g_thermal_shutdown)", "setupForFox");
 assertContains(setupForFox, "loadCurrentFoxMorsePattern();", "setupForFox");
 assertContains(setupForFox, "g_on_the_air = TRUE", "setupForFox");
+assertContains(setupForFox, "if(g_transmissions_disabled || !g_on_the_air)", "setupForFox");
+assertContains(setupForFox, "writePttFast(OFF)", "setupForFox");
+assertContains(setupForFox, "updateAudioSamplingForAMTransmit()", "setupForFox");
 assertContains(setupForFox, "g_reset_transmit_service_state = TRUE", "setupForFox");
 
 const loop = extractFunction("loop");
