@@ -109,6 +109,7 @@ volatile ButtonStability_t g_sync_pin_stable = UNSTABLE;
 volatile uint16_t g_periodic_service_ticks = 0;
 volatile uint16_t g_rtc_service_ticks = 0;
 volatile BOOL g_audio_sampling_suspended_for_am_tx = FALSE;
+volatile BOOL g_reset_transmit_service_state = FALSE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
@@ -1012,6 +1013,9 @@ void servicePeriodicTaskTick(void)
 
 	static uint16_t codeInc = 0;
 	static uint8_t holdButtonState = HIGH;
+	static BOOL key = OFF;
+	static uint16_t ptt_delay = 0;
+	static uint16_t ptt_dropped = 0;
 	BOOL repeat = TRUE, finished = FALSE;
 
 	uint8_t button = readSyncFast();
@@ -1057,9 +1061,23 @@ void servicePeriodicTaskTick(void)
 	}
 
 
-	static BOOL key = OFF;
-	static uint16_t ptt_delay = 0;
-	static uint16_t ptt_dropped = 0;
+	if(g_reset_transmit_service_state)
+	{
+		codeInc = g_on_the_air ? 1 : 0;
+		key = OFF;
+		ptt_delay = 0;
+		ptt_dropped = 0;
+		g_reset_transmit_service_state = FALSE;
+		writeKeyFast(OFF);
+		g_sendAMmodulation = FALSE;
+		sendMorseTone(OFF);
+
+		if(g_transmissions_disabled || !g_on_the_air)
+		{
+			writePttFast(OFF);
+			updateAudioSamplingForAMTransmit();
+		}
+	}
 
 	if(!g_transmissions_disabled && g_on_the_air && !ptt_dropped)
 	{
@@ -3442,6 +3460,8 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 			g_on_the_air = TRUE;
 		}
 	}
+
+	g_reset_transmit_service_state = TRUE;
 
 	sei();
 }

@@ -100,6 +100,13 @@ const periodicService = extractFunction("servicePeriodicTaskTick");
 assertContains(periodicService, "g_callsign_sent = TRUE", "servicePeriodicTaskTick");
 assertContains(periodicService, "currentFoxShouldTransmit()", "servicePeriodicTaskTick");
 assertContains(periodicService, "loadCurrentFoxMorsePattern();", "servicePeriodicTaskTick");
+assertContains(periodicService, "if(g_reset_transmit_service_state)", "servicePeriodicTaskTick");
+assertContains(periodicService, "codeInc = g_on_the_air ? 1 : 0", "servicePeriodicTaskTick");
+assertContains(periodicService, "ptt_delay = 0", "servicePeriodicTaskTick");
+assertContains(periodicService, "ptt_dropped = 0", "servicePeriodicTaskTick");
+assertContains(periodicService, "writeKeyFast(OFF)", "servicePeriodicTaskTick");
+assertContains(periodicService, "if(g_transmissions_disabled || !g_on_the_air)", "servicePeriodicTaskTick");
+assertContains(periodicService, "writePttFast(OFF)", "servicePeriodicTaskTick");
 
 const stationIDMorseStart = extractFunction("stationIDMorseStart");
 assertContains(stationIDMorseStart, "while(*stationID == ' ')", "stationIDMorseStart");
@@ -127,6 +134,7 @@ assertContains(setupForFox, "g_transmissions_disabled = TRUE", "setupForFox");
 assertContains(setupForFox, "if(startActiveEventNow && !g_thermal_shutdown)", "setupForFox");
 assertContains(setupForFox, "loadCurrentFoxMorsePattern();", "setupForFox");
 assertContains(setupForFox, "g_on_the_air = TRUE", "setupForFox");
+assertContains(setupForFox, "g_reset_transmit_service_state = TRUE", "setupForFox");
 
 const loop = extractFunction("loop");
 const rtcServiceIndex = loop.indexOf("servicePendingRTCSeconds();");
