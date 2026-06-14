@@ -7,6 +7,7 @@ const requiredByPhase = {
   "pre-tag": [
     "branch-state",
     "firmware-version",
+    "host-unit-tests",
     "cli-release-build-size",
     "windows-studio-cross-check",
     "hardware-regression",
@@ -17,6 +18,7 @@ const requiredByPhase = {
   "pre-release": [
     "branch-state",
     "firmware-version",
+    "host-unit-tests",
     "cli-release-build-size",
     "windows-studio-cross-check",
     "hardware-regression",
@@ -27,6 +29,7 @@ const requiredByPhase = {
   final: [
     "branch-state",
     "firmware-version",
+    "host-unit-tests",
     "cli-release-build-size",
     "windows-studio-cross-check",
     "hardware-regression",

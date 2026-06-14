@@ -15,6 +15,12 @@
       "evidence": ""
     },
     {
+      "id": "host-unit-tests",
+      "description": "Run the repo test gate, recording host unit-test and firmware structural regression evidence.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
       "id": "cli-release-build-size",
       "description": "Run the reproducible CLI Release build and size check, recording size evidence.",
       "status": "pending",

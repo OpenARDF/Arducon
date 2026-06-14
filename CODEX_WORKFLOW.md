@@ -21,6 +21,14 @@
 
 - Use `.\build-cli-release.ps1 -Clean` as the normal reproducible local Release build entry point.
 - Use `.\build-firmware.ps1 -Configuration Release` when verifying against Microchip/Atmel Studio generated makefiles.
+- After executable firmware source, scheduler logic, test harness, or workflow-script changes, run the repo test gate:
+
+```powershell
+just test
+```
+
+This runs host-side unit tests plus the firmware structural regression checks. Use `just host-unit-tests` only when intentionally running the narrower host unit-test executable.
+
 - After executable firmware source or configuration changes, run the CLI build and comparison:
 
 ```powershell

@@ -39,7 +39,15 @@ git log -1 --oneline
 
 2. Confirm the intended firmware version in `EepromManager.h`.
 
-3. Run the reproducible CLI Release build and size check:
+3. Run the repo test gate:
+
+```powershell
+just test
+```
+
+Record that the host-side unit tests and firmware structural regression checks passed.
+
+4. Run the reproducible CLI Release build and size check:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
@@ -48,7 +56,7 @@ powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuratio
 
 Record the program bytes, SRAM, EEPROM image bytes, HEX range, and remaining bytes below `0x7E00`.
 
-4. For releases from `codex/arducon-bootloader-cleanup`, the Windows/Microchip Studio baseline refresh is not required before publishing. The Mac reproducible CLI build has agreed closely enough with Windows/Microchip Studio builds on this branch that the release gate is the CLI build, size check, package validation, and any hardware regression status recorded below.
+5. For releases from `codex/arducon-bootloader-cleanup`, the Windows/Microchip Studio baseline refresh is not required before publishing. The Mac reproducible CLI build has agreed closely enough with Windows/Microchip Studio builds on this branch that the release gate is the repo test gate, CLI build, size check, package validation, and any hardware regression status recorded below.
 
 If a future branch changes the build system, compiler/toolchain, project configuration, or other release-build assumptions, get a Windows/Microchip Studio Release cross-check before publishing:
 
@@ -57,7 +65,7 @@ powershell -ExecutionPolicy Bypass -File .\build-firmware.ps1 -Configuration Rel
 powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuration Release
 ```
 
-5. Run or confirm hardware regression for the release candidate:
+6. Run or confirm hardware regression for the release candidate:
 
 - serial command smoke: `HELP`, `INF`, `FOX`, `ID`, `PWD`, `UTI`, `UPD`
 - DTMF command smoke for lock/unlock, callsign, fox role, time/start/finish, AM tone, and PTT reset
@@ -66,14 +74,14 @@ powershell -ExecutionPolicy Bypass -File .\check-firmware-size.ps1 -Configuratio
 
 If hardware testing has already been completed, state exactly which hardware-test layer is being treated as complete.
 
-6. Build and validate the release package:
+7. Build and validate the release package:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build-release-package.ps1
 powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 ```
 
-7. Verify expected package outputs under `release-packages\Arducon-vX.Y.Z`:
+8. Verify expected package outputs under `release-packages\Arducon-vX.Y.Z`:
 
 - `Arducon-Update-vX.Y.Z-ATmega328P.hex`
 - `Arducon-First-Install-vX.Y.Z-ATmega328P.hex`
@@ -87,7 +95,7 @@ powershell -ExecutionPolicy Bypass -File .\validate-release-package.ps1
 - `README-Arducon-vX.Y.Z-ATmega328P.txt`
 - `Arducon-vX.Y.Z-ATmega328P-Release-Files.zip`
 
-8. Draft concise GitHub release notes before tagging.
+9. Draft concise GitHub release notes before tagging.
    Include the firmware version, hardware target, user-visible changes, bootloader/update notes if relevant, and any EEPROM/fuse caveats.
 
 Before creating the tag or release, update the release checklist through `github-release-notes` and run:
@@ -96,7 +104,7 @@ Before creating the tag or release, update the release checklist through `github
 node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.json --phase pre-tag
 ```
 
-9. Create the Git tag and GitHub release. For a stable release:
+10. Create the Git tag and GitHub release. For a stable release:
 
 ```powershell
 git tag vX.Y.Z
@@ -111,7 +119,7 @@ gh release create vX.Y.Z `
 
 Upload the release ZIP and the standalone update HEX. The ZIP contains the same update HEX plus the first-install combined HEX, bootloader HEX, setup scripts, Optiboot source archive, manifest, checksums, and package README.
 
-10. Verify the published release:
+11. Verify the published release:
 
 ```powershell
 gh release view vX.Y.Z --repo OpenARDF/Arducon
@@ -119,7 +127,7 @@ gh release view vX.Y.Z --repo OpenARDF/Arducon
 
 Confirm the release page shows the expected title, notes, tag, standalone update HEX, and release ZIP.
 
-11. Re-check this checklist against the work just performed before declaring the deployment complete.
+12. Re-check this checklist against the work just performed before declaring the deployment complete.
 
 Update the release checklist through `final-checklist-audit` and run:
 
