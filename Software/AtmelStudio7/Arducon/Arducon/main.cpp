@@ -40,6 +40,11 @@
 #include "Goertzel.h"
 #include "f1975.h"
 
+typedef char ArduconEventActionStartNothingMatches[((int)ARDUCON_EVENT_ACTION_START_NOTHING == (int)START_NOTHING) ? 1 : -1];
+typedef char ArduconEventActionStartEventNowMatches[((int)ARDUCON_EVENT_ACTION_START_EVENT_NOW == (int)START_EVENT_NOW) ? 1 : -1];
+typedef char ArduconEventActionStartTransmissionsNowMatches[((int)ARDUCON_EVENT_ACTION_START_TRANSMISSIONS_NOW == (int)START_TRANSMISSIONS_NOW) ? 1 : -1];
+typedef char ArduconEventActionStartWithScheduleMatches[((int)ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE == (int)START_EVENT_WITH_STARTFINISH_TIMES) ? 1 : -1];
+
 #ifdef ATMEL_STUDIO_7
 #include <avr/io.h>
 #include <avr/eeprom.h>
@@ -1977,6 +1982,33 @@ ConfigurationState_t clockConfigurationCheck(void)
 	}
 }
 
+ArduconScheduleState_t currentScheduleState(void)
+{
+	ArduconScheduleConfig_t config;
+	config.current_epoch = g_current_epoch;
+	config.start_epoch = g_event_start_epoch;
+	config.finish_epoch = g_event_finish_epoch;
+	config.minimum_epoch = MINIMUM_EPOCH;
+	config.use_rtc_for_startstop = g_use_rtc_for_startstop;
+	config.transmissions_disabled = g_transmissions_disabled;
+
+	return(arduconClassifySchedule(&config));
+}
+
+ArduconEventActionSource_t schedulerActionSource(EventActionSource_t activationSource)
+{
+	if(activationSource == POWER_UP)
+	{
+		return(ARDUCON_EVENT_SOURCE_POWER_UP);
+	}
+	if(activationSource == PROGRAMMATIC)
+	{
+		return(ARDUCON_EVENT_SOURCE_PROGRAMMATIC);
+	}
+
+	return(ARDUCON_EVENT_SOURCE_PUSHBUTTON);
+}
+
 void updateScheduleStateAfterConfigurationChange(Fox_t* fox)
 {
 	if(clockConfigurationCheck() == CONFIGURATION_ERROR)
@@ -3692,87 +3724,20 @@ BOOL only_digits(char *s)
 
 void startEventNow(EventActionSource_t activationSource)
 {
-	ConfigurationState_t conf = clockConfigurationCheck();
+	ArduconEventAction_t action = arduconStartActionForSchedule(schedulerActionSource(activationSource), currentScheduleState());
 
 	cli();
-	if(activationSource == POWER_UP)
-	{
-		if(conf == CONFIGURATION_ERROR)
-		{
-			setupForFox(NULL, START_NOTHING);
-		}
-		else
-		{
-			setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-		}
-	}
-	else if(activationSource == PROGRAMMATIC)
-	{
-		if(conf == CONFIGURATION_ERROR)                                                                                             /* Start immediately */
-		{
-			setupForFox(NULL, START_EVENT_NOW);
-		}
-		else if((conf == WAITING_FOR_START) || (conf == SCHEDULED_EVENT_WILL_NEVER_RUN) || (conf == SCHEDULED_EVENT_DID_NOT_START)) /* Start immediately */
-		{
-			setupForFox(NULL, START_EVENT_NOW);
-		}
-		else                                                                                                                        /*if((conf == EVENT_IN_PROGRESS) */
-		{
-			setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);                                                                  /* Let the RTC start the event */
-		}
-	}
-	else                                                                                                                            /* PUSHBUTTON */
-	{
-		if(conf == CONFIGURATION_ERROR)                                                                                             /* No scheduled event */
-		{
-			setupForFox(NULL, START_EVENT_NOW);
-		}
-		else                                                                                                                        /* if(buttonActivated) */
-		{
-			if(conf == WAITING_FOR_START)
-			{
-				setupForFox(NULL, START_TRANSMISSIONS_NOW);                                                                         /* Start transmitting! */
-			}
-			else if(conf == SCHEDULED_EVENT_WILL_NEVER_RUN)
-			{
-				setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);                                                              /* rtc starts the event */
-			}
-			else                                                                                                                    /* Event should be running now */
-			{
-				setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);                                                              /* start the running event */
-			}
-		}
-	}
-
+	setupForFox(NULL, (EventAction_t)action);
 	g_LED_enunciating = FALSE;
 	sei();
 }
 
 void stopEventNow(EventActionSource_t activationSource)
 {
-	ConfigurationState_t conf = clockConfigurationCheck();
+	ArduconEventAction_t action = arduconStopActionForSchedule(schedulerActionSource(activationSource), currentScheduleState());
 
 	cli();
-
-	if(activationSource == PROGRAMMATIC)
-	{
-		setupForFox(NULL, START_NOTHING);
-	}
-	else    /* if(activationSource == PUSHBUTTON) */
-	{
-		if(conf == WAITING_FOR_START)
-		{
-			setupForFox(NULL, START_TRANSMISSIONS_NOW);
-		}
-		if(conf == SCHEDULED_EVENT_WILL_NEVER_RUN)
-		{
-			setupForFox(NULL, START_NOTHING);
-		}
-		else    /*if(conf == CONFIGURATION_ERROR) */
-		{
-			setupForFox(NULL, START_NOTHING);
-		}
-	}
+	setupForFox(NULL, (EventAction_t)action);
 
 	if(g_sync_pin_stable == STABLE_LOW)
 	{

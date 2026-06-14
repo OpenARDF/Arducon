@@ -41,6 +41,21 @@ typedef enum
 	ARDUCON_SCHEDULE_EVENT_IN_PROGRESS
 } ArduconScheduleState_t;
 
+typedef enum
+{
+	ARDUCON_EVENT_SOURCE_POWER_UP,
+	ARDUCON_EVENT_SOURCE_PUSHBUTTON,
+	ARDUCON_EVENT_SOURCE_PROGRAMMATIC
+} ArduconEventActionSource_t;
+
+typedef enum
+{
+	ARDUCON_EVENT_ACTION_START_NOTHING,
+	ARDUCON_EVENT_ACTION_START_EVENT_NOW,
+	ARDUCON_EVENT_ACTION_START_TRANSMISSIONS_NOW,
+	ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE
+} ArduconEventAction_t;
+
 typedef struct
 {
 	time_t current_epoch;
@@ -169,6 +184,53 @@ static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t curre
 	}
 
 	return plan;
+}
+
+static inline ArduconEventAction_t arduconStartActionForSchedule(ArduconEventActionSource_t activation_source, ArduconScheduleState_t schedule_state)
+{
+	if(activation_source == ARDUCON_EVENT_SOURCE_POWER_UP)
+	{
+		if(schedule_state == ARDUCON_SCHEDULE_CONFIGURATION_ERROR)
+		{
+			return ARDUCON_EVENT_ACTION_START_NOTHING;
+		}
+		return ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE;
+	}
+
+	if(activation_source == ARDUCON_EVENT_SOURCE_PROGRAMMATIC)
+	{
+		if(schedule_state == ARDUCON_SCHEDULE_EVENT_IN_PROGRESS)
+		{
+			return ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE;
+		}
+		return ARDUCON_EVENT_ACTION_START_EVENT_NOW;
+	}
+
+	if(schedule_state == ARDUCON_SCHEDULE_CONFIGURATION_ERROR)
+	{
+		return ARDUCON_EVENT_ACTION_START_EVENT_NOW;
+	}
+	if(schedule_state == ARDUCON_SCHEDULE_WAITING_FOR_START)
+	{
+		return ARDUCON_EVENT_ACTION_START_TRANSMISSIONS_NOW;
+	}
+
+	return ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE;
+}
+
+static inline ArduconEventAction_t arduconStopActionForSchedule(ArduconEventActionSource_t activation_source, ArduconScheduleState_t schedule_state)
+{
+	if(activation_source == ARDUCON_EVENT_SOURCE_PROGRAMMATIC)
+	{
+		return ARDUCON_EVENT_ACTION_START_NOTHING;
+	}
+
+	if(schedule_state == ARDUCON_SCHEDULE_WAITING_FOR_START)
+	{
+		return ARDUCON_EVENT_ACTION_START_TRANSMISSIONS_NOW;
+	}
+
+	return ARDUCON_EVENT_ACTION_START_NOTHING;
 }
 
 #ifdef __cplusplus

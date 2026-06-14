@@ -144,6 +144,14 @@ assertContains(setupForFox, "writePttFast(OFF)", "setupForFox");
 assertContains(setupForFox, "updateAudioSamplingForAMTransmit()", "setupForFox");
 assertContains(setupForFox, "g_reset_transmit_service_state = TRUE", "setupForFox");
 
+const startEventNow = extractFunction("startEventNow");
+assertContains(startEventNow, "arduconStartActionForSchedule", "startEventNow");
+assertContains(startEventNow, "setupForFox(NULL, (EventAction_t)action)", "startEventNow");
+
+const stopEventNow = extractFunction("stopEventNow");
+assertContains(stopEventNow, "arduconStopActionForSchedule", "stopEventNow");
+assertContains(stopEventNow, "setupForFox(NULL, (EventAction_t)action)", "stopEventNow");
+
 const loop = extractFunction("loop");
 const rtcServiceIndex = loop.indexOf("servicePendingRTCSeconds();");
 const periodicServiceIndex = loop.indexOf("servicePendingPeriodicTasks();");
