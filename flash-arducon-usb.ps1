@@ -65,27 +65,45 @@ function Resolve-SerialSlingerClasspath {
 
     if(-not [string]::IsNullOrWhiteSpace($RequestedClasspath))
     {
-        return $RequestedClasspath
+        return Expand-ClasspathWildcard -Classpath $RequestedClasspath
     }
 
     if($env:SERIALSLINGER_CLASSPATH)
     {
-        return $env:SERIALSLINGER_CLASSPATH
+        return Expand-ClasspathWildcard -Classpath $env:SERIALSLINGER_CLASSPATH
     }
 
     $candidate = '/Users/charlesscharlau/Documents/GitHub/SerialSlinger/shared/build/packaging/input/*'
     if(Test-Path -LiteralPath (Split-Path -Parent $candidate))
     {
-        return $candidate
+        return Expand-ClasspathWildcard -Classpath $candidate
     }
 
     $installed = '/Applications/SerialSlinger.app/Contents/app/*'
     if(Test-Path -LiteralPath (Split-Path -Parent $installed))
     {
-        return $installed
+        return Expand-ClasspathWildcard -Classpath $installed
     }
 
     throw 'SerialSlinger classpath not found. Pass -SerialSlingerClasspath or set SERIALSLINGER_CLASSPATH.'
+}
+
+function Expand-ClasspathWildcard {
+    param([string]$Classpath)
+
+    if(-not $Classpath.EndsWith('/*'))
+    {
+        return $Classpath
+    }
+
+    $classpathDir = $Classpath.Substring(0, $Classpath.Length - 2)
+    $jars = @(Get-ChildItem -LiteralPath $classpathDir -Filter '*.jar' -File | Sort-Object Name)
+    if($jars.Count -eq 0)
+    {
+        throw "No jars found in SerialSlinger classpath directory: $classpathDir"
+    }
+
+    return (($jars | ForEach-Object { $_.FullName }) -join [IO.Path]::PathSeparator)
 }
 
 function Read-SerialText {
@@ -132,14 +150,14 @@ function Stop-ArduconEvent {
         for($attempt = 1; $attempt -le 3; $attempt++)
         {
             $serial.DiscardInBuffer()
-            $serial.Write("SYN 0`r")
+            $serial.Write("SYN 0`r`n")
             [void](Read-SerialText -SerialPort $serial -Milliseconds 500)
             Start-Sleep -Milliseconds 250
         }
 
         Start-Sleep -Milliseconds $SettleMilliseconds
         $serial.DiscardInBuffer()
-        $serial.Write("INF`r")
+        $serial.Write("INF`r`n")
         $info = Read-SerialText -SerialPort $serial -Milliseconds 1500
         if($info -notmatch 'INF product=Arducon')
         {
