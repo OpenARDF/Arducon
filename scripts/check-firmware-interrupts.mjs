@@ -133,6 +133,7 @@ assertContains(setupForFox, "BOOL startActiveEventNow = FALSE", "setupForFox");
 assertContains(setupForFox, "g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES", "setupForFox");
 assertContains(setupForFox, "g_transmissions_disabled = FALSE", "setupForFox");
 assertContains(setupForFox, "g_transmissions_disabled = TRUE", "setupForFox");
+assertContains(setupForFox, "arduconPlanFoxTiming", "setupForFox");
 assertContains(setupForFox, "arduconPlanScheduledEvent", "setupForFox");
 assertContains(setupForFox, "plan.event_in_progress", "setupForFox");
 assertContains(setupForFox, "if(startActiveEventNow && !g_thermal_shutdown)", "setupForFox");

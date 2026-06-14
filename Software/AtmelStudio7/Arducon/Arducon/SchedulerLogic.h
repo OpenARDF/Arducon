@@ -56,6 +56,18 @@ typedef enum
 	ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE
 } ArduconEventAction_t;
 
+typedef enum
+{
+	ARDUCON_FOX_BEACON = 0,
+	ARDUCON_FOX_CLASSIC_1 = 1,
+	ARDUCON_FOX_CLASSIC_5 = 5,
+	ARDUCON_FOX_SPRINT_S1 = 8,
+	ARDUCON_FOX_SPRINT_S5 = 12,
+	ARDUCON_FOX_SPRINT_F1 = 13,
+	ARDUCON_FOX_SPRINT_F5 = 17,
+	ARDUCON_FOX_REPORT_BATTERY = 19
+} ArduconFoxSetting_t;
+
 typedef struct
 {
 	time_t current_epoch;
@@ -83,6 +95,17 @@ typedef struct
 	uint8_t start_event;
 	uint8_t finish_event;
 } ArduconRTCGatePlan_t;
+
+typedef struct
+{
+	int on_air_interval_seconds;
+	int cycle_period_seconds;
+	int number_of_foxes;
+	int fox_id_offset;
+	int pattern_codespeed;
+	int id_interval_seconds;
+	uint8_t use_ptt_periodic_reset;
+} ArduconFoxTimingPlan_t;
 
 static inline int arduconSchedulerClamp(int low, int value, int high)
 {
@@ -179,6 +202,61 @@ static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time
 static inline uint8_t arduconCurrentFoxShouldTransmit(int number_of_foxes, int fox, int fox_counter, int fox_id_offset)
 {
 	return ((number_of_foxes == 1) || ((number_of_foxes > 1) && (fox == (fox_counter + fox_id_offset))));
+}
+
+static inline ArduconFoxTimingPlan_t arduconPlanFoxTiming(int fox, uint8_t ptt_periodic_reset_enabled)
+{
+	ArduconFoxTimingPlan_t plan;
+	plan.on_air_interval_seconds = ptt_periodic_reset_enabled ? 60 : 600;
+	plan.cycle_period_seconds = plan.on_air_interval_seconds;
+	plan.number_of_foxes = 1;
+	plan.fox_id_offset = 0;
+	plan.pattern_codespeed = 8;
+	plan.id_interval_seconds = plan.on_air_interval_seconds;
+	plan.use_ptt_periodic_reset = ptt_periodic_reset_enabled;
+
+	if((fox >= ARDUCON_FOX_CLASSIC_1) && (fox <= ARDUCON_FOX_CLASSIC_5))
+	{
+		plan.on_air_interval_seconds = 60;
+		plan.cycle_period_seconds = 300;
+		plan.number_of_foxes = 5;
+		plan.fox_id_offset = 0;
+		plan.pattern_codespeed = 8;
+		plan.id_interval_seconds = 300;
+		plan.use_ptt_periodic_reset = 0;
+	}
+	else if((fox >= ARDUCON_FOX_SPRINT_S1) && (fox <= ARDUCON_FOX_SPRINT_S5))
+	{
+		plan.on_air_interval_seconds = 12;
+		plan.cycle_period_seconds = 60;
+		plan.number_of_foxes = 5;
+		plan.fox_id_offset = ARDUCON_FOX_SPRINT_S1 - 1;
+		plan.pattern_codespeed = 8;
+		plan.id_interval_seconds = 600;
+		plan.use_ptt_periodic_reset = 0;
+	}
+	else if((fox >= ARDUCON_FOX_SPRINT_F1) && (fox <= ARDUCON_FOX_SPRINT_F5))
+	{
+		plan.on_air_interval_seconds = 12;
+		plan.cycle_period_seconds = 60;
+		plan.number_of_foxes = 5;
+		plan.fox_id_offset = ARDUCON_FOX_SPRINT_F1 - 1;
+		plan.pattern_codespeed = 15;
+		plan.id_interval_seconds = 600;
+		plan.use_ptt_periodic_reset = 0;
+	}
+	else if(fox == ARDUCON_FOX_REPORT_BATTERY)
+	{
+		plan.on_air_interval_seconds = 30;
+		plan.cycle_period_seconds = 60;
+		plan.number_of_foxes = 2;
+		plan.fox_id_offset = ARDUCON_FOX_REPORT_BATTERY - 1;
+		plan.pattern_codespeed = 8;
+		plan.id_interval_seconds = 60;
+		plan.use_ptt_periodic_reset = 0;
+	}
+
+	return plan;
 }
 
 static inline int arduconScheduledFoxCounter(int seconds_since_sync, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes)

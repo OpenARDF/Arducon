@@ -129,6 +129,61 @@ void checkFoxSlotLogic()
 	CHECK(arduconScheduledFoxCounter(125, 0, 60, 5) == 1);
 }
 
+void checkFoxTimingPlans()
+{
+	ArduconFoxTimingPlan_t beacon = arduconPlanFoxTiming(ARDUCON_FOX_BEACON, 0);
+	CHECK(beacon.on_air_interval_seconds == 600);
+	CHECK(beacon.cycle_period_seconds == 600);
+	CHECK(beacon.number_of_foxes == 1);
+	CHECK(beacon.fox_id_offset == 0);
+	CHECK(beacon.pattern_codespeed == 8);
+	CHECK(beacon.id_interval_seconds == 600);
+	CHECK(!beacon.use_ptt_periodic_reset);
+
+	ArduconFoxTimingPlan_t beaconPeriodicReset = arduconPlanFoxTiming(ARDUCON_FOX_BEACON, 1);
+	CHECK(beaconPeriodicReset.on_air_interval_seconds == 60);
+	CHECK(beaconPeriodicReset.cycle_period_seconds == 60);
+	CHECK(beaconPeriodicReset.id_interval_seconds == 60);
+	CHECK(beaconPeriodicReset.use_ptt_periodic_reset);
+
+	ArduconFoxTimingPlan_t spectator = arduconPlanFoxTiming(7, 0);
+	CHECK(spectator.on_air_interval_seconds == 600);
+	CHECK(spectator.number_of_foxes == 1);
+
+	ArduconFoxTimingPlan_t classic = arduconPlanFoxTiming(ARDUCON_FOX_CLASSIC_5, 1);
+	CHECK(classic.on_air_interval_seconds == 60);
+	CHECK(classic.cycle_period_seconds == 300);
+	CHECK(classic.number_of_foxes == 5);
+	CHECK(classic.fox_id_offset == 0);
+	CHECK(classic.pattern_codespeed == 8);
+	CHECK(classic.id_interval_seconds == 300);
+	CHECK(!classic.use_ptt_periodic_reset);
+
+	ArduconFoxTimingPlan_t sprintSlow = arduconPlanFoxTiming(ARDUCON_FOX_SPRINT_S1, 0);
+	CHECK(sprintSlow.on_air_interval_seconds == 12);
+	CHECK(sprintSlow.cycle_period_seconds == 60);
+	CHECK(sprintSlow.number_of_foxes == 5);
+	CHECK(sprintSlow.fox_id_offset == ARDUCON_FOX_SPRINT_S1 - 1);
+	CHECK(sprintSlow.pattern_codespeed == 8);
+	CHECK(sprintSlow.id_interval_seconds == 600);
+
+	ArduconFoxTimingPlan_t sprintFast = arduconPlanFoxTiming(ARDUCON_FOX_SPRINT_F5, 0);
+	CHECK(sprintFast.on_air_interval_seconds == 12);
+	CHECK(sprintFast.cycle_period_seconds == 60);
+	CHECK(sprintFast.number_of_foxes == 5);
+	CHECK(sprintFast.fox_id_offset == ARDUCON_FOX_SPRINT_F1 - 1);
+	CHECK(sprintFast.pattern_codespeed == 15);
+	CHECK(sprintFast.id_interval_seconds == 600);
+
+	ArduconFoxTimingPlan_t reportBattery = arduconPlanFoxTiming(ARDUCON_FOX_REPORT_BATTERY, 0);
+	CHECK(reportBattery.on_air_interval_seconds == 30);
+	CHECK(reportBattery.cycle_period_seconds == 60);
+	CHECK(reportBattery.number_of_foxes == 2);
+	CHECK(reportBattery.fox_id_offset == ARDUCON_FOX_REPORT_BATTERY - 1);
+	CHECK(reportBattery.pattern_codespeed == 8);
+	CHECK(reportBattery.id_interval_seconds == 60);
+}
+
 void checkScheduledEventPlans()
 {
 	const time_t start = minimumEpoch + 200;
@@ -199,6 +254,7 @@ int main()
 	checkRadioPrePower();
 	checkRTCGatePlans();
 	checkFoxSlotLogic();
+	checkFoxTimingPlans();
 	checkScheduledEventPlans();
 	checkStartStopActions();
 

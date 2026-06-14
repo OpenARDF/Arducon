@@ -44,6 +44,18 @@ typedef char ArduconEventActionStartNothingMatches[((int)ARDUCON_EVENT_ACTION_ST
 typedef char ArduconEventActionStartEventNowMatches[((int)ARDUCON_EVENT_ACTION_START_EVENT_NOW == (int)START_EVENT_NOW) ? 1 : -1];
 typedef char ArduconEventActionStartTransmissionsNowMatches[((int)ARDUCON_EVENT_ACTION_START_TRANSMISSIONS_NOW == (int)START_TRANSMISSIONS_NOW) ? 1 : -1];
 typedef char ArduconEventActionStartWithScheduleMatches[((int)ARDUCON_EVENT_ACTION_START_WITH_SCHEDULE == (int)START_EVENT_WITH_STARTFINISH_TIMES) ? 1 : -1];
+typedef char ArduconFoxBeaconMatches[((int)ARDUCON_FOX_BEACON == (int)BEACON) ? 1 : -1];
+typedef char ArduconFoxClassic1Matches[((int)ARDUCON_FOX_CLASSIC_1 == (int)FOX_1) ? 1 : -1];
+typedef char ArduconFoxClassic5Matches[((int)ARDUCON_FOX_CLASSIC_5 == (int)FOX_5) ? 1 : -1];
+typedef char ArduconFoxSprintS1Matches[((int)ARDUCON_FOX_SPRINT_S1 == (int)SPRINT_S1) ? 1 : -1];
+typedef char ArduconFoxSprintS5Matches[((int)ARDUCON_FOX_SPRINT_S5 == (int)SPRINT_S5) ? 1 : -1];
+typedef char ArduconFoxSprintF1Matches[((int)ARDUCON_FOX_SPRINT_F1 == (int)SPRINT_F1) ? 1 : -1];
+typedef char ArduconFoxSprintF5Matches[((int)ARDUCON_FOX_SPRINT_F5 == (int)SPRINT_F5) ? 1 : -1];
+typedef char ArduconSprintSlowCodeSpeedMatches[(8 == SPRINT_SLOW_CODE_SPEED) ? 1 : -1];
+typedef char ArduconSprintFastCodeSpeedMatches[(15 == SPRINT_FAST_CODE_SPEED) ? 1 : -1];
+#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
+typedef char ArduconFoxReportBatteryMatches[((int)ARDUCON_FOX_REPORT_BATTERY == (int)REPORT_BATTERY) ? 1 : -1];
+#endif
 
 #ifdef ATMEL_STUDIO_7
 #include <avr/io.h>
@@ -3366,81 +3378,14 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 
 	cli();
 
-	switch(g_fox)
-	{
-		case FOX_1:
-		case FOX_2:
-		case FOX_3:
-		case FOX_4:
-		case FOX_5:
-		{
-			g_on_air_interval_seconds = 60;
-			g_cycle_period_seconds = 300;
-			g_number_of_foxes = 5;
-			g_fox_id_offset = 0;
-			g_pattern_codespeed = 8;
-			g_id_interval_seconds = 300;
-		}
-		break;
-
-		case SPRINT_S1:
-		case SPRINT_S2:
-		case SPRINT_S3:
-		case SPRINT_S4:
-		case SPRINT_S5:
-		{
-			g_on_air_interval_seconds = 12;
-			g_cycle_period_seconds = 60;
-			g_number_of_foxes = 5;
-			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
-			g_fox_id_offset = SPRINT_S1 - 1;
-			g_id_interval_seconds = 600;
-		}
-		break;
-
-		case SPRINT_F1:
-		case SPRINT_F2:
-		case SPRINT_F3:
-		case SPRINT_F4:
-		case SPRINT_F5:
-		{
-			g_on_air_interval_seconds = 12;
-			g_cycle_period_seconds = 60;
-			g_number_of_foxes = 5;
-			g_pattern_codespeed = SPRINT_FAST_CODE_SPEED;
-			g_fox_id_offset = SPRINT_F1 - 1;
-			g_id_interval_seconds = 600;
-		}
-		break;
-
-#if SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-		case REPORT_BATTERY:
-		{
-			g_on_air_interval_seconds = 30;
-			g_cycle_period_seconds = 60;
-			g_number_of_foxes = 2;
-			g_pattern_codespeed = SPRINT_SLOW_CODE_SPEED;
-			g_fox_id_offset = REPORT_BATTERY - 1;
-			g_id_interval_seconds = 60;
-		}
-		break;
-#endif // SUPPORT_TEMP_AND_VOLTAGE_REPORTING
-
-
-		/* case BEACON:
-		 * case SPECTATOR: */
-		default:
-		{
-			g_use_ptt_periodic_reset = g_ptt_periodic_reset_enabled;
-			g_number_of_foxes = 1;
-			g_pattern_codespeed = 8;
-			g_id_interval_seconds = g_ptt_periodic_reset_enabled ? 60 : 600;
-			g_on_air_interval_seconds = g_id_interval_seconds;
-			g_fox_id_offset = 0;
-			g_cycle_period_seconds = g_id_interval_seconds;
-		}
-		break;
-	}
+	ArduconFoxTimingPlan_t foxTiming = arduconPlanFoxTiming((int)g_fox, g_ptt_periodic_reset_enabled);
+	g_on_air_interval_seconds = foxTiming.on_air_interval_seconds;
+	g_cycle_period_seconds = foxTiming.cycle_period_seconds;
+	g_number_of_foxes = foxTiming.number_of_foxes;
+	g_fox_id_offset = foxTiming.fox_id_offset;
+	g_pattern_codespeed = foxTiming.pattern_codespeed;
+	g_id_interval_seconds = foxTiming.id_interval_seconds;
+	g_use_ptt_periodic_reset = foxTiming.use_ptt_periodic_reset;
 
 	if(action == START_NOTHING)
 	{
