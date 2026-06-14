@@ -25,6 +25,13 @@ serial-bootloader-smoke-via-app port:
 serial-update port hex="tmp/cli-release/Arducon.hex":
     ${AVRDUDE:-avrdude} -v -p m328p -c arduino -P "{{port}}" -b 115200 -D -U "flash:w:{{hex}}:i"
 
+flash-latest port="/dev/cu.usbserial-AB9PEG0Z":
+    just package-skip-build
+    pwsh -NoProfile -File ./flash-arducon-usb.ps1 -Port "{{port}}"
+
+stop-running-arducon port="/dev/cu.usbserial-AB9PEG0Z":
+    pwsh -NoProfile -File ./flash-arducon-usb.ps1 -Port "{{port}}" -SkipUpdate
+
 size:
     pwsh -NoProfile -File ./check-firmware-size.ps1 -Configuration Release -HexPath ./tmp/cli-release/Arducon.hex
 
