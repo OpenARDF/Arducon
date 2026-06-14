@@ -139,5 +139,5 @@ node .\scripts\check-release-checklist.mjs --file .\release-checklist-vX.Y.Z.jso
 
 - Release package directories and ZIPs are generated artifacts and are ignored by Git. Upload them to GitHub Releases; do not commit them unless explicitly requested.
 - Arducon release packages should provide the same user-facing update/setup contents as SignalSlinger packages, except that Arducon has one ATmega328P package instead of multiple hardware-option packages. Keep the standalone update HEX plus the complete release ZIP.
-- Normal Arducon release packages are not yet directly updateable by SerialSlinger. SerialSlinger needs product-aware Arducon/STK500v1 support before automatic Arducon updates can consume these packages.
+- Current SerialSlinger builds support Arducon release packages through the product-aware `arducon-update` path using Optiboot/STK500v1 at `115200` baud.
 - `BOOTLOADER_WORKFLOW.md` remains the source of truth for Optiboot provisioning, EESAVE, and serial bootloader smoke testing.
