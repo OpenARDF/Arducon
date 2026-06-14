@@ -389,7 +389,7 @@ typedef enum
 /******************************************************
  * EEPROM definitions */
 #define EEPROM_INITIALIZED_FLAG 0x00BB  /* Never set to 0xFFFF */
-#define EEPROM_LAYOUT_VERSION 0x0003    /* Increment when EEPROM layout/defaults intentionally reset old contents */
+#define EEPROM_LAYOUT_VERSION 0x0004    /* Increment when EEPROM layout/defaults intentionally reset old contents */
 #define EEPROM_UNINITIALIZED 0x00
 
 #define EEPROM_START_TIME_DEFAULT 0
@@ -416,6 +416,7 @@ typedef enum
 #define EEPROM_FINISH_EPOCH_DEFAULT 0
 #define EEPROM_UTC_OFFSET_DEFAULT 0
 #define EEPROM_PTT_PERIODIC_RESET_DEFAULT 0
+#define EEPROM_DAYS_TO_RUN_DEFAULT 1
 #define EEPROM_DTMF_UNLOCK_CODE_DEFAULT ("1357")
 
 #define MINIMUM_EPOCH ((time_t)1609459200)  /* 1 Jan 2021 00:00:00 */

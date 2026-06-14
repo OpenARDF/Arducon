@@ -24,6 +24,7 @@ ArduconScheduleConfig_t schedule(time_t currentEpoch, time_t startEpoch, time_t 
 	config.minimum_epoch = minimumEpoch;
 	config.use_rtc_for_startstop = useRtc;
 	config.transmissions_disabled = disabled;
+	config.event_days = 1;
 	return config;
 }
 
@@ -77,37 +78,37 @@ void checkRTCGatePlans()
 	const time_t start = minimumEpoch + 200;
 	const time_t finish = minimumEpoch + 500;
 
-	ArduconRTCGatePlan_t noRtc = arduconPlanRTCGate(start, start, finish, 5, 1, 0, 0);
+	ArduconRTCGatePlan_t noRtc = arduconPlanRTCGate(start, start, finish, 1, 5, 1, 0, 0);
 	CHECK(!noRtc.pre_power_radio);
 	CHECK(!noRtc.start_event);
 	CHECK(!noRtc.finish_event);
 
-	ArduconRTCGatePlan_t waiting = arduconPlanRTCGate(start - 6, start, finish, 5, 1, 1, 0);
+	ArduconRTCGatePlan_t waiting = arduconPlanRTCGate(start - 6, start, finish, 1, 5, 1, 1, 0);
 	CHECK(!waiting.pre_power_radio);
 	CHECK(!waiting.start_event);
 	CHECK(!waiting.finish_event);
 
-	ArduconRTCGatePlan_t prePower = arduconPlanRTCGate(start - 5, start, finish, 5, 1, 1, 0);
+	ArduconRTCGatePlan_t prePower = arduconPlanRTCGate(start - 5, start, finish, 1, 5, 1, 1, 0);
 	CHECK(prePower.pre_power_radio);
 	CHECK(!prePower.start_event);
 	CHECK(!prePower.finish_event);
 
-	ArduconRTCGatePlan_t startNow = arduconPlanRTCGate(start, start, finish, 5, 1, 1, 0);
+	ArduconRTCGatePlan_t startNow = arduconPlanRTCGate(start, start, finish, 1, 5, 1, 1, 0);
 	CHECK(startNow.pre_power_radio);
 	CHECK(startNow.start_event);
 	CHECK(!startNow.finish_event);
 
-	ArduconRTCGatePlan_t thermalHold = arduconPlanRTCGate(start, start, finish, 5, 1, 1, 1);
+	ArduconRTCGatePlan_t thermalHold = arduconPlanRTCGate(start, start, finish, 1, 5, 1, 1, 1);
 	CHECK(!thermalHold.pre_power_radio);
 	CHECK(!thermalHold.start_event);
 	CHECK(!thermalHold.finish_event);
 
-	ArduconRTCGatePlan_t running = arduconPlanRTCGate(finish - 1, start, finish, 5, 0, 1, 0);
+	ArduconRTCGatePlan_t running = arduconPlanRTCGate(finish - 1, start, finish, 1, 5, 0, 1, 0);
 	CHECK(!running.pre_power_radio);
 	CHECK(!running.start_event);
 	CHECK(!running.finish_event);
 
-	ArduconRTCGatePlan_t finishNow = arduconPlanRTCGate(finish, start, finish, 5, 0, 1, 0);
+	ArduconRTCGatePlan_t finishNow = arduconPlanRTCGate(finish, start, finish, 1, 5, 0, 1, 0);
 	CHECK(!finishNow.pre_power_radio);
 	CHECK(!finishNow.start_event);
 	CHECK(finishNow.finish_event);
@@ -188,7 +189,7 @@ void checkScheduledEventPlans()
 {
 	const time_t start = minimumEpoch + 200;
 
-	ArduconScheduledEventPlan_t future = arduconPlanScheduledEvent(start - 301, start, 300, 60, 5, 300);
+	ArduconScheduledEventPlan_t future = arduconPlanScheduledEvent(start - 301, start, start + 1000, 1, 300, 60, 5, 300);
 	CHECK(future.seconds_since_sync == 0);
 	CHECK(future.fox_counter == 1);
 	CHECK(future.transmissions_disabled);
@@ -197,18 +198,18 @@ void checkScheduledEventPlans()
 	CHECK(!future.event_in_progress);
 	CHECK(future.power_radio_off_until_start);
 
-	ArduconScheduledEventPlan_t nearFuture = arduconPlanScheduledEvent(start - 300, start, 300, 60, 5, 300);
+	ArduconScheduledEventPlan_t nearFuture = arduconPlanScheduledEvent(start - 300, start, start + 1000, 1, 300, 60, 5, 300);
 	CHECK(nearFuture.transmissions_disabled);
 	CHECK(!nearFuture.power_radio_off_until_start);
 
-	ArduconScheduledEventPlan_t exactStart = arduconPlanScheduledEvent(start, start, 300, 60, 5, 300);
+	ArduconScheduledEventPlan_t exactStart = arduconPlanScheduledEvent(start, start, start + 1000, 1, 300, 60, 5, 300);
 	CHECK(exactStart.seconds_since_sync == 0);
 	CHECK(exactStart.fox_counter == 1);
 	CHECK(exactStart.transmissions_disabled);
 	CHECK(!exactStart.start_active_event_now);
 	CHECK(!exactStart.event_in_progress);
 
-	ArduconScheduledEventPlan_t inProgress = arduconPlanScheduledEvent(start + 125, start, 300, 60, 5, 300);
+	ArduconScheduledEventPlan_t inProgress = arduconPlanScheduledEvent(start + 125, start, start + 1000, 1, 300, 60, 5, 300);
 	CHECK(inProgress.seconds_since_sync == 125);
 	CHECK(inProgress.fox_counter == 3);
 	CHECK(!inProgress.transmissions_disabled);
@@ -217,10 +218,40 @@ void checkScheduledEventPlans()
 	CHECK(inProgress.event_in_progress);
 	CHECK(!inProgress.power_radio_off_until_start);
 
-	ArduconScheduledEventPlan_t nextCycle = arduconPlanScheduledEvent(start + 300, start, 300, 60, 5, 300);
+	ArduconScheduledEventPlan_t nextCycle = arduconPlanScheduledEvent(start + 300, start, start + 1000, 1, 300, 60, 5, 300);
 	CHECK(nextCycle.seconds_since_sync == 300);
 	CHECK(nextCycle.fox_counter == 1);
 	CHECK(!nextCycle.transmissions_disabled);
+}
+
+void checkMultiDayScheduleWindows()
+{
+	const time_t start = minimumEpoch + 3600;
+	const time_t finish = start + 7200;
+	time_t effectiveStart = 0;
+	time_t effectiveFinish = 0;
+
+	CHECK(arduconCurrentOrNextScheduleWindow(start - 60, start, finish, 3, &effectiveStart, &effectiveFinish));
+	CHECK(effectiveStart == start);
+	CHECK(effectiveFinish == finish);
+
+	CHECK(arduconCurrentOrNextScheduleWindow(finish + 60, start, finish, 3, &effectiveStart, &effectiveFinish));
+	CHECK(effectiveStart == start + 86400);
+	CHECK(effectiveFinish == finish + 86400);
+
+	CHECK(!arduconCurrentOrNextScheduleWindow(finish + (3 * 86400), start, finish, 3, &effectiveStart, &effectiveFinish));
+
+	ArduconRTCGatePlan_t nextDayStart = arduconPlanRTCGate(start + 86400, start, finish, 3, 5, 1, 1, 0);
+	CHECK(nextDayStart.start_event);
+	CHECK(nextDayStart.seconds_since_sync == 0);
+
+	ArduconRTCGatePlan_t finishFirstDay = arduconPlanRTCGate(finish, start, finish, 3, 5, 0, 1, 0);
+	CHECK(finishFirstDay.finish_event);
+
+	ArduconScheduledEventPlan_t secondDayInProgress = arduconPlanScheduledEvent(start + 86400 + 125, start, finish, 3, 300, 60, 5, 300);
+	CHECK(secondDayInProgress.event_in_progress);
+	CHECK(secondDayInProgress.seconds_since_sync == 125);
+	CHECK(secondDayInProgress.fox_counter == 3);
 }
 
 void checkStartStopActions()
@@ -256,6 +287,7 @@ int main()
 	checkFoxSlotLogic();
 	checkFoxTimingPlans();
 	checkScheduledEventPlans();
+	checkMultiDayScheduleWindows();
 	checkStartStopActions();
 
 	std::cout << "Scheduler logic unit tests passed." << '\n';

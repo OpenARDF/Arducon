@@ -76,6 +76,7 @@ typedef struct
 	time_t minimum_epoch;
 	uint8_t use_rtc_for_startstop;
 	uint8_t transmissions_disabled;
+	uint8_t event_days;
 } ArduconScheduleConfig_t;
 
 typedef struct
@@ -94,6 +95,7 @@ typedef struct
 	uint8_t pre_power_radio;
 	uint8_t start_event;
 	uint8_t finish_event;
+	int seconds_since_sync;
 } ArduconRTCGatePlan_t;
 
 typedef struct
@@ -120,8 +122,73 @@ static inline int arduconSchedulerClamp(int low, int value, int high)
 	return value;
 }
 
+static inline uint8_t arduconNormalizedEventDays(uint8_t event_days)
+{
+	return event_days ? event_days : 1;
+}
+
+static inline uint8_t arduconCurrentOrNextScheduleWindow(time_t current_epoch, time_t start_epoch, time_t finish_epoch, uint8_t event_days, time_t* effective_start_epoch, time_t* effective_finish_epoch)
+{
+	uint8_t days = arduconNormalizedEventDays(event_days);
+
+	*effective_start_epoch = start_epoch;
+	*effective_finish_epoch = finish_epoch;
+
+	if(finish_epoch <= start_epoch)
+	{
+		return 0;
+	}
+
+	if((days <= 1) || (current_epoch < finish_epoch))
+	{
+		return 1;
+	}
+
+	uint8_t day_offset = (uint8_t)(((current_epoch - finish_epoch) / 86400L) + 1);
+	if(day_offset >= days)
+	{
+		return 0;
+	}
+
+	*effective_start_epoch = start_epoch + ((time_t)day_offset * 86400L);
+	*effective_finish_epoch = finish_epoch + ((time_t)day_offset * 86400L);
+
+	return 1;
+}
+
+static inline uint8_t arduconActiveScheduleWindow(time_t current_epoch, time_t start_epoch, time_t finish_epoch, uint8_t event_days, time_t* effective_start_epoch, time_t* effective_finish_epoch)
+{
+	uint8_t days = arduconNormalizedEventDays(event_days);
+	uint8_t day_offset = 0;
+
+	*effective_start_epoch = start_epoch;
+	*effective_finish_epoch = finish_epoch;
+
+	if(finish_epoch <= start_epoch)
+	{
+		return 0;
+	}
+
+	if((days > 1) && (current_epoch > start_epoch))
+	{
+		day_offset = (uint8_t)((current_epoch - start_epoch) / 86400L);
+		if(day_offset >= days)
+		{
+			return 0;
+		}
+	}
+
+	*effective_start_epoch = start_epoch + ((time_t)day_offset * 86400L);
+	*effective_finish_epoch = finish_epoch + ((time_t)day_offset * 86400L);
+
+	return 1;
+}
+
 static inline ArduconScheduleState_t arduconClassifySchedule(const ArduconScheduleConfig_t* config)
 {
+	time_t effective_start_epoch;
+	time_t effective_finish_epoch;
+
 	if(!config)
 	{
 		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
@@ -132,17 +199,17 @@ static inline ArduconScheduleState_t arduconClassifySchedule(const ArduconSchedu
 		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
 	}
 
-	if(config->finish_epoch <= config->start_epoch)
+	if(!arduconCurrentOrNextScheduleWindow(config->current_epoch, config->start_epoch, config->finish_epoch, config->event_days, &effective_start_epoch, &effective_finish_epoch))
 	{
 		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
 	}
 
-	if(config->current_epoch > config->finish_epoch)
+	if(config->current_epoch > effective_finish_epoch)
 	{
 		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
 	}
 
-	if(config->current_epoch > config->start_epoch)
+	if(config->current_epoch > effective_start_epoch)
 	{
 		if(config->transmissions_disabled)
 		{
@@ -174,12 +241,15 @@ static inline uint8_t arduconShouldFinishScheduledEvent(time_t current_epoch, ti
 	return (current_epoch >= finish_epoch);
 }
 
-static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time_t start_epoch, time_t finish_epoch, int pre_power_lead_seconds, uint8_t transmissions_disabled, uint8_t use_rtc_for_startstop, uint8_t thermal_shutdown)
+static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time_t start_epoch, time_t finish_epoch, uint8_t event_days, int pre_power_lead_seconds, uint8_t transmissions_disabled, uint8_t use_rtc_for_startstop, uint8_t thermal_shutdown)
 {
 	ArduconRTCGatePlan_t plan;
+	time_t effective_start_epoch = start_epoch;
+	time_t effective_finish_epoch = finish_epoch;
 	plan.pre_power_radio = 0;
 	plan.start_event = 0;
 	plan.finish_event = 0;
+	plan.seconds_since_sync = 0;
 
 	if(!use_rtc_for_startstop)
 	{
@@ -188,12 +258,24 @@ static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time
 
 	if(transmissions_disabled)
 	{
-		plan.pre_power_radio = arduconShouldPrePowerRadio(current_epoch, start_epoch, pre_power_lead_seconds, thermal_shutdown);
-		plan.start_event = arduconShouldStartScheduledEvent(current_epoch, start_epoch, finish_epoch, thermal_shutdown);
+		if(arduconCurrentOrNextScheduleWindow(current_epoch, start_epoch, finish_epoch, event_days, &effective_start_epoch, &effective_finish_epoch))
+		{
+			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int)(current_epoch - effective_start_epoch) : 0;
+			plan.pre_power_radio = arduconShouldPrePowerRadio(current_epoch, effective_start_epoch, pre_power_lead_seconds, thermal_shutdown);
+			plan.start_event = arduconShouldStartScheduledEvent(current_epoch, effective_start_epoch, effective_finish_epoch, thermal_shutdown);
+		}
 	}
 	else
 	{
-		plan.finish_event = arduconShouldFinishScheduledEvent(current_epoch, finish_epoch);
+		if(arduconActiveScheduleWindow(current_epoch, start_epoch, finish_epoch, event_days, &effective_start_epoch, &effective_finish_epoch))
+		{
+			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int)(current_epoch - effective_start_epoch) : 0;
+			plan.finish_event = arduconShouldFinishScheduledEvent(current_epoch, effective_finish_epoch);
+		}
+		else
+		{
+			plan.finish_event = 1;
+		}
 	}
 
 	return plan;
@@ -269,9 +351,11 @@ static inline int arduconScheduledFoxCounter(int seconds_since_sync, int cycle_p
 	return arduconSchedulerClamp(1, 1 + ((seconds_since_sync % cycle_period_seconds) / on_air_interval_seconds), number_of_foxes);
 }
 
-static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t current_epoch, time_t start_epoch, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes, int radio_power_off_threshold_seconds)
+static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t current_epoch, time_t start_epoch, time_t finish_epoch, uint8_t event_days, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes, int radio_power_off_threshold_seconds)
 {
 	ArduconScheduledEventPlan_t plan;
+	time_t effective_start_epoch = start_epoch;
+	time_t effective_finish_epoch = finish_epoch;
 	plan.seconds_since_sync = 0;
 	plan.fox_counter = 1;
 	plan.transmissions_disabled = 1;
@@ -280,9 +364,15 @@ static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t curre
 	plan.event_in_progress = 0;
 	plan.power_radio_off_until_start = 0;
 
-	if(start_epoch < current_epoch)
+	if(!arduconCurrentOrNextScheduleWindow(current_epoch, start_epoch, finish_epoch, event_days, &effective_start_epoch, &effective_finish_epoch))
 	{
-		plan.seconds_since_sync = (int)(current_epoch - start_epoch);
+		plan.use_rtc_for_startstop = 0;
+		return plan;
+	}
+
+	if(effective_start_epoch < current_epoch)
+	{
+		plan.seconds_since_sync = (int)(current_epoch - effective_start_epoch);
 		plan.fox_counter = arduconScheduledFoxCounter(plan.seconds_since_sync, cycle_period_seconds, on_air_interval_seconds, number_of_foxes);
 		plan.transmissions_disabled = 0;
 		plan.start_active_event_now = 1;
@@ -290,7 +380,7 @@ static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t curre
 	}
 	else
 	{
-		plan.power_radio_off_until_start = (start_epoch > (current_epoch + radio_power_off_threshold_seconds));
+		plan.power_radio_off_until_start = (effective_start_epoch > (current_epoch + radio_power_off_threshold_seconds));
 	}
 
 	return plan;

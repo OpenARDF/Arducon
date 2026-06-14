@@ -84,6 +84,7 @@ const struct EE_prom EEMEM EepromManager::ee_vars =
 	/* .rv3028_offset = */ 0,
 	/* .event_start_epoch = */ 0,
 	/* .event_finish_epoch = */ 0,
+	/* .days_to_run = */ 0,
 	/* .stationID_text = */ "\0",
 
 	/* .dataModulation = */ { 0 },
@@ -110,6 +111,7 @@ extern volatile Fox_t g_fox;
 extern volatile AM_Tone_Freq_t g_AM_audio_frequency;
 extern volatile time_t g_event_start_epoch;
 extern volatile time_t g_event_finish_epoch;
+extern volatile uint8_t g_days_to_run;
 extern volatile int8_t g_utc_offset;
 extern volatile uint8_t g_ptt_periodic_reset_enabled;
 
@@ -226,6 +228,12 @@ void EepromManager::updateEEPROMVar(EE_var_t v, void* val)
 		case Event_finish_epoch:
 		{
 			ee_dword_addr = (uint32_t*)&(EepromManager::ee_vars.event_finish_epoch);
+		}
+		break;
+
+		case Days_to_run:
+		{
+			ee_byte_addr = (uint8_t*)&(EepromManager::ee_vars.days_to_run);
 		}
 		break;
 
@@ -395,6 +403,11 @@ BOOL EepromManager::readNonVols(void)
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
+		g_days_to_run = eeprom_read_byte(&(EepromManager::ee_vars.days_to_run));
+		if(!g_days_to_run)
+		{
+			g_days_to_run = EEPROM_DAYS_TO_RUN_DEFAULT;
+		}
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
 		g_ptt_periodic_reset_enabled = eeprom_read_byte(&(EepromManager::ee_vars.ptt_periodic_reset));
 
@@ -482,6 +495,9 @@ BOOL EepromManager::initializeEEPROMVars(void)
 		g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
 		eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_finish_epoch), g_event_finish_epoch);
 
+		g_days_to_run = EEPROM_DAYS_TO_RUN_DEFAULT;
+		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.days_to_run), g_days_to_run);
+
 		g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
 		eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.utc_offset), (uint8_t)g_utc_offset);
 
@@ -549,6 +565,9 @@ void EepromManager::resetEEPROMValues(void)
 
 	g_event_finish_epoch = EEPROM_FINISH_EPOCH_DEFAULT;
 	eeprom_write_dword((uint32_t*)&(EepromManager::ee_vars.event_finish_epoch), g_event_finish_epoch);
+
+	g_days_to_run = EEPROM_DAYS_TO_RUN_DEFAULT;
+	eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.days_to_run), g_days_to_run);
 }
 
 /***********************************************************************
