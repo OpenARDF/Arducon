@@ -1,0 +1,140 @@
+/*
+ *  MIT License
+ *
+ *  Copyright (c) 2021 DigitalConfections
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
+#ifndef SCHEDULER_LOGIC_H_
+#define SCHEDULER_LOGIC_H_
+
+#include <stdint.h>
+#include <time.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum
+{
+	ARDUCON_SCHEDULE_WAITING_FOR_START,
+	ARDUCON_SCHEDULE_CONFIGURATION_ERROR,
+	ARDUCON_SCHEDULE_DID_NOT_START,
+	ARDUCON_SCHEDULE_WILL_NEVER_RUN,
+	ARDUCON_SCHEDULE_EVENT_IN_PROGRESS
+} ArduconScheduleState_t;
+
+typedef struct
+{
+	time_t current_epoch;
+	time_t start_epoch;
+	time_t finish_epoch;
+	time_t minimum_epoch;
+	uint8_t use_rtc_for_startstop;
+	uint8_t transmissions_disabled;
+} ArduconScheduleConfig_t;
+
+static inline int arduconSchedulerClamp(int low, int value, int high)
+{
+	if(value < low)
+	{
+		return low;
+	}
+	if(value > high)
+	{
+		return high;
+	}
+	return value;
+}
+
+static inline ArduconScheduleState_t arduconClassifySchedule(const ArduconScheduleConfig_t* config)
+{
+	if(!config)
+	{
+		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
+	}
+
+	if((config->finish_epoch < config->minimum_epoch) || (config->start_epoch < config->minimum_epoch) || (config->current_epoch < config->minimum_epoch))
+	{
+		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
+	}
+
+	if(config->finish_epoch <= config->start_epoch)
+	{
+		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
+	}
+
+	if(config->current_epoch > config->finish_epoch)
+	{
+		return ARDUCON_SCHEDULE_CONFIGURATION_ERROR;
+	}
+
+	if(config->current_epoch > config->start_epoch)
+	{
+		if(config->transmissions_disabled)
+		{
+			return ARDUCON_SCHEDULE_DID_NOT_START;
+		}
+		return ARDUCON_SCHEDULE_EVENT_IN_PROGRESS;
+	}
+
+	if(!config->use_rtc_for_startstop)
+	{
+		return ARDUCON_SCHEDULE_WILL_NEVER_RUN;
+	}
+
+	return ARDUCON_SCHEDULE_WAITING_FOR_START;
+}
+
+static inline uint8_t arduconShouldPrePowerRadio(time_t current_epoch, time_t start_epoch, int lead_seconds, uint8_t thermal_shutdown)
+{
+	return ((current_epoch >= (start_epoch - lead_seconds)) && !thermal_shutdown);
+}
+
+static inline uint8_t arduconShouldStartScheduledEvent(time_t current_epoch, time_t start_epoch, time_t finish_epoch, uint8_t thermal_shutdown)
+{
+	return ((current_epoch >= start_epoch) && (current_epoch < finish_epoch) && !thermal_shutdown);
+}
+
+static inline uint8_t arduconShouldFinishScheduledEvent(time_t current_epoch, time_t finish_epoch)
+{
+	return (current_epoch >= finish_epoch);
+}
+
+static inline uint8_t arduconCurrentFoxShouldTransmit(int number_of_foxes, int fox, int fox_counter, int fox_id_offset)
+{
+	return ((number_of_foxes == 1) || ((number_of_foxes > 1) && (fox == (fox_counter + fox_id_offset))));
+}
+
+static inline int arduconScheduledFoxCounter(int seconds_since_sync, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes)
+{
+	if((cycle_period_seconds <= 0) || (on_air_interval_seconds <= 0) || (number_of_foxes <= 0))
+	{
+		return 1;
+	}
+
+	return arduconSchedulerClamp(1, 1 + ((seconds_since_sync % cycle_period_seconds) / on_air_interval_seconds), number_of_foxes);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SCHEDULER_LOGIC_H_ */

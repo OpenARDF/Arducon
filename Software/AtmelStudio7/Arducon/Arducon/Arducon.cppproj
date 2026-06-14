@@ -226,6 +226,9 @@
     <Compile Include="morse.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="SchedulerLogic.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Source" />

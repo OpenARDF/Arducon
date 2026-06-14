@@ -16,6 +16,9 @@ cli-build:
 interrupt-regression:
     node ./scripts/check-firmware-interrupts.mjs
 
+host-unit-tests:
+    pwsh -NoProfile -File ./run-host-unit-tests.ps1
+
 serial-bootloader-smoke port:
     pwsh -NoProfile -File ./test-bootloader-serial.ps1 -Port "{{port}}"
 

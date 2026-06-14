@@ -32,6 +32,12 @@ powershell -ExecutionPolicy Bypass -File .\build-cli-release.ps1 -Clean
 powershell -ExecutionPolicy Bypass -File .\compare-cli-release.ps1
 ```
 
+Run host-side unit tests on macOS, Windows, or Linux with:
+
+```powershell
+just host-unit-tests
+```
+
 Microchip/Atmel Studio 7 Release remains the cross-check path for now:
 
 ```powershell

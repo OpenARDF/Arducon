@@ -25,6 +25,7 @@
 #include "defs.h"
 #include "linkbus.h"
 #include "morse.h"
+#include "SchedulerLogic.h"
 
 #if INCLUDE_RV3028_SUPPORT
 #include "rv3028.h"
@@ -1305,12 +1306,12 @@ void serviceRTCSecondTick(void)
 		{
 			if(g_use_rtc_for_startstop)
 			{
-				if((g_current_epoch >= (g_event_start_epoch - 5)) && !g_thermal_shutdown) /* Turn on radio power in advance of the start time */
+				if(arduconShouldPrePowerRadio(g_current_epoch, g_event_start_epoch, 5, g_thermal_shutdown)) /* Turn on radio power in advance of the start time */
 				{
 					digitalWrite(PIN_PWDN, ON);
 				}
 
-				if((g_current_epoch >= g_event_start_epoch) && (g_current_epoch < g_event_finish_epoch) && !g_thermal_shutdown)    /* Event should be running */
+				if(arduconShouldStartScheduledEvent(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, g_thermal_shutdown))    /* Event should be running */
 				{
 					g_LED_enunciating = FALSE;
 					g_transmissions_disabled = FALSE;
@@ -1330,7 +1331,7 @@ void serviceRTCSecondTick(void)
 		{
 			if(g_use_rtc_for_startstop)
 			{
-				if(g_current_epoch >= g_event_finish_epoch) /* Event has ended */
+				if(arduconShouldFinishScheduledEvent(g_current_epoch, g_event_finish_epoch)) /* Event has ended */
 				{
 					g_use_rtc_for_startstop = FALSE;
 					g_transmissions_disabled = TRUE;
@@ -1933,38 +1934,47 @@ void loop()
 
 ConfigurationState_t clockConfigurationCheck(void)
 {
-	if((g_event_finish_epoch < MINIMUM_EPOCH) || (g_event_start_epoch < MINIMUM_EPOCH) || (g_current_epoch < MINIMUM_EPOCH))
-	{
-		return(CONFIGURATION_ERROR);
-	}
+	ArduconScheduleConfig_t config;
+	config.current_epoch = g_current_epoch;
+	config.start_epoch = g_event_start_epoch;
+	config.finish_epoch = g_event_finish_epoch;
+	config.minimum_epoch = MINIMUM_EPOCH;
+	config.use_rtc_for_startstop = g_use_rtc_for_startstop;
+	config.transmissions_disabled = g_transmissions_disabled;
 
-	if(g_event_finish_epoch <= g_event_start_epoch) /* Event configured to finish before it started */
+	switch(arduconClassifySchedule(&config))
 	{
-		return(CONFIGURATION_ERROR);
-	}
-
-	if(g_current_epoch > g_event_finish_epoch)  /* The scheduled event is over */
-	{
-		return(CONFIGURATION_ERROR);
-	}
-
-	if(g_current_epoch > g_event_start_epoch)       /* Event should be running */
-	{
-		if(g_transmissions_disabled)
+		case ARDUCON_SCHEDULE_WAITING_FOR_START:
 		{
-			return(SCHEDULED_EVENT_DID_NOT_START);  /* Event scheduled to be running isn't */
+			return(WAITING_FOR_START);
 		}
-		else
-		{
-			return(EVENT_IN_PROGRESS);              /* Event is running, so clock settings don't matter */
-		}
-	}
-	else if(!g_use_rtc_for_startstop)
-	{
-		return(SCHEDULED_EVENT_WILL_NEVER_RUN);
-	}
+		break;
 
-	return(WAITING_FOR_START);  /* Future event hasn't started yet */
+		case ARDUCON_SCHEDULE_DID_NOT_START:
+		{
+			return(SCHEDULED_EVENT_DID_NOT_START);
+		}
+		break;
+
+		case ARDUCON_SCHEDULE_WILL_NEVER_RUN:
+		{
+			return(SCHEDULED_EVENT_WILL_NEVER_RUN);
+		}
+		break;
+
+		case ARDUCON_SCHEDULE_EVENT_IN_PROGRESS:
+		{
+			return(EVENT_IN_PROGRESS);
+		}
+		break;
+
+		case ARDUCON_SCHEDULE_CONFIGURATION_ERROR:
+		default:
+		{
+			return(CONFIGURATION_ERROR);
+		}
+		break;
+	}
 }
 
 void updateScheduleStateAfterConfigurationChange(Fox_t* fox)
@@ -2552,7 +2562,7 @@ BOOL isContinuousTransmissionMode(void)
 
 BOOL currentFoxShouldTransmit(void)
 {
-	return(isContinuousTransmissionMode() || ((g_number_of_foxes > 1) && (g_fox == (g_fox_counter + g_fox_id_offset))));
+	return(arduconCurrentFoxShouldTransmit(g_number_of_foxes, g_fox, g_fox_counter, g_fox_id_offset));
 }
 
 void loadCurrentFoxMorsePattern(void)
@@ -3431,7 +3441,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
 		{
 			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
-			g_fox_counter = CLAMP(1, 1 + ((g_seconds_since_sync % g_cycle_period_seconds) / g_on_air_interval_seconds), g_number_of_foxes);
+			g_fox_counter = arduconScheduledFoxCounter(g_seconds_since_sync, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes);
 			g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES;
 			g_transmissions_disabled = FALSE;
 			startActiveEventNow = TRUE;

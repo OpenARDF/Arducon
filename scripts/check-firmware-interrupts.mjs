@@ -117,9 +117,10 @@ const isContinuousTransmissionMode = extractFunction("isContinuousTransmissionMo
 assertContains(isContinuousTransmissionMode, "g_number_of_foxes == 1", "isContinuousTransmissionMode");
 
 const currentFoxShouldTransmit = extractFunction("currentFoxShouldTransmit");
-assertContains(currentFoxShouldTransmit, "isContinuousTransmissionMode()", "currentFoxShouldTransmit");
-assertContains(currentFoxShouldTransmit, "g_number_of_foxes > 1", "currentFoxShouldTransmit");
-assertContains(currentFoxShouldTransmit, "g_fox == (g_fox_counter + g_fox_id_offset)", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "arduconCurrentFoxShouldTransmit", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "g_number_of_foxes", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "g_fox_counter", "currentFoxShouldTransmit");
+assertContains(currentFoxShouldTransmit, "g_fox_id_offset", "currentFoxShouldTransmit");
 
 const loadCurrentFoxMorsePattern = extractFunction("loadCurrentFoxMorsePattern");
 assertContains(loadCurrentFoxMorsePattern, "copyFoxMorsePattern", "loadCurrentFoxMorsePattern");
