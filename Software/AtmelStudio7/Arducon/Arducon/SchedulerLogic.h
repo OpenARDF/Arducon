@@ -51,6 +51,17 @@ typedef struct
 	uint8_t transmissions_disabled;
 } ArduconScheduleConfig_t;
 
+typedef struct
+{
+	int seconds_since_sync;
+	int fox_counter;
+	uint8_t transmissions_disabled;
+	uint8_t use_rtc_for_startstop;
+	uint8_t start_active_event_now;
+	uint8_t event_in_progress;
+	uint8_t power_radio_off_until_start;
+} ArduconScheduledEventPlan_t;
+
 static inline int arduconSchedulerClamp(int low, int value, int high)
 {
 	if(value < low)
@@ -131,6 +142,33 @@ static inline int arduconScheduledFoxCounter(int seconds_since_sync, int cycle_p
 	}
 
 	return arduconSchedulerClamp(1, 1 + ((seconds_since_sync % cycle_period_seconds) / on_air_interval_seconds), number_of_foxes);
+}
+
+static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t current_epoch, time_t start_epoch, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes, int radio_power_off_threshold_seconds)
+{
+	ArduconScheduledEventPlan_t plan;
+	plan.seconds_since_sync = 0;
+	plan.fox_counter = 1;
+	plan.transmissions_disabled = 1;
+	plan.use_rtc_for_startstop = 1;
+	plan.start_active_event_now = 0;
+	plan.event_in_progress = 0;
+	plan.power_radio_off_until_start = 0;
+
+	if(start_epoch < current_epoch)
+	{
+		plan.seconds_since_sync = (int)(current_epoch - start_epoch);
+		plan.fox_counter = arduconScheduledFoxCounter(plan.seconds_since_sync, cycle_period_seconds, on_air_interval_seconds, number_of_foxes);
+		plan.transmissions_disabled = 0;
+		plan.start_active_event_now = 1;
+		plan.event_in_progress = 1;
+	}
+	else
+	{
+		plan.power_radio_off_until_start = (start_epoch > (current_epoch + radio_power_off_threshold_seconds));
+	}
+
+	return plan;
 }
 
 #ifdef __cplusplus

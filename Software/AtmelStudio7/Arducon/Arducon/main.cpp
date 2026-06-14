@@ -3438,26 +3438,22 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	}
 	else                                                                    /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
-		if(g_event_start_epoch < g_current_epoch)                           /* timed event in progress */
+		ArduconScheduledEventPlan_t plan = arduconPlanScheduledEvent(g_current_epoch, g_event_start_epoch, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes, 300);
+		g_seconds_since_sync = plan.seconds_since_sync;
+		g_fox_counter = plan.fox_counter;
+		g_transmissions_disabled = plan.transmissions_disabled;
+		startActiveEventNow = plan.start_active_event_now;
+
+		if(plan.event_in_progress)                                          /* timed event in progress */
 		{
-			g_seconds_since_sync = g_current_epoch - g_event_start_epoch;   /* Total elapsed time counter: synced at event start time */
-			g_fox_counter = arduconScheduledFoxCounter(g_seconds_since_sync, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes);
 			g_initialize_fox_transmissions = INIT_EVENT_IN_PROGRESS_WITH_STARTFINISH_TIMES;
-			g_transmissions_disabled = FALSE;
-			startActiveEventNow = TRUE;
 		}
-		else                                                                /* event starts in the future */
+		else if(plan.power_radio_off_until_start)                           /* event starts in the future */
 		{
-			g_seconds_since_sync = 0;                                       /* Total elapsed time counter */
-			g_fox_counter = 1;
-			g_transmissions_disabled = TRUE;
-			if(g_event_start_epoch > (g_current_epoch + 300))
-			{
-				digitalWrite(PIN_PWDN, OFF); /* Turn off the radio until close to start time */
-			}
+			digitalWrite(PIN_PWDN, OFF); /* Turn off the radio until close to start time */
 		}
 
-		g_use_rtc_for_startstop = TRUE;
+		g_use_rtc_for_startstop = plan.use_rtc_for_startstop;
 	}
 
 	sendMorseTone(OFF);

@@ -87,6 +87,45 @@ void checkFoxSlotLogic()
 	CHECK(arduconScheduledFoxCounter(125, 300, 60, 5) == 3);
 	CHECK(arduconScheduledFoxCounter(125, 0, 60, 5) == 1);
 }
+
+void checkScheduledEventPlans()
+{
+	const time_t start = minimumEpoch + 200;
+
+	ArduconScheduledEventPlan_t future = arduconPlanScheduledEvent(start - 301, start, 300, 60, 5, 300);
+	CHECK(future.seconds_since_sync == 0);
+	CHECK(future.fox_counter == 1);
+	CHECK(future.transmissions_disabled);
+	CHECK(future.use_rtc_for_startstop);
+	CHECK(!future.start_active_event_now);
+	CHECK(!future.event_in_progress);
+	CHECK(future.power_radio_off_until_start);
+
+	ArduconScheduledEventPlan_t nearFuture = arduconPlanScheduledEvent(start - 300, start, 300, 60, 5, 300);
+	CHECK(nearFuture.transmissions_disabled);
+	CHECK(!nearFuture.power_radio_off_until_start);
+
+	ArduconScheduledEventPlan_t exactStart = arduconPlanScheduledEvent(start, start, 300, 60, 5, 300);
+	CHECK(exactStart.seconds_since_sync == 0);
+	CHECK(exactStart.fox_counter == 1);
+	CHECK(exactStart.transmissions_disabled);
+	CHECK(!exactStart.start_active_event_now);
+	CHECK(!exactStart.event_in_progress);
+
+	ArduconScheduledEventPlan_t inProgress = arduconPlanScheduledEvent(start + 125, start, 300, 60, 5, 300);
+	CHECK(inProgress.seconds_since_sync == 125);
+	CHECK(inProgress.fox_counter == 3);
+	CHECK(!inProgress.transmissions_disabled);
+	CHECK(inProgress.use_rtc_for_startstop);
+	CHECK(inProgress.start_active_event_now);
+	CHECK(inProgress.event_in_progress);
+	CHECK(!inProgress.power_radio_off_until_start);
+
+	ArduconScheduledEventPlan_t nextCycle = arduconPlanScheduledEvent(start + 300, start, 300, 60, 5, 300);
+	CHECK(nextCycle.seconds_since_sync == 300);
+	CHECK(nextCycle.fox_counter == 1);
+	CHECK(!nextCycle.transmissions_disabled);
+}
 }
 
 int main()
@@ -95,6 +134,7 @@ int main()
 	checkStartAndFinishBoundaries();
 	checkRadioPrePower();
 	checkFoxSlotLogic();
+	checkScheduledEventPlans();
 
 	std::cout << "Scheduler logic unit tests passed." << '\n';
 	return 0;

@@ -19,6 +19,8 @@ interrupt-regression:
 host-unit-tests:
     pwsh -NoProfile -File ./run-host-unit-tests.ps1
 
+test: host-unit-tests interrupt-regression
+
 serial-bootloader-smoke port:
     pwsh -NoProfile -File ./test-bootloader-serial.ps1 -Port "{{port}}"
 
