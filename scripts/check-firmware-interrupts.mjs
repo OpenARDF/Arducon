@@ -144,6 +144,9 @@ assertContains(setupForFox, "writePttFast(OFF)", "setupForFox");
 assertContains(setupForFox, "updateAudioSamplingForAMTransmit()", "setupForFox");
 assertContains(setupForFox, "g_reset_transmit_service_state = TRUE", "setupForFox");
 
+const serviceRTCSecondTick = extractFunction("serviceRTCSecondTick");
+assertContains(serviceRTCSecondTick, "arduconPlanRTCGate", "serviceRTCSecondTick");
+
 const startEventNow = extractFunction("startEventNow");
 assertContains(startEventNow, "arduconStartActionForSchedule", "startEventNow");
 assertContains(startEventNow, "setupForFox(NULL, (EventAction_t)action)", "startEventNow");

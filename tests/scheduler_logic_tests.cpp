@@ -72,6 +72,47 @@ void checkRadioPrePower()
 	CHECK(!arduconShouldPrePowerRadio(start, start, 5, 1));
 }
 
+void checkRTCGatePlans()
+{
+	const time_t start = minimumEpoch + 200;
+	const time_t finish = minimumEpoch + 500;
+
+	ArduconRTCGatePlan_t noRtc = arduconPlanRTCGate(start, start, finish, 5, 1, 0, 0);
+	CHECK(!noRtc.pre_power_radio);
+	CHECK(!noRtc.start_event);
+	CHECK(!noRtc.finish_event);
+
+	ArduconRTCGatePlan_t waiting = arduconPlanRTCGate(start - 6, start, finish, 5, 1, 1, 0);
+	CHECK(!waiting.pre_power_radio);
+	CHECK(!waiting.start_event);
+	CHECK(!waiting.finish_event);
+
+	ArduconRTCGatePlan_t prePower = arduconPlanRTCGate(start - 5, start, finish, 5, 1, 1, 0);
+	CHECK(prePower.pre_power_radio);
+	CHECK(!prePower.start_event);
+	CHECK(!prePower.finish_event);
+
+	ArduconRTCGatePlan_t startNow = arduconPlanRTCGate(start, start, finish, 5, 1, 1, 0);
+	CHECK(startNow.pre_power_radio);
+	CHECK(startNow.start_event);
+	CHECK(!startNow.finish_event);
+
+	ArduconRTCGatePlan_t thermalHold = arduconPlanRTCGate(start, start, finish, 5, 1, 1, 1);
+	CHECK(!thermalHold.pre_power_radio);
+	CHECK(!thermalHold.start_event);
+	CHECK(!thermalHold.finish_event);
+
+	ArduconRTCGatePlan_t running = arduconPlanRTCGate(finish - 1, start, finish, 5, 0, 1, 0);
+	CHECK(!running.pre_power_radio);
+	CHECK(!running.start_event);
+	CHECK(!running.finish_event);
+
+	ArduconRTCGatePlan_t finishNow = arduconPlanRTCGate(finish, start, finish, 5, 0, 1, 0);
+	CHECK(!finishNow.pre_power_radio);
+	CHECK(!finishNow.start_event);
+	CHECK(finishNow.finish_event);
+}
+
 void checkFoxSlotLogic()
 {
 	CHECK(arduconCurrentFoxShouldTransmit(1, 0, 1, 0));
@@ -156,6 +197,7 @@ int main()
 	checkScheduleClassification();
 	checkStartAndFinishBoundaries();
 	checkRadioPrePower();
+	checkRTCGatePlans();
 	checkFoxSlotLogic();
 	checkScheduledEventPlans();
 	checkStartStopActions();

@@ -1307,42 +1307,38 @@ void serviceRTCSecondTick(void)
 		g_voltage_check_countdown--;
 	}
 
+	ArduconRTCGatePlan_t rtcGate = arduconPlanRTCGate(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, 5, g_transmissions_disabled, g_use_rtc_for_startstop, g_thermal_shutdown);
+
 		if(g_transmissions_disabled)
 		{
-			if(g_use_rtc_for_startstop)
+			if(rtcGate.pre_power_radio) /* Turn on radio power in advance of the start time */
 			{
-				if(arduconShouldPrePowerRadio(g_current_epoch, g_event_start_epoch, 5, g_thermal_shutdown)) /* Turn on radio power in advance of the start time */
-				{
-					digitalWrite(PIN_PWDN, ON);
-				}
+				digitalWrite(PIN_PWDN, ON);
+			}
 
-				if(arduconShouldStartScheduledEvent(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, g_thermal_shutdown))    /* Event should be running */
+			if(rtcGate.start_event) /* Event should be running */
+			{
+				g_LED_enunciating = FALSE;
+				g_transmissions_disabled = FALSE;
+				if(currentFoxShouldTransmit())
 				{
-					g_LED_enunciating = FALSE;
-					g_transmissions_disabled = FALSE;
-					if(currentFoxShouldTransmit())
-					{
-						loadCurrentFoxMorsePattern();
-						g_on_the_air = TRUE;
-					}
-					else
-					{
-						g_on_the_air = FALSE;
-					}
+					loadCurrentFoxMorsePattern();
+					g_on_the_air = TRUE;
+				}
+				else
+				{
+					g_on_the_air = FALSE;
 				}
 			}
 		}
 		else
 		{
-			if(g_use_rtc_for_startstop)
+			if(rtcGate.finish_event) /* Event has ended */
 			{
-				if(arduconShouldFinishScheduledEvent(g_current_epoch, g_event_finish_epoch)) /* Event has ended */
-				{
-					g_use_rtc_for_startstop = FALSE;
-					g_transmissions_disabled = TRUE;
-					g_on_the_air = FALSE;
-					digitalWrite(PIN_PWDN, OFF); /* Power off the radio */
-				}
+				g_use_rtc_for_startstop = FALSE;
+				g_transmissions_disabled = TRUE;
+				g_on_the_air = FALSE;
+				digitalWrite(PIN_PWDN, OFF); /* Power off the radio */
 			}
 
 			if(!g_transmissions_disabled)

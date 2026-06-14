@@ -77,6 +77,13 @@ typedef struct
 	uint8_t power_radio_off_until_start;
 } ArduconScheduledEventPlan_t;
 
+typedef struct
+{
+	uint8_t pre_power_radio;
+	uint8_t start_event;
+	uint8_t finish_event;
+} ArduconRTCGatePlan_t;
+
 static inline int arduconSchedulerClamp(int low, int value, int high)
 {
 	if(value < low)
@@ -142,6 +149,31 @@ static inline uint8_t arduconShouldStartScheduledEvent(time_t current_epoch, tim
 static inline uint8_t arduconShouldFinishScheduledEvent(time_t current_epoch, time_t finish_epoch)
 {
 	return (current_epoch >= finish_epoch);
+}
+
+static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time_t start_epoch, time_t finish_epoch, int pre_power_lead_seconds, uint8_t transmissions_disabled, uint8_t use_rtc_for_startstop, uint8_t thermal_shutdown)
+{
+	ArduconRTCGatePlan_t plan;
+	plan.pre_power_radio = 0;
+	plan.start_event = 0;
+	plan.finish_event = 0;
+
+	if(!use_rtc_for_startstop)
+	{
+		return plan;
+	}
+
+	if(transmissions_disabled)
+	{
+		plan.pre_power_radio = arduconShouldPrePowerRadio(current_epoch, start_epoch, pre_power_lead_seconds, thermal_shutdown);
+		plan.start_event = arduconShouldStartScheduledEvent(current_epoch, start_epoch, finish_epoch, thermal_shutdown);
+	}
+	else
+	{
+		plan.finish_event = arduconShouldFinishScheduledEvent(current_epoch, finish_epoch);
+	}
+
+	return plan;
 }
 
 static inline uint8_t arduconCurrentFoxShouldTransmit(int number_of_foxes, int fox, int fox_counter, int fox_id_offset)
