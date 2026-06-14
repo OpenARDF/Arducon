@@ -102,6 +102,7 @@ volatile BOOL g_LED_enunciating = FALSE;
 volatile time_t g_current_epoch = 0;
 volatile time_t g_event_start_epoch = 0;
 volatile time_t g_event_finish_epoch = 0;
+volatile uint8_t g_days_to_run = EEPROM_DAYS_TO_RUN_DEFAULT;
 volatile int8_t g_utc_offset = 0;
 volatile BOOL g_ptt_periodic_reset_enabled;
 volatile uint8_t g_linkbusRxRestoreADIE = 0;
@@ -239,6 +240,7 @@ BOOL only_digits(char *s);
 ConfigurationState_t clockConfigurationCheck(void);
 void updateScheduleStateAfterConfigurationChange(Fox_t* fox);
 void updateScheduleStateAfterClockSet(void);
+BOOL currentOrNextScheduleWindow(time_t* effective_start_epoch, time_t* effective_finish_epoch);
 void stopEventNow(EventActionSource_t activationSource);
 void startEventNow(EventActionSource_t buttonActivated);
 void startEventUsingRTC(void);
@@ -1322,7 +1324,7 @@ void serviceRTCSecondTick(void)
 		g_voltage_check_countdown--;
 	}
 
-	ArduconRTCGatePlan_t rtcGate = arduconPlanRTCGate(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, 5, g_transmissions_disabled, g_use_rtc_for_startstop, g_thermal_shutdown);
+	ArduconRTCGatePlan_t rtcGate = arduconPlanRTCGate(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, g_days_to_run, 5, g_transmissions_disabled, g_use_rtc_for_startstop, g_thermal_shutdown);
 
 		if(g_transmissions_disabled)
 		{
@@ -1335,6 +1337,8 @@ void serviceRTCSecondTick(void)
 			{
 				g_LED_enunciating = FALSE;
 				g_transmissions_disabled = FALSE;
+				g_seconds_since_sync = rtcGate.seconds_since_sync;
+				g_fox_counter = arduconScheduledFoxCounter(g_seconds_since_sync, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes);
 				if(currentFoxShouldTransmit())
 				{
 					loadCurrentFoxMorsePattern();
@@ -1350,7 +1354,9 @@ void serviceRTCSecondTick(void)
 		{
 			if(rtcGate.finish_event) /* Event has ended */
 			{
-				g_use_rtc_for_startstop = FALSE;
+				time_t next_start_epoch;
+				time_t next_finish_epoch;
+				g_use_rtc_for_startstop = currentOrNextScheduleWindow(&next_start_epoch, &next_finish_epoch) && (next_finish_epoch > g_current_epoch);
 				g_transmissions_disabled = TRUE;
 				g_on_the_air = FALSE;
 				digitalWrite(PIN_PWDN, OFF); /* Power off the radio */
@@ -1957,6 +1963,7 @@ ConfigurationState_t clockConfigurationCheck(void)
 	config.minimum_epoch = MINIMUM_EPOCH;
 	config.use_rtc_for_startstop = g_use_rtc_for_startstop;
 	config.transmissions_disabled = g_transmissions_disabled;
+	config.event_days = g_days_to_run;
 
 	switch(arduconClassifySchedule(&config))
 	{
@@ -2002,6 +2009,7 @@ ArduconScheduleState_t currentScheduleState(void)
 	config.minimum_epoch = MINIMUM_EPOCH;
 	config.use_rtc_for_startstop = g_use_rtc_for_startstop;
 	config.transmissions_disabled = g_transmissions_disabled;
+	config.event_days = g_days_to_run;
 
 	return(arduconClassifySchedule(&config));
 }
@@ -2397,6 +2405,23 @@ void handleLinkBusMsgs()
 					sprintf(g_tempStr, "Finish:%lu\n", g_event_finish_epoch);
 					doprint = true;
 				}
+				else if(lb_buff->fields[FIELD1][0] == 'D')  /* Event days */
+				{
+					if(lb_buff->fields[FIELD2][0])
+					{
+						uint16_t days = (uint16_t)atoi(lb_buff->fields[FIELD2]);
+
+						if((days >= 1) && (days <= UINT8_MAX))
+						{
+							g_days_to_run = (uint8_t)days;
+							ee_mgr.updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);
+							updateScheduleStateAfterConfigurationChange(NULL);
+						}
+					}
+
+					sprintf(g_tempStr, "CLK D %u\n", g_days_to_run);
+					doprint = true;
+				}
 				else if(lb_buff->fields[FIELD1][0] == '*')  /* Sync seconds to zero */
 				{
 					ds3231_sync2nearestMinute();
@@ -2438,6 +2463,9 @@ void handleLinkBusMsgs()
 				else
 				{
 					ConfigurationState_t cfg = clockConfigurationCheck();
+					time_t effective_start_epoch;
+					time_t effective_finish_epoch;
+					currentOrNextScheduleWindow(&effective_start_epoch, &effective_finish_epoch);
 
 					if((cfg != WAITING_FOR_START) && (cfg != EVENT_IN_PROGRESS))
 					{
@@ -2445,11 +2473,13 @@ void handleLinkBusMsgs()
 					}
 					else
 					{
-						reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");
-						reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
-						if(g_event_start_epoch < g_current_epoch)
+						reportTimeTill(g_current_epoch, effective_start_epoch, "Starts in: ", "In progress\n");
+						reportTimeTill(effective_start_epoch, effective_finish_epoch, "Lasts: ", NULL);
+						sprintf(g_tempStr, "CLK D %u\n", g_days_to_run);
+						lb_send_string(g_tempStr, TRUE);
+						if(effective_start_epoch < g_current_epoch)
 						{
-							reportTimeTill(g_current_epoch, g_event_finish_epoch, "Time Remaining: ", NULL);
+							reportTimeTill(g_current_epoch, effective_finish_epoch, "Time Remaining: ", NULL);
 						}
 					}
 				}
@@ -3415,7 +3445,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	}
 	else                                                                    /* if(action == START_EVENT_WITH_STARTFINISH_TIMES) */
 	{
-		ArduconScheduledEventPlan_t plan = arduconPlanScheduledEvent(g_current_epoch, g_event_start_epoch, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes, 300);
+		ArduconScheduledEventPlan_t plan = arduconPlanScheduledEvent(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, g_days_to_run, g_cycle_period_seconds, g_on_air_interval_seconds, g_number_of_foxes, 300);
 		g_seconds_since_sync = plan.seconds_since_sync;
 		g_fox_counter = plan.fox_counter;
 		g_transmissions_disabled = plan.transmissions_disabled;
@@ -3690,6 +3720,11 @@ void stopEventNow(EventActionSource_t activationSource)
 	}
 }
 
+BOOL currentOrNextScheduleWindow(time_t* effective_start_epoch, time_t* effective_finish_epoch)
+{
+	return arduconCurrentOrNextScheduleWindow(g_current_epoch, g_event_start_epoch, g_event_finish_epoch, g_days_to_run, effective_start_epoch, effective_finish_epoch);
+}
+
 void startEventUsingRTC(void)
 {
 	g_current_epoch = RTC_get_epoch(NULL);
@@ -3697,16 +3732,20 @@ void startEventUsingRTC(void)
 
 	if(state != CONFIGURATION_ERROR)
 	{
-		setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
-		reportTimeTill(g_current_epoch, g_event_start_epoch, "Starts in: ", "In progress\n");
+		time_t effective_start_epoch;
+		time_t effective_finish_epoch;
+		currentOrNextScheduleWindow(&effective_start_epoch, &effective_finish_epoch);
 
-		if(g_event_start_epoch < g_current_epoch)
+		setupForFox(NULL, START_EVENT_WITH_STARTFINISH_TIMES);
+		reportTimeTill(g_current_epoch, effective_start_epoch, "Starts in: ", "In progress\n");
+
+		if(effective_start_epoch < g_current_epoch)
 		{
-			reportTimeTill(g_current_epoch, g_event_finish_epoch, "Time Remaining: ", NULL);
+			reportTimeTill(g_current_epoch, effective_finish_epoch, "Time Remaining: ", NULL);
 		}
 		else
 		{
-			reportTimeTill(g_event_start_epoch, g_event_finish_epoch, "Lasts: ", NULL);
+			reportTimeTill(effective_start_epoch, effective_finish_epoch, "Lasts: ", NULL);
 		}
 	}
 	else
@@ -3731,6 +3770,14 @@ void reportConfigErrors(void)
 
 	if(g_event_finish_epoch < g_current_epoch)      /* Event has already finished */
 	{
+		time_t effective_start_epoch;
+		time_t effective_finish_epoch;
+
+		if(currentOrNextScheduleWindow(&effective_start_epoch, &effective_finish_epoch) && (effective_finish_epoch >= g_current_epoch))
+		{
+			return;
+		}
+
 		if(g_event_start_epoch < g_current_epoch)   /* Event has already started */
 		{
 			ee_mgr.sendEEPROMString(TextSetStart);
