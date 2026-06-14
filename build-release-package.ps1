@@ -518,7 +518,7 @@ if(-not (Test-Path -LiteralPath $bootloaderSourceDir))
 }
 $bootloaderFile = 'Arducon-Bootloader-Optiboot-ATmega328P.hex'
 $bootloaderPath = Join-Path $OutputDir $bootloaderFile
-$files += Copy-PackageFile -SourcePath $BootloaderHexPath -DestinationPath $bootloaderPath -Kind 'bootloader' -Purpose 'Reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.'
+$files += Copy-PackageFile -SourcePath $BootloaderHexPath -DestinationPath $bootloaderPath -Kind 'bootloader' -Purpose 'Arducon-patched Optiboot-compatible ATmega328P bootloader for ISP first install.'
 $bootloaderImage = Get-IntelHexBytes -Path $bootloaderPath
 $bootloaderSummary = Get-HexAddressSummary -Image $bootloaderImage
 $mergeSummary = Merge-HexFiles -BootloaderPath $bootloaderPath -ApplicationPath $updatePath -OutputPath $firstInstallPath
@@ -554,8 +554,9 @@ $manifest = [pscustomobject]@{
     bootloader = [pscustomobject]@{
         fileName = $bootloaderFile
         sourceArchiveFileName = $bootloaderSourceFile
-        sourcePackage = 'arduino:avr@1.8.6'
-        sourceFile = 'optiboot/optiboot_atmega328.hex'
+        sourcePackage = 'arduino:avr@1.8.6 with Arducon SRAM handoff-marker patch'
+        sourceFile = 'optiboot/optiboot_atmega328.hex plus local Arducon source changes'
+        sourcePatch = 'Arducon app writes a one-byte SRAM marker at 0x0100 before UPD watchdog reset; Optiboot clears that marker when accepting app-requested update mode; later watchdog resets, including STK500 LEAVE_PROGMODE, jump to the application when the marker is absent; LED_START_FLASHES=0 keeps the bootloader inside 512 bytes.'
         protocol = 'stk500v1'
         baud = 115200
         highFuseTarget = '0xDE'
@@ -606,7 +607,7 @@ Arducon $friendlyVersion ATmega328P firmware package
 Files:
 - ${updateFile}: application HEX for normal bootloader updates.
 - ${firstInstallFile}: combined application and bootloader HEX for programming a new board with an ISP programmer.
-- ${bootloaderFile}: reviewed Optiboot-compatible ATmega328P bootloader for ISP first install.
+- ${bootloaderFile}: Arducon-patched Optiboot-compatible ATmega328P bootloader for ISP first install.
 - ${bootloaderSourceFile}: corresponding source and notices for the bundled Optiboot bootloader.
 - ${setupLauncherFile}: friendly setup launcher for adding software-update support with a programmer.
 - provision-bootloader.ps1: advanced setup tool used by the friendly setup launcher.

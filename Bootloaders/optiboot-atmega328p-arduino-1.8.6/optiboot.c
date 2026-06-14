@@ -219,7 +219,9 @@ void putch(char);
 uint8_t getch(void);
 static inline void getNch(uint8_t); /* "static inline" is a compiler hint to reduce code size */
 void verifySpace();
+#if LED_START_FLASHES > 0
 static inline void flash_led(uint8_t);
+#endif
 uint8_t getLen();
 static inline void watchdogReset();
 void watchdogConfig(uint8_t x);
@@ -252,6 +254,8 @@ void appStart() __attribute__ ((naked));
 /* These definitions are NOT zero initialised, but that doesn't matter */
 /* This allows us to drop the zero init code, saving us memory */
 #define buff    ((uint8_t*)(RAMSTART))
+#define ARDUCON_BOOT_FLAG (RAMSTART)
+#define ARDUCON_BOOT_APP_REQUEST 0xB4
 #ifdef VIRTUAL_BOOT_PARTITION
 #define rstVect (*(uint16_t*)(RAMSTART+SPM_PAGESIZE*2+4))
 #define wdtVect (*(uint16_t*)(RAMSTART+SPM_PAGESIZE*2+6))
@@ -287,7 +291,21 @@ int main(void) {
   // Adaboot no-wait mod
   ch = MCUSR;
   MCUSR = 0;
-  if (!(ch & _BV(WDRF))) appStart();
+  __asm__ __volatile__ (
+    "sbrs %2, 3\n"
+    "rjmp appStart\n"
+    "lds r24, %0\n"
+    "cpi r24, %1\n"
+    "breq 2f\n"
+    "rjmp appStart\n"
+    "2:\n"
+    "sts %0, __zero_reg__\n"
+    :
+    : "n" (ARDUCON_BOOT_FLAG),
+      "M" (ARDUCON_BOOT_APP_REQUEST),
+      "r" (ch)
+    : "r24"
+  );
 
 #if LED_START_FLASHES > 0
   // Set up Timer 1 for timeout counter
@@ -310,8 +328,10 @@ int main(void) {
   // Set up watchdog to trigger after 500ms
   watchdogConfig(WATCHDOG_1S);
 
+#if LED_START_FLASHES > 0 || defined(LED_DATA_FLASH)
   /* Set LED pin as output */
   LED_DDR |= _BV(LED);
+#endif
 
 #ifdef SOFT_UART
   /* Set TX pin as output */
@@ -488,9 +508,16 @@ int main(void) {
       putch(SIGNATURE_2);
     }
     else if (ch == 'Q') {
-      // Adaboot no-wait mod
-      watchdogConfig(WATCHDOG_16MS);
-      verifySpace();
+      // Arducon enters the bootloader with a watchdog reset, so leaving via
+      // another watchdog reset must run without the app-request marker.
+      __asm__ __volatile__ (
+        "ldi r24, 0x08\n"
+        "rcall watchdogConfig\n"
+        "rcall verifySpace\n"
+        :
+        :
+        : "r24"
+      );
     }
     else {
       // This covers the response to commands like STK_ENTER_PROGMODE

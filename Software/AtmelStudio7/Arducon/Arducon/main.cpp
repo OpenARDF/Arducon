@@ -73,6 +73,9 @@ typedef char ArduconFoxReportBatteryMatches[((int)ARDUCON_FOX_REPORT_BATTERY == 
 
 EepromManager ee_mgr;
 
+#define ARDUCON_BOOTLOADER_HANDOFF_FLAG_ADDR ((volatile uint8_t*)0x0100)
+#define ARDUCON_BOOTLOADER_APP_REQUEST 0xB4
+
 /*#define SAMPLE_RATE 9630 */
 #define SAMPLE_RATE 19260
 /*#define SAMPLE_RATE 38520
@@ -2696,6 +2699,7 @@ void enterBootloaderUpdateMode(void)
 		}
 	}
 	cli();
+	*ARDUCON_BOOTLOADER_HANDOFF_FLAG_ADDR = ARDUCON_BOOTLOADER_APP_REQUEST;
 	wdt_init(WD_FORCE_RESET);
 
 	while(1)

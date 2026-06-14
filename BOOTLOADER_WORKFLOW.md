@@ -17,7 +17,9 @@ The reviewed bootloader artifact is checked in at:
 Bootloaders/optiboot-atmega328p-arduino-1.8.6/optiboot_atmega328.hex
 ```
 
-It is copied from Arduino AVR Boards `arduino:avr@1.8.6` with its source subset and occupies `0x7E00..0x7FFF`.
+It is based on Arduino AVR Boards `arduino:avr@1.8.6` Optiboot with its source subset and occupies `0x7E00..0x7FFF`.
+The Arducon build disables Optiboot's entry LED flashes to stay inside the 512-byte boot section and uses a one-byte SRAM handoff marker at `0x0100`. The application writes the marker before the `UPD` watchdog reset. Optiboot clears that marker when it accepts the app-requested update mode; the later STK500 `LEAVE_PROGMODE` (`Q`) watchdog reset then arrives without the marker, so Optiboot jumps to the application instead of re-entering the bootloader.
+Install this bootloader together with firmware that writes the handoff marker; a marker-aware bootloader paired with older app firmware will not enter update mode through `UPD`.
 
 Compatibility note: current SerialSlinger builds include product-aware Arducon update support for this Optiboot/STK500v1 path. Older SerialSlinger builds only spoke the custom SignalSlinger bootloader protocol, so use a SerialSlinger build that includes the `arducon-update` path before treating an Arducon release package as app-updateable.
 
