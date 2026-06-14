@@ -105,6 +105,7 @@ assertContains(periodicService, "codeInc = g_on_the_air ? 1 : 0", "servicePeriod
 assertContains(periodicService, "ptt_delay = 0", "servicePeriodicTaskTick");
 assertContains(periodicService, "ptt_dropped = 0", "servicePeriodicTaskTick");
 assertContains(periodicService, "writeKeyFast(OFF)", "servicePeriodicTaskTick");
+assertContains(periodicService, "requestAMModulatorReset()", "servicePeriodicTaskTick");
 assertContains(periodicService, "if(g_transmissions_disabled || !g_on_the_air)", "servicePeriodicTaskTick");
 assertContains(periodicService, "writePttFast(OFF)", "servicePeriodicTaskTick");
 
@@ -134,6 +135,7 @@ assertContains(setupForFox, "g_transmissions_disabled = TRUE", "setupForFox");
 assertContains(setupForFox, "if(startActiveEventNow && !g_thermal_shutdown)", "setupForFox");
 assertContains(setupForFox, "loadCurrentFoxMorsePattern();", "setupForFox");
 assertContains(setupForFox, "g_on_the_air = TRUE", "setupForFox");
+assertContains(setupForFox, "requestAMModulatorReset()", "setupForFox");
 assertContains(setupForFox, "if(g_transmissions_disabled || !g_on_the_air)", "setupForFox");
 assertContains(setupForFox, "writePttFast(OFF)", "setupForFox");
 assertContains(setupForFox, "updateAudioSamplingForAMTransmit()", "setupForFox");
@@ -161,6 +163,8 @@ assertNotContains(timer1, "g_sendAMmodulation", "TIMER1_COMPA_vect");
 
 const timer2 = extractIsr("TIMER2_COMPA_vect");
 assertContains(timer2, "g_sendAMmodulation", "TIMER2_COMPA_vect");
+assertContains(timer2, "g_reset_am_modulator_state", "TIMER2_COMPA_vect");
+assertContains(timer2, "index = 0", "TIMER2_COMPA_vect");
 assertContains(timer2, "PORTB", "TIMER2_COMPA_vect");
 assertNotContains(timer2, "g_periodic_service_ticks", "TIMER2_COMPA_vect");
 

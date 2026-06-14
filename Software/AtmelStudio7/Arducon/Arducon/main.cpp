@@ -110,6 +110,7 @@ volatile uint16_t g_periodic_service_ticks = 0;
 volatile uint16_t g_rtc_service_ticks = 0;
 volatile BOOL g_audio_sampling_suspended_for_am_tx = FALSE;
 volatile BOOL g_reset_transmit_service_state = FALSE;
+volatile BOOL g_reset_am_modulator_state = FALSE;
 
 volatile BOOL g_dtmf_detected = FALSE;
 volatile uint8_t g_unlockCode[MAX_UNLOCK_CODE_LENGTH + 1];
@@ -204,6 +205,7 @@ void servicePendingRTCSeconds(void);
 void serviceRTCSecondTick(void);
 void updateAudioSamplingForAMTransmit(void);
 void restartAudioSamplingIfAllowed(void);
+void requestAMModulatorReset(void);
 
 uint16_t readADC();
 float getTemp(void);
@@ -1070,6 +1072,7 @@ void servicePeriodicTaskTick(void)
 		g_reset_transmit_service_state = FALSE;
 		writeKeyFast(OFF);
 		g_sendAMmodulation = FALSE;
+		requestAMModulatorReset();
 		sendMorseTone(OFF);
 
 		if(g_transmissions_disabled || !g_on_the_air)
@@ -1532,6 +1535,14 @@ ISR(TIMER0_COMPA_vect)
 			{
 				static uint8_t index = 0;
 				static uint8_t controlPins = 0;
+
+				if(g_reset_am_modulator_state)
+				{
+					index = 0;
+					g_reset_am_modulator_state = FALSE;
+					controlPins = (g_on_the_air || readPttFast()) ? MAX_ATTEN_SETTING : 0;
+					PORTB = controlPins;
+				}
 
 				if(g_sendAMmodulation || index || g_sendAMmodulationConstantly)
 				{
@@ -3448,6 +3459,7 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 
 	digitalWrite(PIN_CW_KEY_LOGIC, OFF);    /* TX key line */
 	g_sendAMmodulation = FALSE;
+	requestAMModulatorReset();
 	g_LED_enunciating = FALSE;
 	g_config_error = NULL_CONFIG;           /* Trigger a new configuration enunciation */
 
@@ -3470,6 +3482,11 @@ void setupForFox(Fox_t* fox, EventAction_t action)
 	g_reset_transmit_service_state = TRUE;
 
 	sei();
+}
+
+void requestAMModulatorReset(void)
+{
+	g_reset_am_modulator_state = TRUE;
 }
 
 
@@ -4041,6 +4058,7 @@ BOOL setAMToneFrequency(AM_Tone_Freq_t value)
 	}
 
 	g_AM_enabled = enableAM;
+	requestAMModulatorReset();
 	sei();
 	updateAudioSamplingForAMTransmit();
 	return(enableAM);
