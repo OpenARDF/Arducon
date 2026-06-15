@@ -1,0 +1,79 @@
+{
+  "release": "v2.1.0",
+  "repository": "OpenARDF/Arducon",
+  "items": [
+    {
+      "id": "branch-state",
+      "description": "Confirm the branch, commit, and working tree.",
+      "status": "done",
+      "evidence": "Fetched latest main and fast-forwarded local main to origin/main commit 5190b3d before release prep; origin/Development1 also resolves to 5190b3d, and release prep keeps the version at the existing 2.1.0 value."
+    },
+    {
+      "id": "firmware-version",
+      "description": "Confirm the intended firmware version in EepromManager.h.",
+      "status": "done",
+      "evidence": "Software/AtmelStudio7/Arducon/Arducon/EepromManager.h already declares ARDUCON_FIRMWARE_VERSION \"2.1.0\" and PRODUCT_NAME_LONG_TXT strings for 2.1.0; deployment kept that version."
+    },
+    {
+      "id": "host-unit-tests",
+      "description": "Run the repo test gate, recording host unit-test and firmware structural regression evidence.",
+      "status": "done",
+      "evidence": "run-host-unit-tests.ps1 passed with clang++; scripts/check-firmware-interrupts.mjs passed."
+    },
+    {
+      "id": "cli-release-build-size",
+      "description": "Run the reproducible CLI Release build and size check, recording size evidence.",
+      "status": "done",
+      "evidence": "build-cli-release.ps1 -Clean passed for v2.1.0 with text=31055, data=654, bss=919, SRAM=1573 bytes, EEPROM image=207 bytes, update HEX range 0x0000..0x7B0D with 31502 data bytes, 754 bytes remaining below 0x7E00 app limit."
+    },
+    {
+      "id": "windows-studio-cross-check",
+      "description": "Complete the Windows/Microchip Studio Release cross-check or record the explicitly accepted branch waiver.",
+      "status": "skipped",
+      "skipReason": "No Windows/Microchip Studio release build was requested for this deployment; the repo-owned CLI Release build, size check, and release package validation were used as the release gates.",
+      "skipRequestedBy": "Codex deployment operator"
+    },
+    {
+      "id": "hardware-regression",
+      "description": "Run or confirm the hardware regression layer for this release candidate.",
+      "status": "done",
+      "evidence": "Hardware tests passed for this Arducon firmware release candidate, confirmed by the release operator during the v2.1.0 deployment."
+    },
+    {
+      "id": "release-package-build-validation",
+      "description": "Build and validate the release package.",
+      "status": "done",
+      "evidence": "build-release-package.ps1 and validate-release-package.ps1 passed for release-packages/Arducon-v2.1.0: update HEX 0x0000..0x7B0D (31502 bytes), first-install HEX 0x0000..0x7FFF (32010 bytes), bootloader HEX 0x7E00..0x7FFF (508 bytes), release ZIP validated."
+    },
+    {
+      "id": "package-outputs",
+      "description": "Verify the expected release package outputs exist under release-packages.",
+      "status": "done",
+      "evidence": "Verified 11 expected package files exist under release-packages/Arducon-v2.1.0: update HEX, first-install HEX, Optiboot HEX, Optiboot source ZIP, Prepare-Arducon-Updates script, provision-bootloader script, test-bootloader-serial script, manifest JSON, checksums TXT, README TXT, and complete release ZIP."
+    },
+    {
+      "id": "github-release-notes",
+      "description": "Draft concise GitHub release notes before tagging.",
+      "status": "done",
+      "evidence": "release-notes-v2.1.0.md created with multi-day scheduled event highlights, single ATmega328P package contents, validation notes, SerialSlinger update support, and update/recovery notes."
+    },
+    {
+      "id": "tag-and-release-created",
+      "description": "Create and push the Git tag, then create the GitHub release with required assets.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "published-release-verified",
+      "description": "Verify the published GitHub release title, notes, tag, standalone update HEX, and ZIP.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "final-checklist-audit",
+      "description": "Re-check this checklist against the work just performed before declaring deployment complete.",
+      "status": "pending",
+      "evidence": ""
+    }
+  ]
+}
