@@ -222,6 +222,16 @@ void checkScheduledEventPlans()
 	CHECK(nextCycle.seconds_since_sync == 300);
 	CHECK(nextCycle.fox_counter == 1);
 	CHECK(!nextCycle.transmissions_disabled);
+
+	ArduconScheduledEventPlan_t longRunningFox2 = arduconPlanScheduledEvent(start + 47768, start, start + 100000, 1, 300, 60, 5, 300);
+	CHECK(longRunningFox2.seconds_since_sync == 47768);
+	CHECK(longRunningFox2.fox_counter == 2);
+	CHECK(!longRunningFox2.transmissions_disabled);
+
+	ArduconScheduledEventPlan_t longRunningFox3 = arduconPlanScheduledEvent(start + 46344, start, start + 100000, 1, 300, 60, 5, 300);
+	CHECK(longRunningFox3.seconds_since_sync == 46344);
+	CHECK(longRunningFox3.fox_counter == 3);
+	CHECK(!longRunningFox3.transmissions_disabled);
 }
 
 void checkMultiDayScheduleWindows()

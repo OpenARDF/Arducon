@@ -81,7 +81,7 @@ typedef struct
 
 typedef struct
 {
-	int seconds_since_sync;
+	int32_t seconds_since_sync;
 	int fox_counter;
 	uint8_t transmissions_disabled;
 	uint8_t use_rtc_for_startstop;
@@ -95,7 +95,7 @@ typedef struct
 	uint8_t pre_power_radio;
 	uint8_t start_event;
 	uint8_t finish_event;
-	int seconds_since_sync;
+	int32_t seconds_since_sync;
 } ArduconRTCGatePlan_t;
 
 typedef struct
@@ -260,7 +260,7 @@ static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time
 	{
 		if(arduconCurrentOrNextScheduleWindow(current_epoch, start_epoch, finish_epoch, event_days, &effective_start_epoch, &effective_finish_epoch))
 		{
-			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int)(current_epoch - effective_start_epoch) : 0;
+			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int32_t)(current_epoch - effective_start_epoch) : 0;
 			plan.pre_power_radio = arduconShouldPrePowerRadio(current_epoch, effective_start_epoch, pre_power_lead_seconds, thermal_shutdown);
 			plan.start_event = arduconShouldStartScheduledEvent(current_epoch, effective_start_epoch, effective_finish_epoch, thermal_shutdown);
 		}
@@ -269,7 +269,7 @@ static inline ArduconRTCGatePlan_t arduconPlanRTCGate(time_t current_epoch, time
 	{
 		if(arduconActiveScheduleWindow(current_epoch, start_epoch, finish_epoch, event_days, &effective_start_epoch, &effective_finish_epoch))
 		{
-			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int)(current_epoch - effective_start_epoch) : 0;
+			plan.seconds_since_sync = (current_epoch > effective_start_epoch) ? (int32_t)(current_epoch - effective_start_epoch) : 0;
 			plan.finish_event = arduconShouldFinishScheduledEvent(current_epoch, effective_finish_epoch);
 		}
 		else
@@ -341,7 +341,7 @@ static inline ArduconFoxTimingPlan_t arduconPlanFoxTiming(int fox, uint8_t ptt_p
 	return plan;
 }
 
-static inline int arduconScheduledFoxCounter(int seconds_since_sync, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes)
+static inline int arduconScheduledFoxCounter(int32_t seconds_since_sync, int cycle_period_seconds, int on_air_interval_seconds, int number_of_foxes)
 {
 	if((cycle_period_seconds <= 0) || (on_air_interval_seconds <= 0) || (number_of_foxes <= 0))
 	{
@@ -372,7 +372,7 @@ static inline ArduconScheduledEventPlan_t arduconPlanScheduledEvent(time_t curre
 
 	if(effective_start_epoch < current_epoch)
 	{
-		plan.seconds_since_sync = (int)(current_epoch - effective_start_epoch);
+		plan.seconds_since_sync = (int32_t)(current_epoch - effective_start_epoch);
 		plan.fox_counter = arduconScheduledFoxCounter(plan.seconds_since_sync, cycle_period_seconds, on_air_interval_seconds, number_of_foxes);
 		plan.transmissions_disabled = 0;
 		plan.start_active_event_now = 1;
