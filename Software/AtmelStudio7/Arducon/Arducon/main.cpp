@@ -233,6 +233,7 @@ uint16_t readADC();
 float getTemp(void);
 int16_t getTempTenths(void);
 uint16_t getVoltage(void);
+void refreshTemperatureReading(void);
 void updateTemperatureState(int16_t temperatureTenths);
 void resetMaxEverTemperatureToCurrent(void);
 void sendTemperatureTenths(const char* label, int16_t temperatureTenths);
@@ -1668,23 +1669,7 @@ void loop()
 
 				if(!g_temperature_check_countdown)
 				{
-					setUpSampling(TEMPERATURE_SAMPLING, FALSE);
-					int16_t temp_tenths = getTempTenths();
-					int8_t temp = (int8_t)((temp_tenths >= 0) ? ((temp_tenths + 5) / 10) : ((temp_tenths - 5) / 10));
-
-					updateTemperatureState(temp_tenths);
-					if(temp != g_temperature)
-					{
-						g_temperature = temp;
-#if INCLUDE_RV3028_SUPPORT
-						int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
-						int8_t adj = ee_mgr.readTemperatureTable(delta25);
-						rv3028_set_offset_RAM(g_rv3028_offset + adj);
-#endif // INCLUDE_DS3231_SUPPORT
-					}
-
-					setUpSampling(AUDIO_SAMPLING, FALSE);
-					g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
+					refreshTemperatureReading();
 				}
 				else if(!g_voltage_check_countdown)
 				{
@@ -2493,6 +2478,8 @@ void handleLinkBusMsgs()
 
 			case MESSAGE_UTIL:
 			{
+				BOOL temperatureRefreshed = FALSE;
+
 				if(lb_buff->fields[FIELD1][0] == 'C')
 				{
 					if(lb_buff->fields[FIELD2][0])
@@ -2503,6 +2490,8 @@ void handleLinkBusMsgs()
 						{
 							g_atmega_temp_calibration = v;
 							ee_mgr.updateEEPROMVar(Atmega_temp_calibration, (void*)&g_atmega_temp_calibration);
+							resetMaxEverTemperatureToCurrent();
+							temperatureRefreshed = TRUE;
 						}
 					}
 
@@ -2528,6 +2517,7 @@ void handleLinkBusMsgs()
 				else if(lb_buff->fields[FIELD1][0] == 'X')
 				{
 					resetMaxEverTemperatureToCurrent();
+					temperatureRefreshed = TRUE;
 					sendTemperatureTenths("Max Ever Reset", g_max_ever_temperature_tenths);
 				}
 #if !SUPPORT_ONLY_80M
@@ -2541,6 +2531,10 @@ void handleLinkBusMsgs()
 				}
 #endif /* !SUPPORT_ONLY_80M */
 
+				if(!temperatureRefreshed)
+				{
+					refreshTemperatureReading();
+				}
 				sendTemperatureTenths("T", g_temperature_tenths);
 				sendTemperatureTenths("Max", g_max_temperature_tenths);
 				sendTemperatureTenths("Max Ever", g_max_ever_temperature_tenths);
@@ -3567,15 +3561,33 @@ void updateTemperatureState(int16_t temperatureTenths)
 	}
 }
 
-void resetMaxEverTemperatureToCurrent(void)
+void refreshTemperatureReading(void)
 {
 	setUpSampling(TEMPERATURE_SAMPLING, FALSE);
-	int16_t temperatureTenths = getTempTenths();
-	updateTemperatureState(temperatureTenths);
-	g_max_temperature_tenths = temperatureTenths;
-	g_max_ever_temperature_tenths = temperatureTenths;
-	ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
+	int16_t temp_tenths = getTempTenths();
+	int8_t temp = (int8_t)((temp_tenths >= 0) ? ((temp_tenths + 5) / 10) : ((temp_tenths - 5) / 10));
+
+	updateTemperatureState(temp_tenths);
+	if(temp != g_temperature)
+	{
+		g_temperature = temp;
+#if INCLUDE_RV3028_SUPPORT
+		int8_t delta25 = temp > 25 ? temp - 25 : 25 - temp;
+		int8_t adj = ee_mgr.readTemperatureTable(delta25);
+		rv3028_set_offset_RAM(g_rv3028_offset + adj);
+#endif // INCLUDE_DS3231_SUPPORT
+	}
+
 	setUpSampling(AUDIO_SAMPLING, FALSE);
+	g_temperature_check_countdown = TEMPERATURE_POLL_INTERVAL_SECONDS;
+}
+
+void resetMaxEverTemperatureToCurrent(void)
+{
+	refreshTemperatureReading();
+	g_max_temperature_tenths = g_temperature_tenths;
+	g_max_ever_temperature_tenths = g_temperature_tenths;
+	ee_mgr.updateEEPROMVar(Max_ever_temperature_tenths, (void*)&g_max_ever_temperature_tenths);
 }
 
 void sendTemperatureTenths(const char* label, int16_t temperatureTenths)
