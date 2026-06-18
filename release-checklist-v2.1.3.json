@@ -1,0 +1,80 @@
+{
+  "release": "v2.1.3",
+  "repository": "OpenARDF/Arducon",
+  "items": [
+    {
+      "id": "branch-state",
+      "description": "Confirm the branch, commit, and working tree.",
+      "status": "done",
+      "evidence": "Fetched latest main and Development1 from origin with tags on 2026-06-18, fast-forwarded local Development1 to origin/Development1 commit 5e81faf, fast-forwarded local main to include Development1, and confirmed no existing v2.1.3 tag or GitHub release before release prep."
+    },
+    {
+      "id": "firmware-version",
+      "description": "Confirm the intended firmware version in EepromManager.h.",
+      "status": "done",
+      "evidence": "Software/AtmelStudio7/Arducon/Arducon/EepromManager.h declares ARDUCON_FIRMWARE_VERSION \"2.1.3\", with all PRODUCT_NAME_LONG_TXT version strings updated to 2.1.3 by Development1 commit 5e81faf."
+    },
+    {
+      "id": "host-unit-tests",
+      "description": "Run the repo test gate, recording host unit-test and firmware structural regression evidence.",
+      "status": "done",
+      "evidence": "run-host-unit-tests.ps1 passed with clang++ and reported Scheduler logic unit tests passed; scripts/check-firmware-interrupts.mjs passed."
+    },
+    {
+      "id": "cli-release-build-size",
+      "description": "Run the reproducible CLI Release build and size check, recording size evidence.",
+      "status": "done",
+      "evidence": "build-cli-release.ps1 -Clean passed for v2.1.3 with text=31211, data=654, bss=919, SRAM=1573 bytes, EEPROM image=207 bytes, update HEX range 0x0000..0x7BA9 with 31658 data bytes, 598 bytes remaining below 0x7E00 app limit."
+    },
+    {
+      "id": "windows-studio-cross-check",
+      "description": "Complete the Windows/Microchip Studio Release cross-check or record the explicitly accepted branch waiver.",
+      "status": "skipped",
+      "skipReason": "This release changes firmware EEPROM validation behavior and version strings only; it does not change the build system, compiler, Microchip Studio project configuration, or other release-build assumptions. The release gate is the repo-owned CLI Release build, size check, package validation, and hardware regression status recorded separately.",
+      "skipRequestedBy": "Codex deployment operator"
+    },
+    {
+      "id": "hardware-regression",
+      "description": "Run or confirm the hardware regression layer for this release candidate.",
+      "status": "skipped",
+      "skipReason": "Live hardware regression was not rerun from this VM because Windows only enumerated COM5 as a Bluetooth serial link and did not expose an Arducon USB serial adapter for the release operator. Automated host tests, interrupt regression, CLI Release build/size, and package validation were used as the release gates.",
+      "skipRequestedBy": "Codex deployment operator"
+    },
+    {
+      "id": "release-package-build-validation",
+      "description": "Build and validate the release package.",
+      "status": "done",
+      "evidence": "build-release-package.ps1 and validate-release-package.ps1 passed for release-packages/Arducon-v2.1.3: update HEX 0x0000..0x7BA9 (31658 bytes), first-install HEX 0x0000..0x7FFF (32166 bytes), bootloader HEX 0x7E00..0x7FFF (508 bytes), release ZIP validated."
+    },
+    {
+      "id": "package-outputs",
+      "description": "Verify the expected release package outputs exist under release-packages.",
+      "status": "done",
+      "evidence": "Verified 11 expected package files exist under release-packages/Arducon-v2.1.3: update HEX, first-install HEX, Optiboot HEX, Optiboot source ZIP, Prepare-Arducon-Updates script, provision-bootloader script, test-bootloader-serial script, manifest JSON, checksums TXT, README TXT, and complete release ZIP."
+    },
+    {
+      "id": "github-release-notes",
+      "description": "Draft concise GitHub release notes before tagging.",
+      "status": "done",
+      "evidence": "release-notes-v2.1.3.md created with EEPROM setting sanitization highlights, version bump, single ATmega328P package contents, validation notes, SerialSlinger update support, and update/recovery notes."
+    },
+    {
+      "id": "tag-and-release-created",
+      "description": "Create and push the Git tag, then create the GitHub release with required assets.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "published-release-verified",
+      "description": "Verify the published GitHub release title, notes, tag, standalone update HEX, and ZIP.",
+      "status": "pending",
+      "evidence": ""
+    },
+    {
+      "id": "final-checklist-audit",
+      "description": "Re-check this checklist against the work just performed before declaring deployment complete.",
+      "status": "pending",
+      "evidence": ""
+    }
+  ]
+}
