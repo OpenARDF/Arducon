@@ -2396,7 +2396,7 @@ void handleLinkBusMsgs()
 					{
 						uint16_t days = (uint16_t)atoi(lb_buff->fields[FIELD2]);
 
-						if((days >= 1) && (days <= UINT8_MAX))
+						if((days >= MIN_DAYS_TO_RUN) && (days <= MAX_DAYS_TO_RUN))
 						{
 							g_days_to_run = (uint8_t)days;
 							ee_mgr.updateEEPROMVar(Days_to_run, (void*)&g_days_to_run);

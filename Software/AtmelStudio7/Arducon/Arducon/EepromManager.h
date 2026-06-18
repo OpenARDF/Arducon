@@ -34,26 +34,26 @@
 #include <time.h>
 
 // Set version information here
-#define ARDUCON_FIRMWARE_VERSION "2.1.2"
+#define ARDUCON_FIRMWARE_VERSION "2.1.3"
 
 #if INCLUDE_RV3028_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.2(80m) ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.3(80m) ***\n"
 		#define HELP_TEXT_TXT "\nCmd:\n CLK T|S|F|D|O [YYMMDDhhmmss]\n FOX [fox]\n ID [callsign]\n SYN 0-3\n PWD [pwd]\n UTI [H tempC|X]\n SET S|P [n]\n INF\n UPD"
 	#else
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.2B ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.3B ***\n"
 		#define HELP_TEXT_TXT "\nCmd:\n CLK T|S|F|D|O [YYMMDDhhmmss]\n FOX [fox]\n ID [callsign]\n SYN 0-3\n PWD [pwd]\n AM [0-6]\n UTI [H tempC|X]\n SET S|P [n]\n INF\n UPD"
 	#endif  /* SUPPORT_ONLY_80M */
 #elif INCLUDE_DS3231_SUPPORT
 	#if SUPPORT_ONLY_80M
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.2(80m) ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.3(80m) ***\n"
 		#define HELP_TEXT_TXT "\nCmd:\n CLK T|S|F|D [YYMMDDhhmmss]\n FOX [fox]\n ID [callsign]\n SYN 0-3\n PWD [pwd]\n UTI [H tempC|X]\n SET S|P [n]\n INF\n UPD"
 	#else
 		/* Set Firmware Version Here */
-		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.2 ***\n"
+		#define PRODUCT_NAME_LONG_TXT "*** Arducon Fox Controller Ver. 2.1.3 ***\n"
 		#define HELP_TEXT_TXT "\nCmd:\n CLK T|S|F|D [YYMMDDhhmmss]\n FOX [fox]\n ID [callsign]\n SYN 0-3\n PWD [pwd]\n AM [0-6]\n UTI [H tempC|X]\n SET S|P [n]\n INF\n UPD"
 	#endif  /* SUPPORT_ONLY_80M */
 #endif          /* INCLUDE_RV3028_SUPPORT */

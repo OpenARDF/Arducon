@@ -122,6 +122,38 @@ extern char g_tempStr[];
 
 #define EEPROM_TEXT_TX_IDLE_WAIT_LIMIT 1000
 
+static uint8_t eepromReadByteOrDefault(
+	const uint8_t *address,
+	uint8_t minimum,
+	uint8_t maximum,
+	uint8_t defaultValue)
+{
+	uint8_t value = eeprom_read_byte(address);
+
+	if((value < minimum) || (value > maximum))
+	{
+		value = defaultValue;
+		eeprom_write_byte((uint8_t*)address, value);
+	}
+
+	return value;
+}
+
+static uint8_t eepromReadBoolOrDefault(
+	const uint8_t *address,
+	uint8_t defaultValue)
+{
+	uint8_t value = eeprom_read_byte(address);
+
+	if(value > 1)
+	{
+		value = defaultValue;
+		eeprom_write_byte((uint8_t*)address, value);
+	}
+
+	return value;
+}
+
 /* default constructor */
 EepromManager::EepromManager()
 {
@@ -394,22 +426,45 @@ BOOL EepromManager::readNonVols(void)
 
 	if(eepromLayoutIsCurrent())  /* EEPROM is initialized and matches this firmware layout */
 	{
-		g_id_codespeed = CLAMP(MIN_CODE_SPEED_WPM, eeprom_read_byte(&(EepromManager::ee_vars.id_codespeed)), MAX_CODE_SPEED_WPM);
+		g_id_codespeed = eepromReadByteOrDefault(
+			&(EepromManager::ee_vars.id_codespeed),
+			MIN_CODE_SPEED_WPM,
+			MAX_CODE_SPEED_WPM,
+			EEPROM_ID_CODE_SPEED_DEFAULT);
 		g_fox = CLAMP(BEACON, (Fox_t)eeprom_read_byte(&(EepromManager::ee_vars.fox_setting)), SPRINT_F5);
-		g_AM_audio_frequency = (AM_Tone_Freq_t)eeprom_read_byte(&(EepromManager::ee_vars.am_audio_frequency));
+		g_AM_audio_frequency = (AM_Tone_Freq_t)eepromReadByteOrDefault(
+			&(EepromManager::ee_vars.am_audio_frequency),
+			MIN_AM_TONE_FREQUENCY,
+			MAX_AM_TONE_FREQUENCY,
+			EEPROM_AM_AUDIO_FREQ_DEFAULT);
 		g_atmega_temp_calibration = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.atmega_temp_calibration));
 		g_thermal_shutdown_temperature_c = CLAMP(THERMAL_SHUTDOWN_MIN_C, (int8_t)eeprom_read_byte((uint8_t*)&(EepromManager::ee_vars.thermal_shutdown_temperature_c)), THERMAL_SHUTDOWN_MAX_C);
 		g_max_ever_temperature_tenths = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.max_ever_temperature_tenths));
 		g_rv3028_offset = (int16_t)eeprom_read_word((uint16_t*)&(EepromManager::ee_vars.rv3028_offset));
 		g_event_start_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_start_epoch));
 		g_event_finish_epoch = eeprom_read_dword(&(EepromManager::ee_vars.event_finish_epoch));
-		g_days_to_run = eeprom_read_byte(&(EepromManager::ee_vars.days_to_run));
-		if(!g_days_to_run)
-		{
-			g_days_to_run = EEPROM_DAYS_TO_RUN_DEFAULT;
-		}
+		g_days_to_run = eepromReadByteOrDefault(
+			&(EepromManager::ee_vars.days_to_run),
+			MIN_DAYS_TO_RUN,
+			MAX_DAYS_TO_RUN,
+			EEPROM_DAYS_TO_RUN_DEFAULT);
+#if INCLUDE_RV3028_SUPPORT
 		g_utc_offset = (int8_t)eeprom_read_byte(&(EepromManager::ee_vars.utc_offset));
-		g_ptt_periodic_reset_enabled = eeprom_read_byte(&(EepromManager::ee_vars.ptt_periodic_reset));
+		if((g_utc_offset < -24) || (g_utc_offset > 24))
+		{
+			g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
+			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.utc_offset), (uint8_t)g_utc_offset);
+		}
+#else
+		g_utc_offset = EEPROM_UTC_OFFSET_DEFAULT;
+		if(eeprom_read_byte(&(EepromManager::ee_vars.utc_offset)) != (uint8_t)EEPROM_UTC_OFFSET_DEFAULT)
+		{
+			eeprom_write_byte((uint8_t*)&(EepromManager::ee_vars.utc_offset), (uint8_t)EEPROM_UTC_OFFSET_DEFAULT);
+		}
+#endif
+		g_ptt_periodic_reset_enabled = eepromReadBoolOrDefault(
+			&(EepromManager::ee_vars.ptt_periodic_reset),
+			EEPROM_PTT_PERIODIC_RESET_DEFAULT);
 
 		for(i = 0; i < MAX_PATTERN_TEXT_LENGTH; i++)
 		{
